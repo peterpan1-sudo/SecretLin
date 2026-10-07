@@ -55,9 +55,12 @@ Le coffre est stocké dans `~/.local/share/GestionnaireMDP/coffre.vault`
 Avant chaque enregistrement, la version précédente est copiée à côté dans
 `coffre.vault.bak` (toujours chiffrée, avec le même mot de passe maître).
 
-Le coffre peut aussi être exporté dans un fichier chiffré avec un mot de passe
-d'export distinct, puis importé dans un autre coffre : les entrées déjà présentes
-à l'identique sont ignorées.
+Le bouton « Sauvegarde » de l'écran principal permet de :
+- **exporter** le coffre dans un fichier chiffré avec un mot de passe d'export
+  distinct, enregistré à l'endroit de votre choix (clé USB, autre disque…) ;
+- **importer** un tel fichier : les entrées déjà présentes à l'identique sont ignorées ;
+- **restaurer** la copie automatique. Le coffre actuel devient alors la copie :
+  restaurer une seconde fois annule l'opération.
 
 ## Logos des marques
 

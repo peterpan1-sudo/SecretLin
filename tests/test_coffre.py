@@ -116,7 +116,7 @@ def test_sauvegarde_avant_chaque_ecriture(tmp_path):
     c = Coffre(chemin)
     c.creer(MAITRE)
     # Premier enregistrement : rien à sauvegarder encore.
-    assert not c.chemin_sauvegarde.exists()
+    assert not c.a_une_sauvegarde()
 
     c.ajouter("netflix", "moi", "abc")
     avant = chemin.read_text()
@@ -151,6 +151,10 @@ def test_restaurer_sauvegarde(tmp_path):
     rouvert = Coffre(chemin)
     rouvert.ouvrir(MAITRE)
     assert [e["site"] for e in rouvert.entrees] == ["site"]
+
+    # Restaurer une seconde fois annule la restauration.
+    c.restaurer_sauvegarde(MAITRE)
+    assert c.entrees == []
 
 
 def test_restaurer_sauvegarde_mauvais_mot_de_passe_ne_touche_a_rien(tmp_path):

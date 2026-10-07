@@ -251,11 +251,18 @@ class Coffre:
             _ecrire_atomique(self.chemin_sauvegarde, self.chemin.read_text(encoding="utf-8"))
         _ecrire_atomique(self.chemin, contenu)
 
+    def a_une_sauvegarde(self) -> bool:
+        return self.chemin_sauvegarde.exists()
+
     def restaurer_sauvegarde(self, mot_de_passe: str) -> None:
-        """Remplace le coffre par sa copie de sauvegarde, après avoir vérifié que
-        « mot_de_passe » l'ouvre bien. Le coffre est ensuite ouvert sur cette copie."""
+        """Remet en place la copie de sauvegarde, après avoir vérifié que « mot_de_passe »
+        l'ouvre bien. Le coffre actuel devient à son tour la copie : une restauration
+        faite par erreur s'annule en restaurant une seconde fois."""
         cle, entete, entrees = _dechiffrer(self.chemin_sauvegarde, mot_de_passe)
-        _ecrire_atomique(self.chemin, self.chemin_sauvegarde.read_text(encoding="utf-8"))
+        ancienne = self.chemin_sauvegarde.read_text(encoding="utf-8")
+        if self.chemin.exists():
+            _ecrire_atomique(self.chemin_sauvegarde, self.chemin.read_text(encoding="utf-8"))
+        _ecrire_atomique(self.chemin, ancienne)
         self._cle, self._entete, self.entrees = cle, entete, entrees
         self._trier()
 
