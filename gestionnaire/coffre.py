@@ -350,8 +350,29 @@ class Coffre:
     def changer_mot_de_passe(self, nouveau: str) -> None:
         # Les entrées restent intactes : on régénère la clé puis on sauvegarde
         # une seule fois (jamais de coffre vide écrit entre-temps).
+        ancienne_cle, ancien_entete = self._cle, self._entete
         self._nouveau_chiffrement(nouveau)
         self.sauvegarder()
+        self._rechiffrer_copies(ancienne_cle, ancien_entete)
+
+    def _rechiffrer_copies(self, ancienne_cle: bytes, ancien_entete: dict) -> None:
+        """Après un changement de mot de passe, aucune copie (.bak, sauvegardes/) ne doit
+        encore s'ouvrir avec l'ancien : celles chiffrées avec l'ancienne clé sont
+        rechiffrées avec la nouvelle, les autres (clé inconnue, illisibles) sont supprimées."""
+        aad = json.dumps(ancien_entete, sort_keys=True).encode("utf-8")
+        for copie in [self.chemin_sauvegarde, *self.copies_ouverture()]:
+            if not copie.exists():
+                continue
+            try:
+                contenu = json.loads(copie.read_text(encoding="utf-8"))
+                if contenu["entete"] != ancien_entete:
+                    raise ValueError("copie chiffrée avec une autre clé")
+                clair = AESGCM(ancienne_cle).decrypt(
+                    _deb64(contenu["nonce"]), _deb64(contenu["donnees"]), aad)
+                _ecrire_atomique(copie, _chiffrer(self._cle, self._entete,
+                                                  json.loads(clair.decode("utf-8"))))
+            except (OSError, ValueError, KeyError, TypeError, InvalidTag):
+                copie.unlink(missing_ok=True)
 
     def _trier(self) -> None:
         self.entrees.sort(key=lambda e: (e["site"].casefold(), e["utilisateur"].casefold()))
