@@ -5,6 +5,7 @@ Dérivation de clé : Argon2id (résistant aux attaques par force brute sur GPU)
 """
 
 import base64
+import datetime
 import json
 import math
 import os
@@ -34,6 +35,12 @@ class CoffreCorrompu(Exception):
     pass
 
 
+SUFFIXE_SAUVEGARDE = ".bak"
+# Copies faites à chaque déverrouillage : on garde les plus récentes.
+NB_COPIES_OUVERTURE = 5
+FORMAT_COPIE = "coffre-%Y%m%d-%H%M%S-%f.vault"
+
+
 def dossier_donnees() -> Path:
     """Dossier privé de l'utilisateur où est rangé le coffre."""
     if sys.platform == "win32":
@@ -57,6 +64,24 @@ def _b64(donnees: bytes) -> str:
 
 def _deb64(texte: str) -> bytes:
     return base64.b64decode(texte.encode("ascii"))
+
+
+def _ecrire_atomique(chemin: Path, contenu: str) -> None:
+    """Écrit « contenu » dans « chemin » sans jamais laisser un fichier à moitié écrit,
+    même en cas de coupure (fichier temporaire puis renommage)."""
+    fd, tmp = tempfile.mkstemp(dir=chemin.parent, prefix=".coffre-")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(contenu)
+            f.flush()
+            os.fsync(f.fileno())
+        if sys.platform != "win32":
+            os.chmod(tmp, 0o600)
+        os.replace(tmp, chemin)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
 
 
 def _deriver_cle(mot_de_passe: str, sel: bytes, memoire: int, iterations: int, voies: int) -> bytes:
@@ -129,6 +154,62 @@ def _separer_email(entree: dict) -> None:
         entree["email"] = ""
 
 
+def _nouvel_entete() -> tuple[dict, bytes]:
+    """En-tête neuf (sel aléatoire, paramètres Argon2id actuels) et sel brut."""
+    sel = secrets.token_bytes(16)
+    entete = {
+        "version": VERSION,
+        "kdf": "argon2id",
+        "sel": _b64(sel),
+        "memoire": ARGON2_MEMOIRE_KIO,
+        "iterations": ARGON2_ITERATIONS,
+        "voies": ARGON2_VOIES,
+    }
+    return entete, sel
+
+
+def _chiffrer(cle: bytes, entete: dict, entrees: list[dict]) -> str:
+    nonce = secrets.token_bytes(12)
+    aad = json.dumps(entete, sort_keys=True).encode("utf-8")
+    clair = json.dumps(entrees, ensure_ascii=False).encode("utf-8")
+    chiffre = AESGCM(cle).encrypt(nonce, clair, aad)
+    return json.dumps({
+        "entete": entete,
+        "nonce": _b64(nonce),
+        "donnees": _b64(chiffre),
+    })
+
+
+def _dechiffrer(chemin: Path, mot_de_passe: str) -> tuple[bytes, dict, list[dict]]:
+    """Lit et déchiffre un fichier au format coffre. Renvoie (clé, en-tête, entrées)."""
+    try:
+        contenu = json.loads(chemin.read_text(encoding="utf-8"))
+        entete = contenu["entete"]
+        nonce = _deb64(contenu["nonce"])
+        chiffre = _deb64(contenu["donnees"])
+        sel = _deb64(entete["sel"])
+        memoire, iterations, voies = entete["memoire"], entete["iterations"], entete["voies"]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        raise CoffreCorrompu(str(e)) from e
+
+    cle = _deriver_cle(mot_de_passe, sel, memoire, iterations, voies)
+    aad = json.dumps(entete, sort_keys=True).encode("utf-8")
+    try:
+        clair = AESGCM(cle).decrypt(nonce, chiffre, aad)
+    except InvalidTag:
+        raise MotDePasseIncorrect() from None
+
+    entrees = json.loads(clair.decode("utf-8"))
+    for e in entrees:
+        _separer_email(e)
+    return cle, entete, entrees
+
+
+def _empreinte(entree: dict) -> tuple:
+    """Contenu d'une entrée, sans son identifiant : sert à repérer les doublons."""
+    return tuple(entree.get(k, "") for k in ("site", "utilisateur", "email", "mot_de_passe", "notes"))
+
+
 class Coffre:
     def __init__(self, chemin: Path | None = None):
         self.chemin = chemin or chemin_coffre()
@@ -142,15 +223,7 @@ class Coffre:
     def _nouveau_chiffrement(self, mot_de_passe: str) -> None:
         """Régénère sel, en-tête et clé pour « mot_de_passe ». Ne touche ni aux
         entrées ni au fichier : l'appelant sauvegarde une seule fois ensuite."""
-        sel = secrets.token_bytes(16)
-        self._entete = {
-            "version": VERSION,
-            "kdf": "argon2id",
-            "sel": _b64(sel),
-            "memoire": ARGON2_MEMOIRE_KIO,
-            "iterations": ARGON2_ITERATIONS,
-            "voies": ARGON2_VOIES,
-        }
+        self._entete, sel = _nouvel_entete()
         self._cle = _deriver_cle(mot_de_passe, sel, ARGON2_MEMOIRE_KIO, ARGON2_ITERATIONS, ARGON2_VOIES)
 
     def creer(self, mot_de_passe: str) -> None:
@@ -158,31 +231,51 @@ class Coffre:
         self.entrees = []
         self.sauvegarder()
 
+    @property
+    def chemin_sauvegarde(self) -> Path:
+        """Copie de la version précédente du coffre, refaite avant chaque écriture."""
+        return self.chemin.with_name(self.chemin.name + SUFFIXE_SAUVEGARDE)
+
+    @property
+    def dossier_copies(self) -> Path:
+        """Dossier des copies faites à chaque déverrouillage."""
+        return self.chemin.parent / "sauvegardes"
+
     def ouvrir(self, mot_de_passe: str) -> None:
-        try:
-            contenu = json.loads(self.chemin.read_text(encoding="utf-8"))
-            entete = contenu["entete"]
-            nonce = _deb64(contenu["nonce"])
-            chiffre = _deb64(contenu["donnees"])
-        except (OSError, ValueError, KeyError) as e:
-            raise CoffreCorrompu(str(e)) from e
-
-        cle = _deriver_cle(
-            mot_de_passe, _deb64(entete["sel"]),
-            entete["memoire"], entete["iterations"], entete["voies"],
-        )
-        aad = json.dumps(entete, sort_keys=True).encode("utf-8")
-        try:
-            clair = AESGCM(cle).decrypt(nonce, chiffre, aad)
-        except InvalidTag:
-            raise MotDePasseIncorrect() from None
-
-        self._cle = cle
-        self._entete = entete
-        self.entrees = json.loads(clair.decode("utf-8"))
-        for e in self.entrees:
-            _separer_email(e)
+        self._cle, self._entete, self.entrees = _dechiffrer(self.chemin, mot_de_passe)
         self._trier()
+        try:
+            self._copie_ouverture()
+        except OSError:
+            pass  # une copie impossible (disque plein…) ne doit pas empêcher d'ouvrir le coffre
+
+    def _copie_ouverture(self) -> None:
+        """Copie le coffre tel qu'il est au déverrouillage, sauf s'il n'a pas changé depuis
+        la dernière copie, puis ne garde que les NB_COPIES_OUVERTURE plus récentes."""
+        contenu = self.chemin.read_text(encoding="utf-8")
+        copies = self.copies_ouverture()
+        if copies and copies[0].read_text(encoding="utf-8") == contenu:
+            return
+        self.dossier_copies.mkdir(exist_ok=True)
+        if sys.platform != "win32":
+            os.chmod(self.dossier_copies, 0o700)
+        nom = datetime.datetime.now().strftime(FORMAT_COPIE)
+        _ecrire_atomique(self.dossier_copies / nom, contenu)
+        for ancienne in self.copies_ouverture()[NB_COPIES_OUVERTURE:]:
+            ancienne.unlink()
+
+    def copies_ouverture(self) -> list[Path]:
+        """Copies faites au déverrouillage, de la plus récente à la plus ancienne."""
+        if not self.dossier_copies.is_dir():
+            return []
+        return sorted(self.dossier_copies.glob("coffre-*.vault"), reverse=True)
+
+    @staticmethod
+    def date_copie(copie: Path) -> datetime.datetime | None:
+        try:
+            return datetime.datetime.strptime(copie.name, FORMAT_COPIE)
+        except ValueError:
+            return None
 
     def verrouiller(self) -> None:
         self._cle = None
@@ -192,29 +285,67 @@ class Coffre:
         if self._cle is None or self._entete is None:
             raise RuntimeError("Coffre verrouillé")
         self._trier()
-        nonce = secrets.token_bytes(12)
-        aad = json.dumps(self._entete, sort_keys=True).encode("utf-8")
-        clair = json.dumps(self.entrees, ensure_ascii=False).encode("utf-8")
-        chiffre = AESGCM(self._cle).encrypt(nonce, clair, aad)
-        contenu = json.dumps({
-            "entete": self._entete,
-            "nonce": _b64(nonce),
-            "donnees": _b64(chiffre),
-        })
-        # Écriture atomique : le coffre n'est jamais à moitié écrit en cas de coupure.
-        fd, tmp = tempfile.mkstemp(dir=self.chemin.parent, prefix=".coffre-")
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                f.write(contenu)
-                f.flush()
-                os.fsync(f.fileno())
-            if sys.platform != "win32":
-                os.chmod(tmp, 0o600)
-            os.replace(tmp, self.chemin)
-        except BaseException:
-            if os.path.exists(tmp):
-                os.remove(tmp)
-            raise
+        contenu = _chiffrer(self._cle, self._entete, self.entrees)
+        # Avant d'écraser le coffre, on garde sa version précédente (toujours chiffrée) :
+        # si l'écriture ou les données posent problème, rien n'est perdu.
+        if self.chemin.exists():
+            _ecrire_atomique(self.chemin_sauvegarde, self.chemin.read_text(encoding="utf-8"))
+        _ecrire_atomique(self.chemin, contenu)
+
+    def a_une_sauvegarde(self) -> bool:
+        return self.chemin_sauvegarde.exists() or bool(self.copies_ouverture())
+
+    def restaurer_sauvegarde(self, mot_de_passe: str, source: Path | None = None) -> None:
+        """Remet en place une copie du coffre : celle d'avant le dernier enregistrement
+        par défaut, ou « source » (par exemple une copie faite au déverrouillage).
+        « mot_de_passe » doit ouvrir cette copie. Le coffre actuel devient la copie
+        d'avant le dernier enregistrement : une restauration faite par erreur s'annule
+        en restaurant cette copie."""
+        source = Path(source) if source else self.chemin_sauvegarde
+        cle, entete, entrees = _dechiffrer(source, mot_de_passe)
+        contenu = source.read_text(encoding="utf-8")
+        if self.chemin.exists():
+            _ecrire_atomique(self.chemin_sauvegarde, self.chemin.read_text(encoding="utf-8"))
+        _ecrire_atomique(self.chemin, contenu)
+        self._cle, self._entete, self.entrees = cle, entete, entrees
+        self._trier()
+
+    def exporter(self, destination: Path, mot_de_passe_export: str) -> None:
+        """Écrit toutes les entrées dans « destination », chiffrées avec un mot de passe
+        propre à l'export (sel et clé neufs, indépendants du mot de passe maître)."""
+        if self._cle is None:
+            raise RuntimeError("Coffre verrouillé")
+        problemes = verifier_force(mot_de_passe_export)
+        if problemes:
+            raise ValueError("Mot de passe d'export trop faible : il manque " + ", ".join(problemes))
+        entete, sel = _nouvel_entete()
+        cle = _deriver_cle(mot_de_passe_export, sel, entete["memoire"], entete["iterations"],
+                           entete["voies"])
+        _ecrire_atomique(Path(destination), _chiffrer(cle, entete, self.entrees))
+
+    def importer(self, source: Path, mot_de_passe_export: str) -> int:
+        """Ajoute au coffre les entrées d'un fichier exporté (ou de tout fichier au
+        format coffre). Les entrées déjà présentes à l'identique sont ignorées.
+        Renvoie le nombre d'entrées ajoutées."""
+        if self._cle is None:
+            raise RuntimeError("Coffre verrouillé")
+        _, _, importees = _dechiffrer(Path(source), mot_de_passe_export)
+        connues = {_empreinte(e) for e in self.entrees}
+        ids = {e["id"] for e in self.entrees}
+        ajoutees = 0
+        for e in importees:
+            if _empreinte(e) in connues:
+                continue
+            e = {**e}
+            if e.get("id") in ids or not e.get("id"):
+                e["id"] = secrets.token_hex(8)
+            self.entrees.append(e)
+            connues.add(_empreinte(e))
+            ids.add(e["id"])
+            ajoutees += 1
+        if ajoutees:
+            self.sauvegarder()
+        return ajoutees
 
     def changer_mot_de_passe(self, nouveau: str) -> None:
         # Les entrées restent intactes : on régénère la clé puis on sauvegarde

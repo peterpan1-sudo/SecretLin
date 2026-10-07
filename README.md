@@ -52,6 +52,17 @@ Sous Windows, remplacer `.venv/bin/` par `.venv\Scripts\`.
 
 Le coffre est stocké dans `~/.local/share/GestionnaireMDP/coffre.vault`
 (Windows : `%APPDATA%\GestionnaireMDP\coffre.vault`).
+Avant chaque enregistrement, la version précédente est copiée à côté dans
+`coffre.vault.bak`. À chaque déverrouillage, une copie datée est aussi rangée dans
+le sous-dossier `sauvegardes/` (les 5 plus récentes sont gardées, et aucune copie
+n'est refaite si le coffre n'a pas changé). Toutes ces copies restent chiffrées.
+
+Le bouton « Sauvegarde » de l'écran principal permet de :
+- **exporter** le coffre dans un fichier chiffré avec un mot de passe d'export
+  distinct, enregistré à l'endroit de votre choix (clé USB, autre disque…) ;
+- **importer** un tel fichier : les entrées déjà présentes à l'identique sont ignorées ;
+- **restaurer** l'une des copies automatiques. Le coffre actuel devient alors la copie
+  « avant le dernier enregistrement » : la restaurer annule l'opération.
 
 ## Logos des marques
 
