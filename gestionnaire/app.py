@@ -1088,7 +1088,8 @@ class FenetreSauvegarde(Dialogue):
                "avec un mot de passe d'export.", "Exporter…", self._exporter)
         rangee("Importer", "Ajoute les identifiants d'un fichier exporté. "
                "Les doublons sont ignorés.", "Importer…", self._importer)
-        rangee("Restaurer", "Revient à la version du coffre d'avant le dernier enregistrement.",
+        rangee("Restaurer", "Revient à une copie automatique : celle d'avant le dernier "
+               "enregistrement, ou celle faite à l'un des derniers déverrouillages.",
                "Restaurer…", self._restaurer, actif=ecran.app.coffre.a_une_sauvegarde())
 
         BoutonAnime(corps, "Fermer", self.destroy, width=100).pack(anchor="e", pady=(10, 0))
@@ -1119,13 +1120,22 @@ class FenetreSauvegarde(Dialogue):
             succes=lambda n: self._fin(f"{n} identifiant{'s' if n > 1 else ''} importé{'s' if n > 1 else ''}"))
 
     def _restaurer(self):
+        coffre = self.ecran.app.coffre
+        choix = []
+        if coffre.chemin_sauvegarde.exists():
+            choix.append(("Avant le dernier enregistrement", coffre.chemin_sauvegarde))
+        for copie in coffre.copies_ouverture():
+            date = coffre.date_copie(copie)
+            if date:
+                choix.append((f"Déverrouillage du {date:%d/%m/%Y à %H:%M:%S}", copie))
         DialogueMotDePasse(
             self, "Restaurer",
-            "Le coffre reviendra à sa version précédente. Restaurer à nouveau annule "
-            "l'opération. Entrez votre mot de passe maître.",
-            libelle="Restaurer", style="danger",
-            travail=self.ecran.app.coffre.restaurer_sauvegarde,
-            succes=lambda _r: self._fin("Version précédente restaurée"))
+            "Choisissez la copie à remettre en place, puis entrez le mot de passe maître "
+            "qui l'ouvre. Le coffre actuel reste récupérable avec « Avant le dernier "
+            "enregistrement ».",
+            libelle="Restaurer", style="danger", choix=choix,
+            travail=lambda mdp, copie: coffre.restaurer_sauvegarde(mdp, copie),
+            succes=lambda _r: self._fin("Copie restaurée"))
 
     def _fin(self, message):
         self.ecran.rafraichir()
@@ -1138,16 +1148,26 @@ class DialogueMotDePasse(Dialogue):
     (Argon2id prend du temps) et appelle « succes(resultat) » s'il réussit."""
 
     def __init__(self, parent, titre, texte, travail, succes, libelle="Valider",
-                 nouveau=False, style="principal"):
+                 nouveau=False, style="principal", choix=None):
         super().__init__(parent, titre)
         self.app = parent.winfo_toplevel()
         self.travail, self.succes, self.nouveau = travail, succes, nouveau
+        # « choix » : liste de (libellé, valeur) ; la valeur choisie est passée à « travail ».
+        self.choix = dict(choix) if choix else None
         corps = ctk.CTkFrame(self, fg_color="transparent")
         corps.pack(padx=30, pady=26)
         ctk.CTkLabel(corps, text=titre, font=police(17, gras=True), text_color=TEXTE,
                      anchor="w").pack(fill="x")
         ctk.CTkLabel(corps, text=texte, font=police(12), text_color=TEXTE_DOUX, anchor="w",
                      justify="left", wraplength=340).pack(fill="x", pady=(4, 14))
+        if self.choix:
+            self.liste = ctk.CTkOptionMenu(
+                corps, values=list(self.choix), width=340, height=38, corner_radius=9,
+                fg_color=FOND, button_color=CARTE, button_hover_color=CARTE_SURVOL,
+                text_color=TEXTE, font=police(13), dropdown_font=police(13),
+                dropdown_fg_color=PANNEAU, dropdown_hover_color=CARTE_SURVOL,
+                dropdown_text_color=TEXTE)
+            self.liste.pack(pady=(0, 10))
         self.mdp = champ(corps, "Mot de passe", masque=True, width=340)
         self.mdp.pack()
         if nouveau:
@@ -1183,12 +1203,16 @@ class DialogueMotDePasse(Dialogue):
             if mdp != self.confirmation.get():
                 self.message.configure(text="Les deux mots de passe ne correspondent pas.")
                 return
+        valeur = self.liste.get() if self.choix else None
         self.bouton.activer(False, "Patientez…")
         self.message.configure(text="")
 
         def fond():
             try:
-                resultat, erreur = self.travail(mdp), None
+                if self.choix:
+                    resultat, erreur = self.travail(mdp, self.choix[valeur]), None
+                else:
+                    resultat, erreur = self.travail(mdp), None
             except MotDePasseIncorrect:
                 resultat, erreur = None, "Mot de passe incorrect."
             except CoffreCorrompu:

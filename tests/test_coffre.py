@@ -237,3 +237,65 @@ def test_export_refuse_mot_de_passe_faible_et_coffre_verrouille(tmp_path):
         c.exporter(tmp_path / "e.secretlin", EXPORT)
     with pytest.raises(RuntimeError):
         c.importer(tmp_path / "e.secretlin", EXPORT)
+
+
+def test_copie_a_chaque_deverrouillage(tmp_path):
+    chemin = tmp_path / "c.vault"
+    c = Coffre(chemin)
+    c.creer(MAITRE)
+    c.ajouter("site", "u", "p")
+    assert c.copies_ouverture() == []
+
+    Coffre(chemin).ouvrir(MAITRE)
+    copies = c.copies_ouverture()
+    assert len(copies) == 1
+    assert copies[0].read_text() == chemin.read_text()
+    assert c.date_copie(copies[0]) is not None
+    if module.sys.platform != "win32":
+        assert copies[0].stat().st_mode & 0o777 == 0o600
+        assert c.dossier_copies.stat().st_mode & 0o777 == 0o700
+
+    # Coffre inchangé depuis la dernière copie : pas de doublon.
+    Coffre(chemin).ouvrir(MAITRE)
+    assert len(c.copies_ouverture()) == 1
+
+
+def test_copies_ouverture_limitees(tmp_path):
+    chemin = tmp_path / "c.vault"
+    c = Coffre(chemin)
+    c.creer(MAITRE)
+    for i in range(module.NB_COPIES_OUVERTURE + 3):
+        c.ajouter(f"site{i}", "u", "p")
+        Coffre(chemin).ouvrir(MAITRE)
+    copies = c.copies_ouverture()
+    assert len(copies) == module.NB_COPIES_OUVERTURE
+    # La plus récente correspond au coffre actuel.
+    recente = Coffre(copies[0])
+    recente.ouvrir(MAITRE)
+    assert len(recente.entrees) == module.NB_COPIES_OUVERTURE + 3
+
+
+def test_pas_de_copie_si_mot_de_passe_incorrect(tmp_path):
+    chemin = tmp_path / "c.vault"
+    Coffre(chemin).creer(MAITRE)
+    with pytest.raises(MotDePasseIncorrect):
+        Coffre(chemin).ouvrir("mauvais")
+    assert Coffre(chemin).copies_ouverture() == []
+
+
+def test_restaurer_copie_ouverture(tmp_path):
+    chemin = tmp_path / "c.vault"
+    c = Coffre(chemin)
+    c.creer(MAITRE)
+    c.ajouter("garder", "u", "p")
+    c = Coffre(chemin)
+    c.ouvrir(MAITRE)  # copie faite ici
+    copie = c.copies_ouverture()[0]
+    c.supprimer(c.entrees[0]["id"])
+    c.ajouter("autre", "u", "p")  # la copie .bak ne contient plus « garder »
+
+    c.restaurer_sauvegarde(MAITRE, copie)
+    assert [e["site"] for e in c.entrees] == ["garder"]
+    # Le coffre d'avant la restauration reste récupérable.
+    c.restaurer_sauvegarde(MAITRE)
+    assert [e["site"] for e in c.entrees] == ["autre"]

@@ -5,6 +5,7 @@ Dérivation de clé : Argon2id (résistant aux attaques par force brute sur GPU)
 """
 
 import base64
+import datetime
 import json
 import math
 import os
@@ -35,6 +36,9 @@ class CoffreCorrompu(Exception):
 
 
 SUFFIXE_SAUVEGARDE = ".bak"
+# Copies faites à chaque déverrouillage : on garde les plus récentes.
+NB_COPIES_OUVERTURE = 5
+FORMAT_COPIE = "coffre-%Y%m%d-%H%M%S-%f.vault"
 
 
 def dossier_donnees() -> Path:
@@ -232,9 +236,46 @@ class Coffre:
         """Copie de la version précédente du coffre, refaite avant chaque écriture."""
         return self.chemin.with_name(self.chemin.name + SUFFIXE_SAUVEGARDE)
 
+    @property
+    def dossier_copies(self) -> Path:
+        """Dossier des copies faites à chaque déverrouillage."""
+        return self.chemin.parent / "sauvegardes"
+
     def ouvrir(self, mot_de_passe: str) -> None:
         self._cle, self._entete, self.entrees = _dechiffrer(self.chemin, mot_de_passe)
         self._trier()
+        try:
+            self._copie_ouverture()
+        except OSError:
+            pass  # une copie impossible (disque plein…) ne doit pas empêcher d'ouvrir le coffre
+
+    def _copie_ouverture(self) -> None:
+        """Copie le coffre tel qu'il est au déverrouillage, sauf s'il n'a pas changé depuis
+        la dernière copie, puis ne garde que les NB_COPIES_OUVERTURE plus récentes."""
+        contenu = self.chemin.read_text(encoding="utf-8")
+        copies = self.copies_ouverture()
+        if copies and copies[0].read_text(encoding="utf-8") == contenu:
+            return
+        self.dossier_copies.mkdir(exist_ok=True)
+        if sys.platform != "win32":
+            os.chmod(self.dossier_copies, 0o700)
+        nom = datetime.datetime.now().strftime(FORMAT_COPIE)
+        _ecrire_atomique(self.dossier_copies / nom, contenu)
+        for ancienne in self.copies_ouverture()[NB_COPIES_OUVERTURE:]:
+            ancienne.unlink()
+
+    def copies_ouverture(self) -> list[Path]:
+        """Copies faites au déverrouillage, de la plus récente à la plus ancienne."""
+        if not self.dossier_copies.is_dir():
+            return []
+        return sorted(self.dossier_copies.glob("coffre-*.vault"), reverse=True)
+
+    @staticmethod
+    def date_copie(copie: Path) -> datetime.datetime | None:
+        try:
+            return datetime.datetime.strptime(copie.name, FORMAT_COPIE)
+        except ValueError:
+            return None
 
     def verrouiller(self) -> None:
         self._cle = None
@@ -252,17 +293,20 @@ class Coffre:
         _ecrire_atomique(self.chemin, contenu)
 
     def a_une_sauvegarde(self) -> bool:
-        return self.chemin_sauvegarde.exists()
+        return self.chemin_sauvegarde.exists() or bool(self.copies_ouverture())
 
-    def restaurer_sauvegarde(self, mot_de_passe: str) -> None:
-        """Remet en place la copie de sauvegarde, après avoir vérifié que « mot_de_passe »
-        l'ouvre bien. Le coffre actuel devient à son tour la copie : une restauration
-        faite par erreur s'annule en restaurant une seconde fois."""
-        cle, entete, entrees = _dechiffrer(self.chemin_sauvegarde, mot_de_passe)
-        ancienne = self.chemin_sauvegarde.read_text(encoding="utf-8")
+    def restaurer_sauvegarde(self, mot_de_passe: str, source: Path | None = None) -> None:
+        """Remet en place une copie du coffre : celle d'avant le dernier enregistrement
+        par défaut, ou « source » (par exemple une copie faite au déverrouillage).
+        « mot_de_passe » doit ouvrir cette copie. Le coffre actuel devient la copie
+        d'avant le dernier enregistrement : une restauration faite par erreur s'annule
+        en restaurant cette copie."""
+        source = Path(source) if source else self.chemin_sauvegarde
+        cle, entete, entrees = _dechiffrer(source, mot_de_passe)
+        contenu = source.read_text(encoding="utf-8")
         if self.chemin.exists():
             _ecrire_atomique(self.chemin_sauvegarde, self.chemin.read_text(encoding="utf-8"))
-        _ecrire_atomique(self.chemin, ancienne)
+        _ecrire_atomique(self.chemin, contenu)
         self._cle, self._entete, self.entrees = cle, entete, entrees
         self._trier()
 
