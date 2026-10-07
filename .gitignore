@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+# Ne jamais versionner le coffre de mots de passe
+*.vault
+/coffre*
+build/
+dist/
+*.spec
+/SecretLin
