@@ -8,3 +8,11 @@ build/
 dist/
 *.spec
 /SecretLin
+# Fichiers créés pendant la construction du paquet .deb
+debian/secretlin/
+debian/.debhelper/
+debian/files
+debian/*.substvars
+debian/*.debhelper.log
+debian/debhelper-build-stamp
+debian/secretlin-*.png
