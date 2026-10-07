@@ -1,10 +1,13 @@
 """Interface graphique du gestionnaire de mots de passe."""
 
+import datetime
 import math
 import threading
 import time
 import tkinter
 import tkinter.font
+from pathlib import Path
+from tkinter import filedialog
 
 import customtkinter as ctk
 from PIL import ImageTk
@@ -726,6 +729,7 @@ class EcranPrincipal(ctk.CTkFrame):
         self.recherche.pack(side="left", fill="x", expand=True)
         self.recherche.bind("<KeyRelease>", lambda _e: self.rafraichir(animer_entree=False))
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
+        BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
         self.compteur.pack(side="right", padx=(14, 0))
 
         self.liste = ctk.CTkScrollableFrame(contenu, fg_color="transparent",
@@ -1049,6 +1053,190 @@ class ConfirmationSuppression(Dialogue):
 
         BoutonAnime(boutons, "Supprimer", confirmer, style="danger", width=110).pack(side="right")
         BoutonAnime(boutons, "Annuler", self.destroy, width=100).pack(side="right")
+
+
+class FenetreSauvegarde(Dialogue):
+    """Export et import chiffrés, et restauration de la copie automatique du coffre."""
+
+    EXTENSION = ".secretlin"
+    TYPES = [("Export SecretLin", "*" + EXTENSION), ("Tous les fichiers", "*")]
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran.app, "Sauvegarde")
+        self.ecran = ecran
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        ctk.CTkLabel(corps, text="Sauvegarde du coffre", font=police(20, gras=True),
+                     text_color=TEXTE, anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text="Les fichiers exportés restent chiffrés.", font=police(12),
+                     text_color=TEXTE_DOUX, anchor="w").pack(fill="x", pady=(2, 10))
+
+        def rangee(titre, texte, bouton, commande, actif=True):
+            ligne = ctk.CTkFrame(corps, fg_color=CARTE, corner_radius=12)
+            ligne.pack(fill="x", pady=5)
+            textes = ctk.CTkFrame(ligne, fg_color="transparent")
+            textes.pack(side="left", fill="x", expand=True, padx=(16, 8), pady=12)
+            ctk.CTkLabel(textes, text=titre, font=police(14, gras=True), text_color=TEXTE,
+                         anchor="w").pack(fill="x")
+            ctk.CTkLabel(textes, text=texte, font=police(12), text_color=TEXTE_DOUX, anchor="w",
+                         justify="left", wraplength=330).pack(fill="x")
+            b = BoutonAnime(ligne, bouton, commande, width=110)
+            b.pack(side="right", padx=(0, 8))
+            b.activer(actif)
+
+        rangee("Exporter", "Enregistre tous vos identifiants dans un fichier chiffré "
+               "avec un mot de passe d'export.", "Exporter…", self._exporter)
+        rangee("Importer", "Ajoute les identifiants d'un fichier exporté. "
+               "Les doublons sont ignorés.", "Importer…", self._importer)
+        rangee("Restaurer", "Revient à une copie automatique : celle d'avant le dernier "
+               "enregistrement, ou celle faite à l'un des derniers déverrouillages.",
+               "Restaurer…", self._restaurer, actif=ecran.app.coffre.a_une_sauvegarde())
+
+        BoutonAnime(corps, "Fermer", self.destroy, width=100).pack(anchor="e", pady=(10, 0))
+
+    def _exporter(self):
+        nom = f"secretlin-{datetime.date.today().isoformat()}{self.EXTENSION}"
+        chemin = filedialog.asksaveasfilename(parent=self, title="Exporter le coffre",
+                                              initialfile=nom, defaultextension=self.EXTENSION,
+                                              filetypes=self.TYPES)
+        if not chemin:
+            return
+        DialogueMotDePasse(
+            self, "Mot de passe d'export",
+            "Choisissez un mot de passe pour ce fichier. Il sera demandé à l'import.",
+            nouveau=True, libelle="Exporter",
+            travail=lambda mdp: self.ecran.app.coffre.exporter(Path(chemin), mdp),
+            succes=lambda _r: self._fin("Coffre exporté"))
+
+    def _importer(self):
+        chemin = filedialog.askopenfilename(parent=self, title="Importer un export",
+                                            filetypes=self.TYPES)
+        if not chemin:
+            return
+        DialogueMotDePasse(
+            self, "Importer", "Entrez le mot de passe choisi lors de l'export.",
+            libelle="Importer",
+            travail=lambda mdp: self.ecran.app.coffre.importer(Path(chemin), mdp),
+            succes=lambda n: self._fin(f"{n} identifiant{'s' if n > 1 else ''} importé{'s' if n > 1 else ''}"))
+
+    def _restaurer(self):
+        coffre = self.ecran.app.coffre
+        choix = []
+        if coffre.chemin_sauvegarde.exists():
+            choix.append(("Avant le dernier enregistrement", coffre.chemin_sauvegarde))
+        for copie in coffre.copies_ouverture():
+            date = coffre.date_copie(copie)
+            if date:
+                choix.append((f"Déverrouillage du {date:%d/%m/%Y à %H:%M:%S}", copie))
+        DialogueMotDePasse(
+            self, "Restaurer",
+            "Choisissez la copie à remettre en place, puis entrez le mot de passe maître "
+            "qui l'ouvre. Le coffre actuel reste récupérable avec « Avant le dernier "
+            "enregistrement ».",
+            libelle="Restaurer", style="danger", choix=choix,
+            travail=lambda mdp, copie: coffre.restaurer_sauvegarde(mdp, copie),
+            succes=lambda _r: self._fin("Copie restaurée"))
+
+    def _fin(self, message):
+        self.ecran.rafraichir()
+        self.ecran.notifier(message)
+        self.destroy()
+
+
+class DialogueMotDePasse(Dialogue):
+    """Demande un mot de passe, puis lance « travail(mdp) » en arrière-plan
+    (Argon2id prend du temps) et appelle « succes(resultat) » s'il réussit."""
+
+    def __init__(self, parent, titre, texte, travail, succes, libelle="Valider",
+                 nouveau=False, style="principal", choix=None):
+        super().__init__(parent, titre)
+        self.app = parent.winfo_toplevel()
+        self.travail, self.succes, self.nouveau = travail, succes, nouveau
+        # « choix » : liste de (libellé, valeur) ; la valeur choisie est passée à « travail ».
+        self.choix = dict(choix) if choix else None
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        ctk.CTkLabel(corps, text=titre, font=police(17, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text=texte, font=police(12), text_color=TEXTE_DOUX, anchor="w",
+                     justify="left", wraplength=340).pack(fill="x", pady=(4, 14))
+        if self.choix:
+            self.liste = ctk.CTkOptionMenu(
+                corps, values=list(self.choix), width=340, height=38, corner_radius=9,
+                fg_color=FOND, button_color=CARTE, button_hover_color=CARTE_SURVOL,
+                text_color=TEXTE, font=police(13), dropdown_font=police(13),
+                dropdown_fg_color=PANNEAU, dropdown_hover_color=CARTE_SURVOL,
+                dropdown_text_color=TEXTE)
+            self.liste.pack(pady=(0, 10))
+        self.mdp = champ(corps, "Mot de passe", masque=True, width=340)
+        self.mdp.pack()
+        if nouveau:
+            self.jauge = JaugeForce(corps)
+            self.jauge.pack(fill="x", pady=(4, 8))
+            self.mdp.bind("<KeyRelease>", lambda _e: self.jauge.maj(self.mdp.get()))
+            self.confirmation = champ(corps, "Confirmer le mot de passe", masque=True, width=340)
+            self.confirmation.pack()
+            self.confirmation.bind("<Return>", lambda _e: self._valider())
+        else:
+            self.mdp.bind("<Return>", lambda _e: self._valider())
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=340)
+        self.message.pack(pady=(6, 0))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(fill="x", pady=(4, 0))
+        self.libelle = libelle
+        self.bouton = BoutonAnime(boutons, libelle, self._valider, style=style, width=120)
+        self.bouton.pack(side="right")
+        BoutonAnime(boutons, "Annuler", self.destroy, width=100).pack(side="right")
+        self.after(80, self.mdp.focus_set)
+
+    def _valider(self):
+        mdp = self.mdp.get()
+        if not mdp:
+            self.message.configure(text="Entrez un mot de passe.")
+            return
+        if self.nouveau:
+            problemes = verifier_force(mdp)
+            if problemes:
+                self.message.configure(text="Il manque : " + ", ".join(problemes) + ".")
+                return
+            if mdp != self.confirmation.get():
+                self.message.configure(text="Les deux mots de passe ne correspondent pas.")
+                return
+        valeur = self.liste.get() if self.choix else None
+        self.bouton.activer(False, "Patientez…")
+        self.message.configure(text="")
+
+        def fond():
+            try:
+                if self.choix:
+                    resultat, erreur = self.travail(mdp, self.choix[valeur]), None
+                else:
+                    resultat, erreur = self.travail(mdp), None
+            except MotDePasseIncorrect:
+                resultat, erreur = None, "Mot de passe incorrect."
+            except CoffreCorrompu:
+                resultat, erreur = None, "Ce fichier est illisible ou n'est pas un export SecretLin."
+            except (OSError, RuntimeError, ValueError) as e:
+                resultat, erreur = None, f"Opération impossible : {e}"
+            self.app.after(0, lambda: self._resultat(resultat, erreur))
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _resultat(self, resultat, erreur):
+        # Le coffre a pu être verrouillé pendant l'opération : on ne le laisse pas ouvert.
+        if not isinstance(self.app.ecran, EcranPrincipal):
+            self.app.coffre.verrouiller()
+            return
+        if not self.winfo_exists():
+            return
+        if erreur:
+            self.bouton.activer(True, self.libelle)
+            self.mdp.delete(0, "end")
+            self.message.configure(text=erreur)
+            return
+        self.destroy()
+        self.succes(resultat)
 
 
 def main():
