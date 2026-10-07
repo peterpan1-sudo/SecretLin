@@ -299,3 +299,34 @@ def test_restaurer_copie_ouverture(tmp_path):
     # Le coffre d'avant la restauration reste récupérable.
     c.restaurer_sauvegarde(MAITRE)
     assert [e["site"] for e in c.entrees] == ["autre"]
+
+
+def test_changer_mot_de_passe_rechiffre_les_copies(tmp_path):
+    chemin = tmp_path / "c.vault"
+    c = Coffre(chemin)
+    c.creer(MAITRE)
+    c.ajouter("site1", "u", "p")
+    Coffre(chemin).ouvrir(MAITRE)  # copie dans sauvegardes/
+    c.ajouter("site2", "u", "p")   # .bak = coffre avec site1 seulement
+    # Copie d'un ancien mot de passe, dont la clé n'est plus connue.
+    autre = Coffre(tmp_path / "autre.vault")
+    autre.creer("TresAncien!2020z")
+    vieille = c.dossier_copies / "coffre-20200101-000000-000000.vault"
+    vieille.write_text((tmp_path / "autre.vault").read_text())
+
+    c.changer_mot_de_passe("NouveauPass!2027y")
+
+    copies = c.copies_ouverture()
+    assert vieille not in copies
+    assert len(copies) == 1
+    for copie in [c.chemin_sauvegarde, *copies]:
+        with pytest.raises(MotDePasseIncorrect):
+            Coffre(copie).ouvrir(MAITRE)
+        if module.sys.platform != "win32":
+            assert copie.stat().st_mode & 0o777 == 0o600
+    # Les copies gardent leur contenu et s'ouvrent avec le nouveau mot de passe.
+    bak = Coffre(c.chemin_sauvegarde)
+    bak.ouvrir("NouveauPass!2027y")
+    assert [e["site"] for e in bak.entrees] == ["site1", "site2"]
+    c.restaurer_sauvegarde("NouveauPass!2027y", copies[0])
+    assert [e["site"] for e in c.entrees] == ["site1"]
