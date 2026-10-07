@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Tests (pytest)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tk est nécessaire : tests/test_marques.py importe customtkinter.
+      - name: Installer Python et Tk
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-tk python3-venv
+
+      - name: Installer les dépendances
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install -q -r requirements.txt pytest
+
+      - name: Lancer pytest
+        run: .venv/bin/python -m pytest -q
+
+  deb:
+    name: Paquet .deb
+    runs-on: ubuntu-24.04
+    # Kali (la cible du paquet) fournit python3-cryptography >= 44, requis pour Argon2id.
+    container: kalilinux/kali-rolling
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer les outils de construction
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends \
+            build-essential debhelper dh-python python3 python3-pip \
+            python3-cryptography python3-pil python3-pytest python3-tk
+          # customtkinter n'est pas dans les dépôts : installé avec pip pour les tests du paquet.
+          pip3 install -q --break-system-packages customtkinter
+
+      - name: Construire le paquet
+        # -d : python3-customtkinter n'existe pas en paquet, il est fourni par pip ci-dessus.
+        run: dpkg-buildpackage -us -uc -b -d
+
+      - name: Vérifier le paquet
+        run: |
+          dpkg-deb -I ../secretlin_*_all.deb
+          dpkg-deb -c ../secretlin_*_all.deb
+          mkdir -p dist && cp ../secretlin_*_all.deb dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: secretlin-deb
+          path: dist/*.deb
