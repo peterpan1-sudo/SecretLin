@@ -1,0 +1,30 @@
+#!/usr/bin/make -f
+
+APP = debian/secretlin/usr/share/secretlin
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	python3 -m gestionnaire.logo debian/secretlin-256.png 256
+	python3 -m gestionnaire.logo debian/secretlin-48.png 48
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	python3 -m pytest -q -p no:cacheprovider tests
+endif
+
+override_dh_auto_install:
+	install -D -m 644 lancer.py $(APP)/lancer.py
+	install -d $(APP)/gestionnaire
+	install -m 644 gestionnaire/*.py gestionnaire/logos.zip $(APP)/gestionnaire/
+	install -D -m 755 debian/secretlin.sh debian/secretlin/usr/bin/secretlin
+	install -D -m 644 debian/secretlin.desktop debian/secretlin/usr/share/applications/secretlin.desktop
+	install -D -m 644 debian/secretlin-256.png debian/secretlin/usr/share/icons/hicolor/256x256/apps/secretlin.png
+	install -D -m 644 debian/secretlin-48.png debian/secretlin/usr/share/icons/hicolor/48x48/apps/secretlin.png
+
+override_dh_python3:
+	dh_python3 /usr/share/secretlin
+
+execute_after_dh_clean:
+	rm -f debian/secretlin-256.png debian/secretlin-48.png

@@ -1,0 +1,34 @@
+Source: secretlin
+Section: utils
+Priority: optional
+Maintainer: peterpan1 <peterpan1sudo@proton.me>
+Build-Depends: debhelper-compat (= 13),
+               dh-sequence-python3,
+               python3,
+               python3-cryptography,
+               python3-customtkinter,
+               python3-pil,
+               python3-pytest
+Standards-Version: 4.7.2
+Homepage: https://github.com/peterpan1-sudo/SecretLin
+Vcs-Browser: https://github.com/peterpan1-sudo/SecretLin
+Vcs-Git: https://github.com/peterpan1-sudo/SecretLin.git
+Rules-Requires-Root: no
+
+Package: secretlin
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         python3-cryptography (>= 44),
+         python3-customtkinter,
+         python3-pil,
+         python3-pil.imagetk,
+         python3-tk
+Description: encrypted password manager with a graphical interface
+ SecretLin stores logins (site, user name, password) in a local vault
+ protected by a master password.
+ .
+ The vault is encrypted with AES-256-GCM and the key is derived from the
+ master password with Argon2id. Any change to the vault file is detected,
+ the application locks itself after a short inactivity and the clipboard
+ is cleared 20 seconds after a password is copied.

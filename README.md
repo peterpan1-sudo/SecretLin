@@ -5,7 +5,20 @@ Gestionnaire de mots de passe sécurisé.
 Application de bureau pour ranger ses identifiants (site, nom d'utilisateur, mot de passe),
 classés par ordre alphabétique et protégés par un mot de passe maître.
 
-## Lancer l'application
+## Installation sur Kali Linux / Debian
+
+Télécharger les 3 fichiers `.deb` de la [dernière version](https://github.com/peterpan1-sudo/SecretLin/releases/latest)
+(SecretLin et les bibliothèques `customtkinter` et `darkdetect`, absentes des dépôts), puis dans le dossier du téléchargement :
+
+```
+sudo apt install ./python3-darkdetect_*_all.deb ./python3-customtkinter_*_all.deb ./secretlin_*_all.deb
+```
+
+Lancer ensuite `secretlin`, ou chercher « SecretLin » dans le menu des applications.
+
+Pour construire le paquet soi-même : `dpkg-buildpackage -us -uc -b` (dossier `debian/`).
+
+## Lancer depuis le code
 
 ```
 .venv/bin/python lancer.py
@@ -15,7 +28,7 @@ classés par ordre alphabétique et protégés par un mot de passe maître.
 
 | Système | État |
 |---|---|
-| Linux | Testé (Kali Linux). `./construire.sh` crée l'exécutable `SecretLin` et l'ajoute au menu et au Bureau. |
+| Linux | Testé (Kali Linux). Paquet `.deb` disponible (voir plus haut). `./construire.sh` crée l'exécutable `SecretLin` et l'ajoute au menu et au Bureau. |
 | Windows, macOS | Non testé. Devrait fonctionner en lançant le code avec Python, sans garantie. `construire.sh` ne fonctionne que sous Linux. |
 
 Pour lancer depuis le code (Python 3 avec Tkinter requis) :
