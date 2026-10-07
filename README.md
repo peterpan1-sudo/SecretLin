@@ -52,6 +52,12 @@ Sous Windows, remplacer `.venv/bin/` par `.venv\Scripts\`.
 
 Le coffre est stocké dans `~/.local/share/GestionnaireMDP/coffre.vault`
 (Windows : `%APPDATA%\GestionnaireMDP\coffre.vault`).
+Avant chaque enregistrement, la version précédente est copiée à côté dans
+`coffre.vault.bak` (toujours chiffrée, avec le même mot de passe maître).
+
+Le coffre peut aussi être exporté dans un fichier chiffré avec un mot de passe
+d'export distinct, puis importé dans un autre coffre : les entrées déjà présentes
+à l'identique sont ignorées.
 
 ## Logos des marques
 
