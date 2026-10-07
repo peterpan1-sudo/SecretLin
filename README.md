@@ -29,3 +29,7 @@ Les logos des sites (Discord, Netflix, Steam…) proviennent de [Simple Icons](h
 (licence CC0) et sont intégrés dans `gestionnaire/logos.zip` : rien n'est téléchargé à l'utilisation.
 Pour les régénérer : `python outils/preparer_logos.py <dossier package de simple-icons>`.
 Les marques citées appartiennent à leurs propriétaires respectifs.
+
+## Licence
+
+Ce projet est distribué sous licence [MIT](LICENSE).
