@@ -11,6 +11,23 @@ classés par ordre alphabétique et protégés par un mot de passe maître.
 .venv/bin/python lancer.py
 ```
 
+## Compatibilité
+
+| Système | État |
+|---|---|
+| Linux | Testé (Kali Linux). `./construire.sh` crée l'exécutable `SecretLin` et l'ajoute au menu et au Bureau. |
+| Windows, macOS | Non testé. Devrait fonctionner en lançant le code avec Python, sans garantie. `construire.sh` ne fonctionne que sous Linux. |
+
+Pour lancer depuis le code (Python 3 avec Tkinter requis) :
+
+```
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python lancer.py
+```
+
+Sous Windows, remplacer `.venv/bin/` par `.venv\Scripts\`.
+
 ## Sécurité
 
 - Coffre chiffré en AES-256-GCM ; clé dérivée du mot de passe maître avec Argon2id.
