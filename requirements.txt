@@ -1,0 +1,3 @@
+cryptography>=44
+customtkinter
+pillow
