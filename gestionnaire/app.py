@@ -10,8 +10,9 @@ from pathlib import Path
 from tkinter import filedialog
 
 import customtkinter as ctk
-from PIL import Image, ImageFilter, ImageGrab, ImageTk
+from PIL import Image, ImageFilter, ImageTk
 
+from gestionnaire.capture import photographier
 from gestionnaire.coffre import (
     Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
@@ -667,11 +668,15 @@ class Glissiere(tkinter.Frame):
 
     Un élément écarté glisse vers le bas en se dissipant comme une fumée (flou et fondu),
     et la place qu'il occupait se referme en douceur ; un élément qui revient fait le
-    chemin inverse. La fumée est faite à partir d'une photo de l'élément prise à l'écran :
-    recolorer chaque bouton à chaque image serait bien trop lent.
+    chemin inverse. La fumée est faite à partir d'une photo de l'élément : recolorer
+    chaque bouton à chaque image serait bien trop lent.
+
+    L'élément se place dans « interieur ». Pendant l'animation, la glissière prend une
+    hauteur fixe et « interieur » y est posé sans changer de taille : un bouton qui change
+    de taille est redessiné en entier, ce qui ferait saccader l'animation.
     """
 
-    DUREE = 0.55
+    DUREE = 0.65
     DERIVE = 22    # glissement vertical, en pixels, entre « visible » et « caché »
     REFERMER = 1.6  # la place se referme sur la fin de la disparition (s'ouvre au début du retour)
     NIVEAUX = 10   # étapes de fumée, calculées une fois puis réutilisées
@@ -679,8 +684,8 @@ class Glissiere(tkinter.Frame):
 
     def __init__(self, parent):
         super().__init__(parent, bg=FOND, bd=0, highlightthickness=0)
-        self.element = None
-        self.marges = (0, 0)
+        self.interieur = tkinter.Frame(self, bg=FOND, bd=0, highlightthickness=0)
+        self.interieur.pack(fill="x")
         self._cible = 1.0
         self._hauteur = None
         self._cliche = None
@@ -689,13 +694,11 @@ class Glissiere(tkinter.Frame):
         self._toile = None
         self._image = None
         self._niveau = None
-        self._placement = {}
         definir(self, "presence", 1.0)
 
-    def contenir(self, element, marges):
-        """« element » est déjà packé dans la glissière avec pady=marges."""
-        self.element = element
-        self.marges = marges
+    def hauteur(self):
+        """Hauteur de l'élément une fois affiché."""
+        return self._hauteur or self.interieur.winfo_reqheight()
 
     def aller(self, cible, anime=True, capture=None):
         """Fait apparaître (cible 1.0) ou disparaître (cible 0.0) l'élément.
@@ -711,18 +714,22 @@ class Glissiere(tkinter.Frame):
         en_cours = "presence" in self.__dict__.get("_animations", {})
         if not en_cours and presence == cible:
             return
-        if presence >= 1.0 and self.winfo_ismapped():
-            self._hauteur = self.winfo_height()
-            self._photographier(capture)
-        if not self._hauteur or self._hauteur <= 1:
-            self._hauteur = self.element.winfo_reqheight() + sum(self.marges)
-        if presence >= 1.0:
-            self.configure(height=self._hauteur)
-        self.pack_propagate(False)
+        if self.interieur.winfo_manager() != "place":
+            self._figer(capture if presence >= 1.0 else None)
         self._preparer_fumee()
-        if self._toile is None:
-            self._remettre()
         transition(self, "presence", cible, self.DUREE, self._appliquer, courbe=fluide)
+
+    def _figer(self, capture):
+        """Passe de la mise en page normale à celle de l'animation."""
+        if self.winfo_ismapped():
+            self._hauteur = self.interieur.winfo_height()
+            self._photographier(capture)
+        else:
+            self._hauteur = self.interieur.winfo_reqheight()
+        self.configure(height=self._hauteur)
+        self.pack_propagate(False)
+        self.interieur.pack_forget()
+        self.interieur.place(x=0, y=0, relwidth=1, height=self._hauteur)
 
     def _photographier(self, capture):
         self._cliche = None
@@ -744,15 +751,12 @@ class Glissiere(tkinter.Frame):
         if largeur != self._largeur:
             self._cliche = None  # la fenêtre a changé de taille depuis la photo
             return
+        # La fumée recouvre l'élément, qui reste immobile dessous jusqu'à la fin.
         self._toile = tkinter.Canvas(self, bg=FOND, bd=0, highlightthickness=0)
         self._toile.place(x=0, y=0, relwidth=1, relheight=1)
         self._image = self._toile.create_image(0, 0, anchor="nw")
         self._niveau = None
-        # Caché sous la fumée, l'élément n'a pas besoin d'être affiché : le redessiner à
-        # chaque image, à mesure que sa place s'ouvre, ferait saccader l'animation.
-        if self.element.winfo_manager():
-            self._placement = {k: v for k, v in self.element.pack_info().items() if k != "in"}
-            self.element.pack_forget()
+        self.interieur.place_configure(y=0)
 
     def _retirer_fumee(self):
         if self._toile is not None:
@@ -763,27 +767,26 @@ class Glissiere(tkinter.Frame):
         self._niveaux = {}
         if self._cible == 1.0:
             self._cliche = None
-        self._remettre()
-
-    def _remettre(self):
-        if not self.element.winfo_manager():
-            self.element.pack(in_=self, **self._placement)
 
     def _image_niveau(self, niveau):
         if niveau not in self._niveaux:
             t = niveau / self.NIVEAUX
             image = Image.blend(self._cliche, Image.new("RGB", self._cliche.size, FOND), t)
             if t:
-                image = image.filter(ImageFilter.GaussianBlur(self.FLOU * t))
+                # Flou calculé sur une image deux fois plus petite : quatre fois moins de calcul.
+                petite = image.reduce(2).filter(ImageFilter.GaussianBlur(self.FLOU * t / 2))
+                image = petite.resize(image.size, Image.BILINEAR)
             self._niveaux[niveau] = ImageTk.PhotoImage(image, master=self)
         return self._niveaux[niveau]
 
     def _appliquer(self, p):
-        haut, bas = self.marges
-        if p >= 1.0:
+        # La position de départ (p = 1 ou 0) n'est pas une fin : seule la cible en est une.
+        if p >= 1.0 and self._cible == 1.0:
             self._retirer_fumee()
+            if self.interieur.winfo_manager() != "pack":
+                self.interieur.place_forget()
+                self.interieur.pack(fill="x")
             self.pack_propagate(True)
-            self.element.pack_configure(pady=(haut, bas))
         elif p <= 0.0 and self._cible == 0.0:
             self._retirer_fumee()
             self.pack_forget()
@@ -791,7 +794,7 @@ class Glissiere(tkinter.Frame):
             self.configure(height=max(1, round(self._hauteur * min(1.0, p * self.REFERMER))))
             derive = round(self.DERIVE * (1 - p))
             if self._toile is None:
-                self.element.pack_configure(pady=(haut + derive, bas))
+                self.interieur.place_configure(y=derive)
                 return
             niveau = round((1 - p) * self.NIVEAUX)
             if niveau != self._niveau:
@@ -1011,8 +1014,7 @@ class EcranPrincipal(ctk.CTkFrame):
                 self._sections.append((lettre, self._entete_section(lettre), []))
             anime = animer_entree and len(cartes) < 25
             place = Glissiere(self.liste)
-            carte = CarteIdentifiant(self, place, e, marge_depart=70 if anime else None)
-            place.contenir(carte, (4, 4))
+            carte = CarteIdentifiant(self, place.interieur, e, marge_depart=70 if anime else None)
             self._sections[-1][2].append((e, place))
             cartes.append(carte)
         self._afficher(self.recherche.get().strip().casefold(), anime=False)
@@ -1043,15 +1045,24 @@ class EcranPrincipal(ctk.CTkFrame):
         # Les éléments déjà affichés ne bougent pas (les repacker les ferait clignoter) :
         # ceux qui reviennent sont insérés à leur place, entre leurs voisins.
         capture = self._capture() if anime else None
+        # Sous le bas de la zone visible, rien ne s'anime : on ne le verrait pas, et
+        # animer tout un gros coffre à la fois ralentirait ce qui est à l'écran.
+        toile = self.liste._parent_canvas
+        limite = toile.canvasy(toile.winfo_height())
         precedent = None
+        arrivee = 0  # position, dans la liste filtrée, du prochain élément affiché
         for place, visible in plan:
-            if visible and not place.winfo_manager():
-                if precedent is not None:
-                    place.pack(fill="x", after=precedent)
-                else:
-                    suivant = next((p for p, _v in plan if p.winfo_manager()), None)
-                    place.pack(fill="x", before=suivant) if suivant else place.pack(fill="x")
-            place.aller(1.0 if visible else 0.0, anime, capture)
+            # Un élément qui part est vu là où il est ; un élément qui revient, là où il arrive.
+            haut = place.winfo_y() if place.winfo_manager() and not visible else arrivee
+            if visible:
+                arrivee += place.hauteur()
+                if not place.winfo_manager():
+                    if precedent is not None:
+                        place.pack(fill="x", after=precedent)
+                    else:
+                        suivant = next((p for p, _v in plan if p.winfo_manager()), None)
+                        place.pack(fill="x", before=suivant) if suivant else place.pack(fill="x")
+            place.aller(1.0 if visible else 0.0, anime and haut < limite, capture)
             if place.winfo_manager():
                 precedent = place
 
@@ -1076,27 +1087,16 @@ class EcranPrincipal(ctk.CTkFrame):
 
         def prendre():
             if not memo:
-                memo.append((None, None))
                 toile = self.liste._parent_canvas
-                x, y = toile.winfo_rootx(), toile.winfo_rooty()
-                try:
-                    # Display X explicite : sans lui, en cas d'échec, Pillow lancerait un
-                    # outil de capture (gnome-screenshot…) qui écrit l'écran sur le disque.
-                    image = ImageGrab.grab(bbox=(x, y, x + toile.winfo_width(), y + toile.winfo_height()),
-                                           xdisplay=toile.winfo_screen()).convert("RGB")
-                except OSError:
-                    return memo[0]  # capture d'écran indisponible : glissement sans fumée
-                # Une image toute noire veut dire que l'écran n'est pas lisible (Wayland…).
-                if max(haut for _bas, haut in image.getextrema()) > 24:
-                    memo[0] = (image, (x, y))
+                image = photographier(toile)  # None si impossible : glissement sans fumée
+                memo.append((image, (toile.winfo_rootx(), toile.winfo_rooty())) if image else (None, None))
             return memo[0]
         return prendre
 
     def _entete_section(self, lettre):
         place = Glissiere(self.liste)
-        ligne = ctk.CTkFrame(place, fg_color="transparent")
+        ligne = ctk.CTkFrame(place.interieur, fg_color="transparent")
         ligne.pack(fill="x", padx=14, pady=(16, 4))
-        place.contenir(ligne, (16, 4))
         lab = ctk.CTkLabel(ligne, text=lettre, font=police(14, gras=True), text_color=TEXTE_DOUX,
                            width=20, anchor="w")
         lab.pack(side="left")
