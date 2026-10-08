@@ -330,3 +330,25 @@ def test_changer_mot_de_passe_rechiffre_les_copies(tmp_path):
     assert [e["site"] for e in bak.entrees] == ["site1", "site2"]
     c.restaurer_sauvegarde("NouveauPass!2027y", copies[0])
     assert [e["site"] for e in c.entrees] == ["site1"]
+
+
+def test_compteur_echecs_garde_entre_deux_lancements(tmp_path):
+    import time
+    c = Coffre(tmp_path / "c.vault")
+    assert c.lire_echecs() == (0, 0.0)
+    fin = time.time() + 8
+    c.noter_echecs(4, fin)
+    assert Coffre(tmp_path / "c.vault").lire_echecs() == (4, fin)
+    c.noter_echecs(0)
+    assert not c.chemin_echecs.exists()
+    assert c.lire_echecs() == (0, 0.0)
+
+
+def test_compteur_echecs_illisible_ou_horloge_reculee(tmp_path):
+    import time
+    c = Coffre(tmp_path / "c.vault")
+    c.chemin_echecs.write_text("pas du json")
+    assert c.lire_echecs() == (0, 0.0)
+    c.noter_echecs(9, time.time() + 10_000)
+    _echecs, fin = c.lire_echecs()
+    assert fin <= time.time() + module.ATTENTE_MAX
