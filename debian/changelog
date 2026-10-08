@@ -1,3 +1,16 @@
+secretlin (1.1.0) kali-dev; urgency=medium
+
+  * Sauvegarde du coffre : copies automatiques datées, export et import
+    chiffrés, restauration d'une copie depuis le bouton « Sauvegarde ».
+  * Les copies du coffre ne s'ouvrent plus avec l'ancien mot de passe
+    maître après un changement de mot de passe.
+  * Déverrouillage : le compteur d'échecs est conservé même si on ferme
+    et relance SecretLin.
+  * Déverrouillage : après 3 erreurs, attente de 1, 3, 5, 10, 15, 30 min
+    puis 1 h.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Thu, 08 Oct 2026 21:00:00 +0200
+
 secretlin (1.0.1) kali-dev; urgency=medium
 
   * Paquet Debian : installation avec apt, commande « secretlin »,

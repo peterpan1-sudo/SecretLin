@@ -1154,7 +1154,9 @@ class FenetreSauvegarde(Dialogue):
             self, "Importer", "Entrez le mot de passe choisi lors de l'export.",
             libelle="Importer",
             travail=lambda mdp: self.ecran.app.coffre.importer(Path(chemin), mdp),
-            succes=lambda n: self._fin(f"{n} identifiant{'s' if n > 1 else ''} importé{'s' if n > 1 else ''}"))
+            succes=lambda n: self._fin(
+                f"{n} identifiant{'s' if n > 1 else ''} importé{'s' if n > 1 else ''}" if n
+                else "Rien à importer : tout est déjà dans le coffre"))
 
     def _restaurer(self):
         coffre = self.ecran.app.coffre
