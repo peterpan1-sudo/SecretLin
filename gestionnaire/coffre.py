@@ -40,8 +40,11 @@ SUFFIXE_SAUVEGARDE = ".bak"
 # Copies faites à chaque déverrouillage : on garde les plus récentes.
 NB_COPIES_OUVERTURE = 5
 FORMAT_COPIE = "coffre-%Y%m%d-%H%M%S-%f.vault"
-# Attente maximale imposée après des mots de passe maîtres incorrects (secondes).
-ATTENTE_MAX = 300
+# Attente imposée après des mots de passe maîtres incorrects (secondes) : 1 min au
+# 3e échec, puis 3, 5, 10, 15, 30 min, et 1 h pour chaque échec suivant.
+PALIERS_ATTENTE = (60, 180, 300, 600, 900, 1800, 3600)
+ATTENTE_MAX = PALIERS_ATTENTE[-1]
+ECHECS_AVANT_ATTENTE = 3
 
 
 def dossier_donnees() -> Path:
@@ -55,6 +58,13 @@ def dossier_donnees() -> Path:
     if sys.platform != "win32":
         os.chmod(dossier, 0o700)
     return dossier
+
+
+def attente_apres(echecs: int) -> int:
+    """Secondes d'attente imposées après « echecs » mots de passe incorrects d'affilée."""
+    if echecs < ECHECS_AVANT_ATTENTE:
+        return 0
+    return PALIERS_ATTENTE[min(echecs - ECHECS_AVANT_ATTENTE, len(PALIERS_ATTENTE) - 1)]
 
 
 def chemin_coffre() -> Path:
