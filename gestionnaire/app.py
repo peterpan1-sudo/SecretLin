@@ -764,7 +764,8 @@ class EcranPrincipal(ctk.CTkFrame):
         barre.pack(fill="x", padx=10, pady=(0, 6))
         self.recherche = champ(barre, "Rechercher un site ou un identifiant…   (Ctrl+F)")
         self.recherche.pack(side="left", fill="x", expand=True)
-        self.recherche.bind("<KeyRelease>", lambda _e: self.rafraichir(animer_entree=False))
+        self.recherche.bind("<KeyRelease>", lambda _e: self._recherche_modifiee())
+        self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
         BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
         self.compteur.pack(side="right", padx=(14, 0))
@@ -835,11 +836,27 @@ class EcranPrincipal(ctk.CTkFrame):
         lab.configure(text_color=BLANC)
         transition(lab, "couleur", TEXTE_DOUX, 1.2, lambda c: lab.configure(text_color=c))
 
+    def _recherche_modifiee(self):
+        """Attend une courte pause dans la frappe avant de refiltrer la liste."""
+        if self._jeton_recherche is not None:
+            self.after_cancel(self._jeton_recherche)
+        self._jeton_recherche = self.after(120, self._filtrer)
+
+    def _filtrer(self):
+        self._jeton_recherche = None
+        if not self.winfo_exists():
+            return
+        # Une touche qui ne change pas le texte (retour arrière sur un champ vide, Maj,
+        # flèches…) ne doit pas reconstruire toute la liste : elle clignoterait.
+        if self.recherche.get().strip().casefold() != self._filtre_affiche:
+            self.rafraichir(animer_entree=False)
+
     def rafraichir(self, animer_entree=False):
         for enfant in self.liste.winfo_children():
             enfant.destroy()
         self.entetes = {}
         filtre = self.recherche.get().strip().casefold()
+        self._filtre_affiche = filtre
         entrees = [e for e in self.app.coffre.entrees
                    if any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))]
         total = len(self.app.coffre.entrees)
