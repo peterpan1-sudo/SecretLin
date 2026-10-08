@@ -10,7 +10,7 @@ from pathlib import Path
 from tkinter import filedialog
 
 import customtkinter as ctk
-from PIL import ImageTk
+from PIL import Image, ImageFilter, ImageGrab, ImageTk
 
 from gestionnaire.coffre import (
     Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
@@ -19,7 +19,7 @@ from gestionnaire.coffre import (
 from gestionnaire.logo import dessiner as dessiner_logo
 from gestionnaire.marques import style_pastille
 from gestionnaire.effets import (
-    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition, valeur,
+    adoucir, animer, definir, fluide, lineaire, melanger, rebond, survol, transition, valeur,
 )
 
 # Palette sobre gris / noir
@@ -609,8 +609,11 @@ class IndexAlphabet(ctk.CTkFrame):
         return TEXTE_DOUX if lettre in self.presentes else TEXTE_ETEINT
 
     def maj(self, presentes):
-        self.presentes = presentes
+        anciennes, self.presentes = self.presentes, presentes
         for lettre, (lab, _f) in self.lettres.items():
+            # Seules les lettres qui changent s'animent : la recherche appelle maj() souvent.
+            if (lettre in anciennes) == (lettre in presentes):
+                continue
             transition(lab, "couleur", self._couleur_repos(lettre), 0.3,
                        lambda c, lab=lab: lab.configure(text_color=c))
 
@@ -657,6 +660,144 @@ class Pastille(ctk.CTkLabel):
                    lambda c: self.configure(text_color=c))
         if st["image"]:
             self.configure(image=st["image_survol"] if survole else st["image"])
+
+
+class Glissiere(tkinter.Frame):
+    """Emplacement d'un élément de la liste filtrée par la recherche.
+
+    Un élément écarté glisse vers le bas en se dissipant comme une fumée (flou et fondu),
+    et la place qu'il occupait se referme en douceur ; un élément qui revient fait le
+    chemin inverse. La fumée est faite à partir d'une photo de l'élément prise à l'écran :
+    recolorer chaque bouton à chaque image serait bien trop lent.
+    """
+
+    DUREE = 0.55
+    DERIVE = 22    # glissement vertical, en pixels, entre « visible » et « caché »
+    REFERMER = 1.6  # la place se referme sur la fin de la disparition (s'ouvre au début du retour)
+    NIVEAUX = 10   # étapes de fumée, calculées une fois puis réutilisées
+    FLOU = 4.0
+
+    def __init__(self, parent):
+        super().__init__(parent, bg=FOND, bd=0, highlightthickness=0)
+        self.element = None
+        self.marges = (0, 0)
+        self._cible = 1.0
+        self._hauteur = None
+        self._cliche = None
+        self._largeur = 0
+        self._niveaux = {}
+        self._toile = None
+        self._image = None
+        self._niveau = None
+        self._placement = {}
+        definir(self, "presence", 1.0)
+
+    def contenir(self, element, marges):
+        """« element » est déjà packé dans la glissière avec pady=marges."""
+        self.element = element
+        self.marges = marges
+
+    def aller(self, cible, anime=True, capture=None):
+        """Fait apparaître (cible 1.0) ou disparaître (cible 0.0) l'élément.
+
+        « capture » renvoie une photo de la zone visible de la liste, pour la fumée."""
+        self._cible = cible
+        if not anime:
+            animer(self, "presence", 0, lambda _t: None)  # interrompt une animation en cours
+            definir(self, "presence", cible)
+            self._appliquer(cible)
+            return
+        presence = valeur(self, "presence", 1.0)
+        en_cours = "presence" in self.__dict__.get("_animations", {})
+        if not en_cours and presence == cible:
+            return
+        if presence >= 1.0 and self.winfo_ismapped():
+            self._hauteur = self.winfo_height()
+            self._photographier(capture)
+        if not self._hauteur or self._hauteur <= 1:
+            self._hauteur = self.element.winfo_reqheight() + sum(self.marges)
+        if presence >= 1.0:
+            self.configure(height=self._hauteur)
+        self.pack_propagate(False)
+        self._preparer_fumee()
+        if self._toile is None:
+            self._remettre()
+        transition(self, "presence", cible, self.DUREE, self._appliquer, courbe=fluide)
+
+    def _photographier(self, capture):
+        self._cliche = None
+        self._niveaux = {}
+        image, origine = capture() if capture else (None, None)
+        if image is None:
+            return
+        x, y = self.winfo_rootx() - origine[0], self.winfo_rooty() - origine[1]
+        l, h = self.winfo_width(), self.winfo_height()
+        if x < 0 or y < 0 or x + l > image.width or y + h > image.height:
+            return  # en partie hors de la zone visible : il glissera sans fumée
+        self._cliche = image.crop((x, y, x + l, y + h))
+        self._largeur = l
+
+    def _preparer_fumee(self):
+        if self._cliche is None or self._toile is not None:
+            return
+        largeur = self.winfo_width() if self.winfo_ismapped() else self.master.winfo_width()
+        if largeur != self._largeur:
+            self._cliche = None  # la fenêtre a changé de taille depuis la photo
+            return
+        self._toile = tkinter.Canvas(self, bg=FOND, bd=0, highlightthickness=0)
+        self._toile.place(x=0, y=0, relwidth=1, relheight=1)
+        self._image = self._toile.create_image(0, 0, anchor="nw")
+        self._niveau = None
+        # Caché sous la fumée, l'élément n'a pas besoin d'être affiché : le redessiner à
+        # chaque image, à mesure que sa place s'ouvre, ferait saccader l'animation.
+        if self.element.winfo_manager():
+            self._placement = {k: v for k, v in self.element.pack_info().items() if k != "in"}
+            self.element.pack_forget()
+
+    def _retirer_fumee(self):
+        if self._toile is not None:
+            self._toile.destroy()
+            self._toile = None
+        # Les images de fumée sont lourdes : on ne garde que la photo, le temps que
+        # l'élément reste caché (elle resservira à son retour).
+        self._niveaux = {}
+        if self._cible == 1.0:
+            self._cliche = None
+        self._remettre()
+
+    def _remettre(self):
+        if not self.element.winfo_manager():
+            self.element.pack(in_=self, **self._placement)
+
+    def _image_niveau(self, niveau):
+        if niveau not in self._niveaux:
+            t = niveau / self.NIVEAUX
+            image = Image.blend(self._cliche, Image.new("RGB", self._cliche.size, FOND), t)
+            if t:
+                image = image.filter(ImageFilter.GaussianBlur(self.FLOU * t))
+            self._niveaux[niveau] = ImageTk.PhotoImage(image, master=self)
+        return self._niveaux[niveau]
+
+    def _appliquer(self, p):
+        haut, bas = self.marges
+        if p >= 1.0:
+            self._retirer_fumee()
+            self.pack_propagate(True)
+            self.element.pack_configure(pady=(haut, bas))
+        elif p <= 0.0 and self._cible == 0.0:
+            self._retirer_fumee()
+            self.pack_forget()
+        else:
+            self.configure(height=max(1, round(self._hauteur * min(1.0, p * self.REFERMER))))
+            derive = round(self.DERIVE * (1 - p))
+            if self._toile is None:
+                self.element.pack_configure(pady=(haut + derive, bas))
+                return
+            niveau = round((1 - p) * self.NIVEAUX)
+            if niveau != self._niveau:
+                self._toile.itemconfigure(self._image, image=self._image_niveau(niveau))
+                self._niveau = niveau
+            self._toile.coords(self._image, 0, derive)
 
 
 class CarteIdentifiant(ctk.CTkFrame):
@@ -852,14 +993,14 @@ class EcranPrincipal(ctk.CTkFrame):
         # flèches…) ne touche pas à la liste.
         filtre = self.recherche.get().strip().casefold()
         if filtre != self._filtre_affiche:
-            self._afficher(filtre)
+            self._afficher(filtre, anime=True)
 
     def rafraichir(self, animer_entree=False):
         """Recrée toutes les cartes, après un ajout, une modification ou un import."""
         for enfant in self.liste.winfo_children():
             enfant.destroy()
         self._vide = None
-        self._sections = []  # [(lettre, en-tête, [(entrée, carte), …]), …]
+        self._sections = []  # [(lettre, glissière d'en-tête, [(entrée, glissière), …]), …]
         cartes = []
         lettre_courante = None
         for e in self.app.coffre.entrees:
@@ -869,36 +1010,50 @@ class EcranPrincipal(ctk.CTkFrame):
                 lettre_courante = lettre
                 self._sections.append((lettre, self._entete_section(lettre), []))
             anime = animer_entree and len(cartes) < 25
-            carte = CarteIdentifiant(self, self.liste, e, marge_depart=70 if anime else None)
-            self._sections[-1][2].append((e, carte))
+            place = Glissiere(self.liste)
+            carte = CarteIdentifiant(self, place, e, marge_depart=70 if anime else None)
+            place.contenir(carte, (4, 4))
+            self._sections[-1][2].append((e, place))
             cartes.append(carte)
-        self._afficher(self.recherche.get().strip().casefold())
+        self._afficher(self.recherche.get().strip().casefold(), anime=False)
 
         if animer_entree:
             for i, carte in enumerate(cartes[:25]):
                 self.after(30 * i, carte.apparaitre)
 
-    def _afficher(self, filtre):
+    def _afficher(self, filtre, anime):
         """Montre les cartes qui correspondent à la recherche. Les cartes existent déjà :
-        on les cache ou on les remet, sans rien recréer, pour que la liste ne clignote pas."""
+        celles qu'on écarte glissent et s'estompent, celles qui reviennent remontent."""
         self._filtre_affiche = filtre
-        for enfant in self.liste.winfo_children():
-            enfant.pack_forget()
         if self._vide is not None:
             self._vide.destroy()
             self._vide = None
         self.entetes = {}
         nombre = 0
+        plan = []  # (glissière, visible) dans l'ordre de la liste
         for lettre, entete, cartes in self._sections:
-            visibles = [carte for e, carte in cartes
-                        if any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))]
-            if not visibles:
-                continue
-            entete.pack(fill="x", padx=14, pady=(16, 4))
-            self.entetes[lettre] = entete
-            for carte in visibles:
-                carte.pack(fill="x", padx=round(valeur(carte, "marge", carte.MARGE)), pady=4)
-            nombre += len(visibles)
+            visibles = [any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))
+                        for e, _place in cartes]
+            plan.append((entete, any(visibles)))
+            plan.extend((place, visible) for (_e, place), visible in zip(cartes, visibles))
+            if any(visibles):
+                self.entetes[lettre] = entete
+            nombre += sum(visibles)
+
+        # Les éléments déjà affichés ne bougent pas (les repacker les ferait clignoter) :
+        # ceux qui reviennent sont insérés à leur place, entre leurs voisins.
+        capture = self._capture() if anime else None
+        precedent = None
+        for place, visible in plan:
+            if visible and not place.winfo_manager():
+                if precedent is not None:
+                    place.pack(fill="x", after=precedent)
+                else:
+                    suivant = next((p for p, _v in plan if p.winfo_manager()), None)
+                    place.pack(fill="x", before=suivant) if suivant else place.pack(fill="x")
+            place.aller(1.0 if visible else 0.0, anime, capture)
+            if place.winfo_manager():
+                precedent = place
 
         total = len(self.app.coffre.entrees)
         self.compteur.configure(text=f"{nombre} / {total}" if filtre else
@@ -915,17 +1070,41 @@ class EcranPrincipal(ctk.CTkFrame):
                          justify="center").pack(pady=(12, 0))
         self.index.maj(set(self.entetes))
 
+    def _capture(self):
+        """Photo de la zone visible de la liste, prise au plus une fois par filtrage."""
+        memo = []
+
+        def prendre():
+            if not memo:
+                memo.append((None, None))
+                toile = self.liste._parent_canvas
+                x, y = toile.winfo_rootx(), toile.winfo_rooty()
+                try:
+                    # Display X explicite : sans lui, en cas d'échec, Pillow lancerait un
+                    # outil de capture (gnome-screenshot…) qui écrit l'écran sur le disque.
+                    image = ImageGrab.grab(bbox=(x, y, x + toile.winfo_width(), y + toile.winfo_height()),
+                                           xdisplay=toile.winfo_screen()).convert("RGB")
+                except OSError:
+                    return memo[0]  # capture d'écran indisponible : glissement sans fumée
+                # Une image toute noire veut dire que l'écran n'est pas lisible (Wayland…).
+                if max(haut for _bas, haut in image.getextrema()) > 24:
+                    memo[0] = (image, (x, y))
+            return memo[0]
+        return prendre
+
     def _entete_section(self, lettre):
-        ligne = ctk.CTkFrame(self.liste, fg_color="transparent")
+        place = Glissiere(self.liste)
+        ligne = ctk.CTkFrame(place, fg_color="transparent")
         ligne.pack(fill="x", padx=14, pady=(16, 4))
+        place.contenir(ligne, (16, 4))
         lab = ctk.CTkLabel(ligne, text=lettre, font=police(14, gras=True), text_color=TEXTE_DOUX,
                            width=20, anchor="w")
         lab.pack(side="left")
         definir(lab, "couleur", TEXTE_DOUX)
         ctk.CTkFrame(ligne, fg_color=BORDURE, height=1, corner_radius=0).pack(
             side="left", fill="x", expand=True, padx=(10, 0))
-        ligne.lettre = lab
-        return ligne
+        place.lettre = lab
+        return place
 
 
 # --- Fenêtres ---------------------------------------------------------------

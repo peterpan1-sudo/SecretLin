@@ -27,6 +27,11 @@ def rebond(t: float) -> float:
     return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2
 
 
+def fluide(t: float) -> float:
+    """Démarre et finit en douceur : pour les mouvements qu'on doit voir en entier."""
+    return 4 * t ** 3 if t < 0.5 else 1 - (2 - 2 * t) ** 3 / 2
+
+
 def lineaire(t: float) -> float:
     return t
 
