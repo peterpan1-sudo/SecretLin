@@ -18,7 +18,9 @@ from gestionnaire.coffre import (
 )
 from gestionnaire.logo import dessiner as dessiner_logo
 from gestionnaire.marques import style_pastille
-from gestionnaire.effets import adoucir, animer, definir, lineaire, melanger, rebond, survol, transition
+from gestionnaire.effets import (
+    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition, valeur,
+)
 
 # Palette sobre gris / noir
 FOND = "#0b0b0d"
@@ -764,7 +766,8 @@ class EcranPrincipal(ctk.CTkFrame):
         barre.pack(fill="x", padx=10, pady=(0, 6))
         self.recherche = champ(barre, "Rechercher un site ou un identifiant…   (Ctrl+F)")
         self.recherche.pack(side="left", fill="x", expand=True)
-        self.recherche.bind("<KeyRelease>", lambda _e: self.rafraichir(animer_entree=False))
+        self.recherche.bind("<KeyRelease>", lambda _e: self._recherche_modifiee())
+        self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
         BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
         self.compteur.pack(side="right", padx=(14, 0))
@@ -835,44 +838,82 @@ class EcranPrincipal(ctk.CTkFrame):
         lab.configure(text_color=BLANC)
         transition(lab, "couleur", TEXTE_DOUX, 1.2, lambda c: lab.configure(text_color=c))
 
+    def _recherche_modifiee(self):
+        """Attend une courte pause dans la frappe avant de refiltrer la liste."""
+        if self._jeton_recherche is not None:
+            self.after_cancel(self._jeton_recherche)
+        self._jeton_recherche = self.after(120, self._filtrer)
+
+    def _filtrer(self):
+        self._jeton_recherche = None
+        if not self.winfo_exists():
+            return
+        # Une touche qui ne change pas le texte (retour arrière sur un champ vide, Maj,
+        # flèches…) ne touche pas à la liste.
+        filtre = self.recherche.get().strip().casefold()
+        if filtre != self._filtre_affiche:
+            self._afficher(filtre)
+
     def rafraichir(self, animer_entree=False):
+        """Recrée toutes les cartes, après un ajout, une modification ou un import."""
         for enfant in self.liste.winfo_children():
             enfant.destroy()
-        self.entetes = {}
-        filtre = self.recherche.get().strip().casefold()
-        entrees = [e for e in self.app.coffre.entrees
-                   if any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))]
-        total = len(self.app.coffre.entrees)
-        self.compteur.configure(text=f"{len(entrees)} / {total}" if filtre else
-                                f"{total} identifiant{'s' if total > 1 else ''}")
-
-        if not entrees:
-            vide = ctk.CTkFrame(self.liste, fg_color="transparent")
-            vide.pack(pady=70)
-            if not filtre:
-                LogoAnime(vide, FOND).pack()
-            texte = ("Aucun résultat." if filtre else
-                     "Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte.")
-            ctk.CTkLabel(vide, text=texte, font=police(14), text_color=TEXTE_DOUX,
-                         justify="center").pack(pady=(12, 0))
-            self.index.maj(set())
-            return
-
+        self._vide = None
+        self._sections = []  # [(lettre, en-tête, [(entrée, carte), …]), …]
         cartes = []
         lettre_courante = None
-        for e in entrees:
+        for e in self.app.coffre.entrees:
             initiale = e["site"][:1].upper()
             lettre = initiale if initiale.isalpha() and initiale in IndexAlphabet.LETTRES else "#"
             if lettre != lettre_courante:
                 lettre_courante = lettre
-                self.entetes[lettre] = self._entete_section(lettre)
+                self._sections.append((lettre, self._entete_section(lettre), []))
             anime = animer_entree and len(cartes) < 25
-            cartes.append(CarteIdentifiant(self, self.liste, e, marge_depart=70 if anime else None))
-        self.index.maj(set(self.entetes))
+            carte = CarteIdentifiant(self, self.liste, e, marge_depart=70 if anime else None)
+            self._sections[-1][2].append((e, carte))
+            cartes.append(carte)
+        self._afficher(self.recherche.get().strip().casefold())
 
         if animer_entree:
             for i, carte in enumerate(cartes[:25]):
                 self.after(30 * i, carte.apparaitre)
+
+    def _afficher(self, filtre):
+        """Montre les cartes qui correspondent à la recherche. Les cartes existent déjà :
+        on les cache ou on les remet, sans rien recréer, pour que la liste ne clignote pas."""
+        self._filtre_affiche = filtre
+        for enfant in self.liste.winfo_children():
+            enfant.pack_forget()
+        if self._vide is not None:
+            self._vide.destroy()
+            self._vide = None
+        self.entetes = {}
+        nombre = 0
+        for lettre, entete, cartes in self._sections:
+            visibles = [carte for e, carte in cartes
+                        if any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))]
+            if not visibles:
+                continue
+            entete.pack(fill="x", padx=14, pady=(16, 4))
+            self.entetes[lettre] = entete
+            for carte in visibles:
+                carte.pack(fill="x", padx=round(valeur(carte, "marge", carte.MARGE)), pady=4)
+            nombre += len(visibles)
+
+        total = len(self.app.coffre.entrees)
+        self.compteur.configure(text=f"{nombre} / {total}" if filtre else
+                                f"{total} identifiant{'s' if total > 1 else ''}")
+
+        if not nombre:
+            self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
+            self._vide.pack(pady=70)
+            if not filtre:
+                LogoAnime(self._vide, FOND).pack()
+            texte = ("Aucun résultat." if filtre else
+                     "Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte.")
+            ctk.CTkLabel(self._vide, text=texte, font=police(14), text_color=TEXTE_DOUX,
+                         justify="center").pack(pady=(12, 0))
+        self.index.maj(set(self.entetes))
 
     def _entete_section(self, lettre):
         ligne = ctk.CTkFrame(self.liste, fg_color="transparent")
