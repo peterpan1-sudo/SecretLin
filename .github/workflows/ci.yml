@@ -5,6 +5,11 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version déjà publiée dont réécrire le texte d'installation (ex. 1.1.2). Vide : CI seule."
+        required: false
+        default: ""
   # Publier une version sur GitHub construit le paquet et joint les .deb à la version.
   release:
     types: [published]
@@ -93,3 +98,23 @@ jobs:
 
       - name: Joindre les fichiers à la version
         run: gh release upload "$GITHUB_REF_NAME" dist/*.deb --clobber
+
+  installation:
+    name: Texte d'installation de la version
+    # À chaque publication, ou à la demande pour une version déjà publiée.
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.version != '')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event_name == 'release' && github.ref_name || format('v{0}', inputs.version) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Réécrire la section Installation
+        run: |
+          gh release view "$TAG" --json body --jq .body > notes.md
+          python3 outils/texte_installation.py "$TAG" notes.md
+          gh release edit "$TAG" --notes-file notes.md
