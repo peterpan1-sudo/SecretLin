@@ -1,3 +1,10 @@
+secretlin (1.1.2) kali-dev; urgency=medium
+
+  * Recherche : la liste des comptes ne clignote plus quand on tape ou
+    qu'on efface la recherche ; filtrer ne recrée plus les cartes.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Thu, 08 Oct 2026 22:06:00 +0200
+
 secretlin (1.1.1) kali-dev; urgency=medium
 
   * Verrouillage automatique plus long : 5 min sans bouger la souris sur
