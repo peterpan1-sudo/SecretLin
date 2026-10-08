@@ -352,3 +352,8 @@ def test_compteur_echecs_illisible_ou_horloge_reculee(tmp_path):
     c.noter_echecs(9, time.time() + 10_000)
     _echecs, fin = c.lire_echecs()
     assert fin <= time.time() + module.ATTENTE_MAX
+
+
+def test_paliers_d_attente():
+    assert [module.attente_apres(n) for n in range(1, 11)] == [
+        0, 0, 60, 180, 300, 600, 900, 1800, 3600, 3600]
