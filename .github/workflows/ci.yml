@@ -5,6 +5,9 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+  # Publier une version sur GitHub construit le paquet et joint les .deb à la version.
+  release:
+    types: [published]
 
 jobs:
   tests:
@@ -44,6 +47,15 @@ jobs:
           # customtkinter n'est pas dans les dépôts : installé avec pip pour les tests du paquet.
           pip3 install -q --break-system-packages customtkinter
 
+      - name: Vérifier que le tag correspond à debian/changelog
+        if: github.event_name == 'release'
+        run: |
+          attendu="v$(dpkg-parsechangelog -S Version)"
+          if [ "$GITHUB_REF_NAME" != "$attendu" ]; then
+            echo "Le tag $GITHUB_REF_NAME ne correspond pas à debian/changelog ($attendu)."
+            exit 1
+          fi
+
       - name: Construire le paquet
         # -d : python3-customtkinter n'existe pas en paquet, il est fourni par pip ci-dessus.
         run: dpkg-buildpackage -us -uc -b -d
@@ -58,3 +70,26 @@ jobs:
         with:
           name: secretlin-deb
           path: dist/*.deb
+
+  publier:
+    name: Joindre les .deb à la version
+    if: github.event_name == 'release'
+    needs: [tests, deb]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: secretlin-deb
+          path: dist
+
+      # customtkinter et darkdetect ne changent pas : on reprend les paquets de la version 1.0.1.
+      - name: Récupérer les bibliothèques
+        run: gh release download v1.0.1 --pattern 'python3-*_all.deb' --dir dist
+
+      - name: Joindre les fichiers à la version
+        run: gh release upload "$GITHUB_REF_NAME" dist/*.deb --clobber
