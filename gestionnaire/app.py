@@ -47,8 +47,8 @@ STYLES = {
                    bord_survol=DANGER, halo="#3a1c1f", eclat="#7a2a2e"),
 }
 
-DELAI_SOURIS_IMMOBILE_S = 120  # souris sur la fenêtre mais sans bouger
-DELAI_SOURIS_DEHORS_S = 60  # souris hors de la fenêtre
+DELAI_SOURIS_IMMOBILE_S = 300  # souris sur la fenêtre mais sans bouger
+DELAI_SOURIS_DEHORS_S = 120  # souris hors de la fenêtre
 EFFACEMENT_PRESSE_PAPIER_S = 20
 
 _famille = None
