@@ -1,4 +1,4 @@
-secretlin (1.0.2) kali-dev; urgency=medium
+secretlin (1.1.0) kali-dev; urgency=medium
 
   * Sauvegarde du coffre : copies automatiques datées, export et import
     chiffrés, restauration d'une copie depuis le bouton « Sauvegarde ».
