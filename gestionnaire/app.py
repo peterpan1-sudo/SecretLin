@@ -13,7 +13,7 @@ import customtkinter as ctk
 from PIL import ImageTk
 
 from gestionnaire.coffre import (
-    ATTENTE_MAX, Coffre, CoffreCorrompu, MotDePasseIncorrect, evaluer_force,
+    Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
 )
 from gestionnaire.logo import dessiner as dessiner_logo
@@ -52,6 +52,18 @@ DELAI_SOURIS_DEHORS_S = 15  # souris hors de la fenêtre
 EFFACEMENT_PRESSE_PAPIER_S = 20
 
 _famille = None
+
+
+def duree_lisible(secondes) -> str:
+    """« 45 s », « 2 min 05 s » ou « 1 h 00 min »."""
+    secondes = max(0, math.ceil(secondes))
+    minutes, s = divmod(secondes, 60)
+    heures, minutes = divmod(minutes, 60)
+    if heures:
+        return f"{heures} h {minutes:02d} min"
+    if minutes:
+        return f"{minutes} min {s:02d} s"
+    return f"{s} s"
 
 
 def police(taille=13, gras=False):
@@ -501,11 +513,24 @@ class EcranDeverrouillage(EcranCentre):
         self.bouton.pack()
         self.mdp.bind("<Return>", lambda _e: self._ouvrir())
         self.mdp.focus_set()
+        self._decompte()
 
-    def _ouvrir(self):
+    def _decompte(self):
+        """Pendant l'attente, le bouton reste grisé et le temps restant défile chaque seconde."""
+        if not self.winfo_exists():
+            return
         attente = self.app.bloque_jusqua - time.monotonic()
         if attente > 0:
-            self.afficher_message(f"Trop d'essais. Réessayez dans {int(attente) + 1} s.")
+            if self.bouton.actif:
+                self.bouton.activer(False, "Patientez…")
+            self.afficher_message(f"Trop d'essais. Réessayez dans {duree_lisible(attente)}.")
+            self.after(1000, self._decompte)
+        elif not self.bouton.actif:
+            self.bouton.activer(True, "Déverrouiller")
+            self.afficher_message("")
+
+    def _ouvrir(self):
+        if self.app.bloque_jusqua > time.monotonic():
             self.secouer()
             return
         mdp = self.mdp.get()
@@ -541,12 +566,12 @@ class EcranDeverrouillage(EcranCentre):
             self.afficher_message("Le fichier du coffre est illisible ou endommagé.")
             return
         self.app.echecs += 1
-        # Délai croissant après plusieurs erreurs : 2, 4, 8… jusqu'à 5 minutes.
-        if self.app.echecs >= 3:
-            delai = min(2 ** (self.app.echecs - 2), ATTENTE_MAX)
+        # Attente croissante après plusieurs erreurs : 1, 3, 5, 10, 15, 30 min puis 1 h.
+        delai = attente_apres(self.app.echecs)
+        if delai:
             self.app.bloque_jusqua = time.monotonic() + delai
             self.app.noter_echecs(delai)
-            self.afficher_message(f"Mot de passe incorrect. Patientez {delai} s.")
+            self._decompte()
         else:
             self.app.noter_echecs(0)
             self.afficher_message("Mot de passe incorrect.")

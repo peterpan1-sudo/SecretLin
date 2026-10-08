@@ -46,7 +46,7 @@ Sous Windows, remplacer `.venv/bin/` par `.venv\Scripts\`.
 - Coffre chiffré en AES-256-GCM ; clé dérivée du mot de passe maître avec Argon2id.
 - Le mot de passe maître n'est jamais enregistré : s'il est perdu, le coffre est irrécupérable.
 - Toute modification du fichier du coffre est détectée.
-- Délai croissant après plusieurs mauvais essais, conservé même si on ferme et relance SecretLin.
+- Après 3 mauvais essais, attente de 1 min, puis 3, 5, 10, 15, 30 min et 1 h ; conservée même si on ferme et relance SecretLin.
 - Verrouillage automatique : 30 s sans bouger la souris sur la fenêtre, ou 15 s avec la souris en dehors.
 - Presse-papier vidé 20 secondes après la copie d'un mot de passe.
 
