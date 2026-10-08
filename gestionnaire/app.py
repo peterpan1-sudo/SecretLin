@@ -13,8 +13,8 @@ import customtkinter as ctk
 from PIL import ImageTk
 
 from gestionnaire.coffre import (
-    Coffre, CoffreCorrompu, MotDePasseIncorrect, evaluer_force, generer_mot_de_passe,
-    verifier_force,
+    ATTENTE_MAX, Coffre, CoffreCorrompu, MotDePasseIncorrect, evaluer_force,
+    generer_mot_de_passe, verifier_force,
 )
 from gestionnaire.logo import dessiner as dessiner_logo
 from gestionnaire.marques import style_pastille
@@ -276,8 +276,10 @@ class Application(ctk.CTk):
         self.derniere_activite = time.monotonic()
         self.dehors_depuis = None
         self._position_souris = None
-        self.echecs = 0
-        self.bloque_jusqua = 0.0
+        # Le compteur d'échecs est relu au lancement : fermer puis relancer SecretLin
+        # ne remet pas l'attente à zéro.
+        self.echecs, bloque = self.coffre.lire_echecs()
+        self.bloque_jusqua = time.monotonic() + max(0.0, bloque - time.time())
         self._jeton_presse_papier = None
 
         for evt in ("<Any-KeyPress>", "<Any-ButtonPress>"):
@@ -325,6 +327,13 @@ class Application(ctk.CTk):
     def afficher_principal(self):
         self._activite()
         self._changer_ecran(EcranPrincipal(self))
+
+    def noter_echecs(self, delai):
+        """Enregistre le compteur d'échecs et l'attente en cours (« delai » secondes)."""
+        try:
+            self.coffre.noter_echecs(self.echecs, time.time() + delai if delai else 0.0)
+        except OSError:
+            pass  # un disque plein ne doit pas bloquer l'écran de déverrouillage
 
     def verrouiller(self):
         for fenetre in self.winfo_children():
@@ -521,6 +530,7 @@ class EcranDeverrouillage(EcranCentre):
     def _resultat(self, resultat):
         if resultat is None:
             self.app.echecs = 0
+            self.app.noter_echecs(0)
             self.afficher_message("Déverrouillé", SUCCES)
             self.logo.ouvrir(lambda: self.after(150, self.app.afficher_principal))
             return
@@ -533,10 +543,12 @@ class EcranDeverrouillage(EcranCentre):
         self.app.echecs += 1
         # Délai croissant après plusieurs erreurs : 2, 4, 8… jusqu'à 5 minutes.
         if self.app.echecs >= 3:
-            delai = min(2 ** (self.app.echecs - 2), 300)
+            delai = min(2 ** (self.app.echecs - 2), ATTENTE_MAX)
             self.app.bloque_jusqua = time.monotonic() + delai
+            self.app.noter_echecs(delai)
             self.afficher_message(f"Mot de passe incorrect. Patientez {delai} s.")
         else:
+            self.app.noter_echecs(0)
             self.afficher_message("Mot de passe incorrect.")
 
 

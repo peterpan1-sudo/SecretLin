@@ -13,6 +13,7 @@ import secrets
 import string
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 from cryptography.exceptions import InvalidTag
@@ -39,6 +40,8 @@ SUFFIXE_SAUVEGARDE = ".bak"
 # Copies faites à chaque déverrouillage : on garde les plus récentes.
 NB_COPIES_OUVERTURE = 5
 FORMAT_COPIE = "coffre-%Y%m%d-%H%M%S-%f.vault"
+# Attente maximale imposée après des mots de passe maîtres incorrects (secondes).
+ATTENTE_MAX = 300
 
 
 def dossier_donnees() -> Path:
@@ -240,6 +243,30 @@ class Coffre:
     def dossier_copies(self) -> Path:
         """Dossier des copies faites à chaque déverrouillage."""
         return self.chemin.parent / "sauvegardes"
+
+    @property
+    def chemin_echecs(self) -> Path:
+        """Compteur des déverrouillages ratés, gardé d'un lancement à l'autre."""
+        return self.chemin.with_name(self.chemin.stem + "-echecs.json")
+
+    def lire_echecs(self) -> tuple[int, float]:
+        """Nombre d'échecs de déverrouillage et heure (time.time) jusqu'à laquelle les
+        essais sont refusés. Un fichier absent ou illisible compte pour aucun échec."""
+        try:
+            donnees = json.loads(self.chemin_echecs.read_text(encoding="utf-8"))
+            echecs = max(0, int(donnees["echecs"]))
+            bloque_jusqua = float(donnees["bloque_jusqua"])
+        except (OSError, ValueError, KeyError, TypeError):
+            return 0, 0.0
+        # Si l'horloge a été reculée, l'attente ne dépasse quand même pas le maximum.
+        return echecs, min(bloque_jusqua, time.time() + ATTENTE_MAX)
+
+    def noter_echecs(self, echecs: int, bloque_jusqua: float = 0.0) -> None:
+        """Enregistre le compteur ; à zéro, le fichier est supprimé."""
+        if echecs <= 0:
+            self.chemin_echecs.unlink(missing_ok=True)
+            return
+        _ecrire_atomique(self.chemin_echecs, json.dumps({"echecs": echecs, "bloque_jusqua": bloque_jusqua}))
 
     def ouvrir(self, mot_de_passe: str) -> None:
         self._cle, self._entete, self.entrees = _dechiffrer(self.chemin, mot_de_passe)
