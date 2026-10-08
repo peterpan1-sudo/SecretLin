@@ -1,3 +1,10 @@
+secretlin (1.1.1) kali-dev; urgency=medium
+
+  * Verrouillage automatique plus long : 5 min sans bouger la souris sur
+    la fenêtre, 2 min avec la souris en dehors (au lieu de 30 s et 15 s).
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Thu, 08 Oct 2026 21:45:00 +0200
+
 secretlin (1.1.0) kali-dev; urgency=medium
 
   * Sauvegarde du coffre : copies automatiques datées, export et import
