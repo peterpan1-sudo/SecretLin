@@ -10,9 +10,8 @@ from pathlib import Path
 from tkinter import filedialog
 
 import customtkinter as ctk
-from PIL import Image, ImageFilter, ImageTk
+from PIL import ImageTk
 
-from gestionnaire.capture import photographier
 from gestionnaire.coffre import (
     Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
@@ -20,8 +19,9 @@ from gestionnaire.coffre import (
 from gestionnaire.logo import dessiner as dessiner_logo
 from gestionnaire.marques import style_pastille
 from gestionnaire.effets import (
-    adoucir, animer, definir, fluide, lineaire, melanger, rebond, survol, transition, valeur,
+    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition,
 )
+from gestionnaire.voile import Voile
 
 # Palette sobre gris / noir
 FOND = "#0b0b0d"
@@ -632,6 +632,11 @@ class IndexAlphabet(ctk.CTkFrame):
             self.aller_a(lettre)
 
 
+def _distance(c1: str, c2: str) -> int:
+    """Écart entre deux couleurs « #rrggbb »."""
+    return sum(abs(int(c1[i:i + 2], 16) - int(c2[i:i + 2], 16)) for i in (1, 3, 5))
+
+
 class Pastille(ctk.CTkLabel):
     """Carré à gauche d'un identifiant : logo de la marque reconnue, sinon l'initiale."""
 
@@ -648,159 +653,27 @@ class Pastille(ctk.CTkLabel):
         texte = st["texte_survol"] if self.survole else st["texte"]
         definir(self, "fond", fond)
         definir(self, "texte", texte)
-        self.configure(fg_color=fond, text_color=texte,
-                       image=st["image_survol"] if self.survole else st["image"],
+        self._logo = st["image_survol"] if self.survole else st["image"]
+        self.configure(fg_color=fond, text_color=texte, image=self._logo,
                        text="" if st["image"] else (site.strip()[:1].upper() or "?"))
 
     def survol(self, survole):
         self.survole = survole
         st = self.style
-        transition(self, "fond", st["fond_survol"] if survole else st["fond"], 0.25,
-                   lambda c: self.configure(fg_color=c))
+        cible, depart = (st["fond_survol"], st["fond"]) if survole else (st["fond"], st["fond_survol"])
+        image = st["image_survol"] if survole else st["image"]
+
+        def fond(c):
+            self.configure(fg_color=c)
+            # Le logo change de couleur quand le fond est à mi-chemin. Changé dès le début,
+            # il aurait presque la couleur du fond et disparaîtrait un instant.
+            if image is not None and image is not self._logo and \
+                    _distance(c, cible) <= _distance(c, depart):
+                self._logo = image
+                self.configure(image=image)
+        transition(self, "fond", cible, 0.25, fond)
         transition(self, "texte", st["texte_survol"] if survole else st["texte"], 0.25,
                    lambda c: self.configure(text_color=c))
-        if st["image"]:
-            self.configure(image=st["image_survol"] if survole else st["image"])
-
-
-class Glissiere(tkinter.Frame):
-    """Emplacement d'un élément de la liste filtrée par la recherche.
-
-    Un élément écarté glisse vers le bas en se dissipant comme une fumée (flou et fondu),
-    et la place qu'il occupait se referme en douceur ; un élément qui revient fait le
-    chemin inverse. La fumée est faite à partir d'une photo de l'élément : recolorer
-    chaque bouton à chaque image serait bien trop lent.
-
-    L'élément se place dans « interieur ». Pendant l'animation, la glissière prend une
-    hauteur fixe et « interieur » y est posé sans changer de taille : un bouton qui change
-    de taille est redessiné en entier, ce qui ferait saccader l'animation.
-    """
-
-    DUREE = 0.65
-    DERIVE = 22    # glissement vertical, en pixels, entre « visible » et « caché »
-    REFERMER = 1.6  # la place se referme sur la fin de la disparition (s'ouvre au début du retour)
-    NIVEAUX = 10   # étapes de fumée, calculées une fois puis réutilisées
-    FLOU = 4.0
-
-    def __init__(self, parent):
-        super().__init__(parent, bg=FOND, bd=0, highlightthickness=0)
-        self.interieur = tkinter.Frame(self, bg=FOND, bd=0, highlightthickness=0)
-        self.interieur.pack(fill="x")
-        self._cible = 1.0
-        self._hauteur = None
-        self._cliche = None
-        self._largeur = 0
-        self._niveaux = {}
-        self._toile = None
-        self._image = None
-        self._niveau = None
-        definir(self, "presence", 1.0)
-
-    def hauteur(self):
-        """Hauteur de l'élément une fois affiché."""
-        return self._hauteur or self.interieur.winfo_reqheight()
-
-    def aller(self, cible, anime=True, capture=None):
-        """Fait apparaître (cible 1.0) ou disparaître (cible 0.0) l'élément.
-
-        « capture » renvoie une photo de la zone visible de la liste, pour la fumée."""
-        self._cible = cible
-        if not anime:
-            animer(self, "presence", 0, lambda _t: None)  # interrompt une animation en cours
-            definir(self, "presence", cible)
-            self._appliquer(cible)
-            return
-        presence = valeur(self, "presence", 1.0)
-        en_cours = "presence" in self.__dict__.get("_animations", {})
-        if not en_cours and presence == cible:
-            return
-        if self.interieur.winfo_manager() != "place":
-            self._figer(capture if presence >= 1.0 else None)
-        self._preparer_fumee()
-        transition(self, "presence", cible, self.DUREE, self._appliquer, courbe=fluide)
-
-    def _figer(self, capture):
-        """Passe de la mise en page normale à celle de l'animation."""
-        if self.winfo_ismapped():
-            self._hauteur = self.interieur.winfo_height()
-            self._photographier(capture)
-        else:
-            self._hauteur = self.interieur.winfo_reqheight()
-        self.configure(height=self._hauteur)
-        self.pack_propagate(False)
-        self.interieur.pack_forget()
-        self.interieur.place(x=0, y=0, relwidth=1, height=self._hauteur)
-
-    def _photographier(self, capture):
-        self._cliche = None
-        self._niveaux = {}
-        image, origine = capture() if capture else (None, None)
-        if image is None:
-            return
-        x, y = self.winfo_rootx() - origine[0], self.winfo_rooty() - origine[1]
-        l, h = self.winfo_width(), self.winfo_height()
-        if x < 0 or y < 0 or x + l > image.width or y + h > image.height:
-            return  # en partie hors de la zone visible : il glissera sans fumée
-        self._cliche = image.crop((x, y, x + l, y + h))
-        self._largeur = l
-
-    def _preparer_fumee(self):
-        if self._cliche is None or self._toile is not None:
-            return
-        largeur = self.winfo_width() if self.winfo_ismapped() else self.master.winfo_width()
-        if largeur != self._largeur:
-            self._cliche = None  # la fenêtre a changé de taille depuis la photo
-            return
-        # La fumée recouvre l'élément, qui reste immobile dessous jusqu'à la fin.
-        self._toile = tkinter.Canvas(self, bg=FOND, bd=0, highlightthickness=0)
-        self._toile.place(x=0, y=0, relwidth=1, relheight=1)
-        self._image = self._toile.create_image(0, 0, anchor="nw")
-        self._niveau = None
-        self.interieur.place_configure(y=0)
-
-    def _retirer_fumee(self):
-        if self._toile is not None:
-            self._toile.destroy()
-            self._toile = None
-        # Les images de fumée sont lourdes : on ne garde que la photo, le temps que
-        # l'élément reste caché (elle resservira à son retour).
-        self._niveaux = {}
-        if self._cible == 1.0:
-            self._cliche = None
-
-    def _image_niveau(self, niveau):
-        if niveau not in self._niveaux:
-            t = niveau / self.NIVEAUX
-            image = Image.blend(self._cliche, Image.new("RGB", self._cliche.size, FOND), t)
-            if t:
-                # Flou calculé sur une image deux fois plus petite : quatre fois moins de calcul.
-                petite = image.reduce(2).filter(ImageFilter.GaussianBlur(self.FLOU * t / 2))
-                image = petite.resize(image.size, Image.BILINEAR)
-            self._niveaux[niveau] = ImageTk.PhotoImage(image, master=self)
-        return self._niveaux[niveau]
-
-    def _appliquer(self, p):
-        # La position de départ (p = 1 ou 0) n'est pas une fin : seule la cible en est une.
-        if p >= 1.0 and self._cible == 1.0:
-            self._retirer_fumee()
-            if self.interieur.winfo_manager() != "pack":
-                self.interieur.place_forget()
-                self.interieur.pack(fill="x")
-            self.pack_propagate(True)
-        elif p <= 0.0 and self._cible == 0.0:
-            self._retirer_fumee()
-            self.pack_forget()
-        else:
-            self.configure(height=max(1, round(self._hauteur * min(1.0, p * self.REFERMER))))
-            derive = round(self.DERIVE * (1 - p))
-            if self._toile is None:
-                self.interieur.place_configure(y=derive)
-                return
-            niveau = round((1 - p) * self.NIVEAUX)
-            if niveau != self._niveau:
-                self._toile.itemconfigure(self._image, image=self._image_niveau(niveau))
-                self._niveau = niveau
-            self._toile.coords(self._image, 0, derive)
 
 
 class CarteIdentifiant(ctk.CTkFrame):
@@ -920,6 +793,7 @@ class EcranPrincipal(ctk.CTkFrame):
                                             scrollbar_button_color=BORDURE,
                                             scrollbar_button_hover_color=BORDURE_ECLAT)
         self.liste.pack(fill="both", expand=True)
+        self.voile = Voile(self.liste)
 
         # Notification qui glisse depuis le bas
         self.toast = ctk.CTkFrame(self, fg_color=ACCENT, corner_radius=12)
@@ -970,6 +844,7 @@ class EcranPrincipal(ctk.CTkFrame):
         cible_widget = self.entetes.get(lettre)
         if cible_widget is None:
             return
+        self.voile.terminer()
         self.liste.update_idletasks()
         canvas = self.liste._parent_canvas
         total = max(self.liste.winfo_height(), 1)
@@ -1000,10 +875,12 @@ class EcranPrincipal(ctk.CTkFrame):
 
     def rafraichir(self, animer_entree=False):
         """Recrée toutes les cartes, après un ajout, une modification ou un import."""
+        self.voile.terminer()
         for enfant in self.liste.winfo_children():
             enfant.destroy()
         self._vide = None
-        self._sections = []  # [(lettre, glissière d'en-tête, [(entrée, glissière), …]), …]
+        self._texte_vide = None
+        self._sections = []  # [(lettre, case de l'en-tête, [(entrée, case de la carte), …]), …]
         cartes = []
         lettre_courante = None
         for e in self.app.coffre.entrees:
@@ -1013,9 +890,9 @@ class EcranPrincipal(ctk.CTkFrame):
                 lettre_courante = lettre
                 self._sections.append((lettre, self._entete_section(lettre), []))
             anime = animer_entree and len(cartes) < 25
-            place = Glissiere(self.liste)
-            carte = CarteIdentifiant(self, place.interieur, e, marge_depart=70 if anime else None)
-            self._sections[-1][2].append((e, place))
+            case = self._case()
+            carte = CarteIdentifiant(self, case, e, marge_depart=70 if anime else None)
+            self._sections[-1][2].append((e, case))
             cartes.append(carte)
         self._afficher(self.recherche.get().strip().casefold(), anime=False)
 
@@ -1025,77 +902,72 @@ class EcranPrincipal(ctk.CTkFrame):
 
     def _afficher(self, filtre, anime):
         """Montre les cartes qui correspondent à la recherche. Les cartes existent déjà :
-        celles qu'on écarte glissent et s'estompent, celles qui reviennent remontent."""
+        on ne fait que ranger ou ressortir leur case, et le voile anime le changement."""
         self._filtre_affiche = filtre
-        if self._vide is not None:
-            self._vide.destroy()
-            self._vide = None
-        self.entetes = {}
+        entetes = {}
+        plan = []  # (case, visible) dans l'ordre de la liste
         nombre = 0
-        plan = []  # (glissière, visible) dans l'ordre de la liste
         for lettre, entete, cartes in self._sections:
             visibles = [any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))
-                        for e, _place in cartes]
+                        for e, _case in cartes]
             plan.append((entete, any(visibles)))
-            plan.extend((place, visible) for (_e, place), visible in zip(cartes, visibles))
+            plan.extend((case, visible) for (_e, case), visible in zip(cartes, visibles))
             if any(visibles):
-                self.entetes[lettre] = entete
+                entetes[lettre] = entete
             nombre += sum(visibles)
-
-        # Les éléments déjà affichés ne bougent pas (les repacker les ferait clignoter) :
-        # ceux qui reviennent sont insérés à leur place, entre leurs voisins.
-        capture = self._capture() if anime else None
-        # Sous le bas de la zone visible, rien ne s'anime : on ne le verrait pas, et
-        # animer tout un gros coffre à la fois ralentirait ce qui est à l'écran.
-        toile = self.liste._parent_canvas
-        limite = toile.canvasy(toile.winfo_height())
-        precedent = None
-        arrivee = 0  # position, dans la liste filtrée, du prochain élément affiché
-        for place, visible in plan:
-            # Un élément qui part est vu là où il est ; un élément qui revient, là où il arrive.
-            haut = place.winfo_y() if place.winfo_manager() and not visible else arrivee
-            if visible:
-                arrivee += place.hauteur()
-                if not place.winfo_manager():
-                    if precedent is not None:
-                        place.pack(fill="x", after=precedent)
-                    else:
-                        suivant = next((p for p, _v in plan if p.winfo_manager()), None)
-                        place.pack(fill="x", before=suivant) if suivant else place.pack(fill="x")
-            place.aller(1.0 if visible else 0.0, anime and haut < limite, capture)
-            if place.winfo_manager():
-                precedent = place
-
         total = len(self.app.coffre.entrees)
-        self.compteur.configure(text=f"{nombre} / {total}" if filtre else
-                                f"{total} identifiant{'s' if total > 1 else ''}")
+        texte_vide = None if nombre else (
+            "Aucun résultat." if filtre else
+            "Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte.")
 
-        if not nombre:
-            self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
-            self._vide.pack(pady=70)
-            if not filtre:
-                LogoAnime(self._vide, FOND).pack()
-            texte = ("Aucun résultat." if filtre else
-                     "Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte.")
-            ctk.CTkLabel(self._vide, text=texte, font=police(14), text_color=TEXTE_DOUX,
-                         justify="center").pack(pady=(12, 0))
-        self.index.maj(set(self.entetes))
+        def appliquer():
+            self.entetes = entetes
+            if texte_vide != self._texte_vide and self._vide is not None:
+                self._vide.destroy()
+                self._vide = None
+            # Les cases déjà affichées gardent leur place ; celles qui reviennent sont
+            # insérées entre leurs voisines.
+            precedente = None
+            for case, visible in plan:
+                if visible and not case.winfo_manager():
+                    if precedente is not None:
+                        case.pack(fill="x", after=precedente)
+                    else:
+                        suivante = next((c for c, _v in plan if c.winfo_manager()), None)
+                        case.pack(fill="x", before=suivante) if suivante else case.pack(fill="x")
+                elif not visible and case.winfo_manager():
+                    case.pack_forget()
+                if case.winfo_manager():
+                    precedente = case
+            if texte_vide is not None and self._vide is None:
+                self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
+                self._vide.pack(pady=70)
+                if not filtre:
+                    LogoAnime(self._vide, FOND).pack()
+                ctk.CTkLabel(self._vide, text=texte_vide, font=police(14), text_color=TEXTE_DOUX,
+                             justify="center").pack(pady=(12, 0))
+            self._texte_vide = texte_vide
+            self.compteur.configure(text=f"{nombre} / {total}" if filtre else
+                                    f"{total} identifiant{'s' if total > 1 else ''}")
+            self.index.maj(set(entetes))
 
-    def _capture(self):
-        """Photo de la zone visible de la liste, prise au plus une fois par filtrage."""
-        memo = []
+        change = texte_vide != self._texte_vide or any(
+            visible != bool(case.winfo_manager()) for case, visible in plan)
+        if not change:
+            appliquer()  # rien ne bouge dans la liste : seuls le compteur et l'index changent
+        elif anime:
+            self.voile.changer(appliquer)
+        else:
+            self.voile.terminer()
+            appliquer()
 
-        def prendre():
-            if not memo:
-                toile = self.liste._parent_canvas
-                image = photographier(toile)  # None si impossible : glissement sans fumée
-                memo.append((image, (toile.winfo_rootx(), toile.winfo_rooty())) if image else (None, None))
-            return memo[0]
-        return prendre
+    def _case(self):
+        """Emplacement d'un élément dans la liste : c'est lui qu'on range ou ressort."""
+        return tkinter.Frame(self.liste, bg=FOND, bd=0, highlightthickness=0)
 
     def _entete_section(self, lettre):
-        place = Glissiere(self.liste)
-        ligne = ctk.CTkFrame(place.interieur, fg_color="transparent")
+        case = self._case()
+        ligne = ctk.CTkFrame(case, fg_color="transparent")
         ligne.pack(fill="x", padx=14, pady=(16, 4))
         lab = ctk.CTkLabel(ligne, text=lettre, font=police(14, gras=True), text_color=TEXTE_DOUX,
                            width=20, anchor="w")
@@ -1103,8 +975,8 @@ class EcranPrincipal(ctk.CTkFrame):
         definir(lab, "couleur", TEXTE_DOUX)
         ctk.CTkFrame(ligne, fg_color=BORDURE, height=1, corner_radius=0).pack(
             side="left", fill="x", expand=True, padx=(10, 0))
-        place.lettre = lab
-        return place
+        case.lettre = lab
+        return case
 
 
 # --- Fenêtres ---------------------------------------------------------------
