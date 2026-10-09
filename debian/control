@@ -8,6 +8,7 @@ Build-Depends: debhelper-compat (= 13),
                python3-cryptography,
                python3-customtkinter,
                python3-pil,
+               python3-pil.imagetk,
                python3-pytest
 Standards-Version: 4.7.2
 Homepage: https://github.com/peterpan1-sudo/SecretLin
