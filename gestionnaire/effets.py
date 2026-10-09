@@ -2,6 +2,7 @@
 
 import time
 import tkinter
+import weakref
 
 IMAGE_MS = 16
 
@@ -31,6 +32,35 @@ def lineaire(t: float) -> float:
     return t
 
 
+def _dans(chemin: str, nom: str) -> bool:
+    return chemin == nom or chemin.startswith(nom + ".")
+
+
+def pointeur_dans(widget) -> bool:
+    try:
+        x, y = widget.winfo_pointerxy()
+        chemin = str(widget.tk.call("winfo", "containing", x, y))
+    except tkinter.TclError:
+        return False
+    return _dans(chemin, str(widget))
+
+
+_figes = set()  # conteneurs figés pendant qu'un calque les recouvre
+_survoles = weakref.WeakSet()  # widgets qui réagissent au survol
+
+
+def _fige(widget) -> bool:
+    nom = str(widget)
+    return any(_dans(nom, conteneur) for conteneur in _figes)
+
+
+def figer(conteneur):
+    """Met en pause les animations et le survol des widgets de « conteneur », pendant
+    qu'un calque le recouvre : rien n'y change d'apparence. (La souris survole alors le
+    calque : pour les widgets dessous, ce n'est pas une vraie sortie.)"""
+    _figes.add(str(conteneur))
+
+
 def animer(widget, cle, duree, etape, fin=None, courbe=adoucir):
     """Appelle etape(t) à chaque image pendant `duree` secondes.
 
@@ -44,14 +74,22 @@ def animer(widget, cle, duree, etape, fin=None, courbe=adoucir):
             racine.after_cancel(ancienne)
         except tkinter.TclError:
             pass
-    debut = time.perf_counter()
+    horloge = {"debut": time.perf_counter(), "vu": time.perf_counter()}
 
     def tick():
         taches.pop(cle, None)
         try:
             if not widget.winfo_exists():
                 return
-            t = 1.0 if duree <= 0 else min(1.0, (time.perf_counter() - debut) / duree)
+            maintenant = time.perf_counter()
+            if _fige(widget):
+                # En pause : le temps passé figé ne compte pas.
+                horloge["debut"] += maintenant - horloge["vu"]
+                horloge["vu"] = maintenant
+                taches[cle] = racine.after(IMAGE_MS, tick)
+                return
+            horloge["vu"] = maintenant
+            t = 1.0 if duree <= 0 else min(1.0, (maintenant - horloge["debut"]) / duree)
             etape(courbe(t))
             if t < 1:
                 taches[cle] = racine.after(IMAGE_MS, tick)
@@ -91,30 +129,39 @@ def transition(widget, nom, cible, duree, applique, courbe=adoucir):
     animer(widget, nom, duree, etape, courbe=courbe)
 
 
-def pointeur_dans(widget) -> bool:
+def liberer(conteneur):
+    """Fin de figer() : les animations reprennent où elles en étaient, et chaque widget
+    de « conteneur » prend l'état de survol qui correspond à la souris."""
+    _figes.discard(str(conteneur))
     try:
-        x, y = widget.winfo_pointerxy()
-        chemin = str(widget.tk.call("winfo", "containing", x, y))
+        x, y = conteneur.winfo_pointerxy()
+        chemin = str(conteneur.tk.call("winfo", "containing", x, y))
     except tkinter.TclError:
-        return False
-    nom = str(widget)
-    return chemin == nom or chemin.startswith(nom + ".")
+        return
+    nom = str(conteneur)
+    for widget in list(_survoles):
+        if _dans(str(widget), nom):
+            for recalculer in widget.__dict__.get("_survols", ()):
+                recalculer(chemin)
 
 
 def survol(widget, entrer, sortir):
     """Appelle entrer()/sortir() quand la souris entre ou quitte le widget et tout son contenu."""
     etat = {"dedans": False}
 
+    def changer(dedans):
+        if dedans != etat["dedans"]:
+            etat["dedans"] = dedans
+            (entrer if dedans else sortir)()
+
     def sur_entree(_e):
-        if not etat["dedans"]:
-            etat["dedans"] = True
-            entrer()
+        if not _fige(widget):
+            changer(True)
 
     def verifier():
         try:
-            if etat["dedans"] and not pointeur_dans(widget):
-                etat["dedans"] = False
-                sortir()
+            if etat["dedans"] and not _fige(widget) and not pointeur_dans(widget):
+                changer(False)
         except tkinter.TclError:
             pass
 
@@ -124,5 +171,15 @@ def survol(widget, entrer, sortir):
         except tkinter.TclError:
             pass
 
+    def recalculer(chemin):
+        try:
+            if widget.winfo_exists():
+                changer(_dans(chemin, str(widget)))
+        except tkinter.TclError:
+            pass
+
     tkinter.Misc.bind(widget, "<Enter>", sur_entree, "+")
     tkinter.Misc.bind(widget, "<Leave>", sur_sortie, "+")
+    # Rangé sur le widget lui-même : il disparaît avec lui.
+    widget.__dict__.setdefault("_survols", []).append(recalculer)
+    _survoles.add(widget)
