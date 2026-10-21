@@ -134,9 +134,14 @@ def image_logo(slug: str, couleur: str, taille: int) -> ctk.CTkImage:
     return ctk.CTkImage(light_image=image, dark_image=image, size=(taille, taille))
 
 
+def _assombrir(hexa: str, t: float) -> str:
+    return "".join(f"{round(int(hexa[i:i + 2], 16) * (1 - t)):02X}" for i in (0, 2, 4))
+
+
 def style_pastille(site: str, fond_neutre: str, fond_survol_neutre: str, texte_neutre: str,
-                   texte_survol_neutre: str, taille_logo: int = 24) -> dict:
-    """Couleurs et images d'une pastille au repos et au survol, selon la marque reconnue."""
+                   texte_survol_neutre: str, taille_logo: int = 24, fond_clair: bool = False) -> dict:
+    """Couleurs et images d'une pastille au repos et au survol, selon la marque reconnue.
+    « fond_clair » : thème clair, le logo au repos doit alors rester foncé pour être lisible."""
     trouve = trouver(site)
     if not trouve:
         return dict(fond=fond_neutre, fond_survol=fond_survol_neutre, texte=texte_neutre,
@@ -145,7 +150,10 @@ def style_pastille(site: str, fond_neutre: str, fond_survol_neutre: str, texte_n
     lum = _luminance(couleur)
     gris = _saturation(couleur) < 0.15
     # Au repos : logo à sa couleur sur fond sombre (éclaircie si trop foncée pour être lisible).
-    if gris and lum < 0.5:
+    if fond_clair:
+        couleur_repos = ("1C1C21" if gris else
+                         _assombrir(couleur, 0.35) if lum > 0.7 else couleur)
+    elif gris and lum < 0.5:
         couleur_repos = "ECECEF"
     elif lum < 0.3:
         couleur_repos = _eclaircir(couleur, 0.45)
