@@ -1479,6 +1479,13 @@ class DialogueMotDePasse(Dialogue):
 
 # --- Réglages ---------------------------------------------------------------
 
+def sur_clic(widgets, action):
+    """Appelle action() quand on clique sur l'un des widgets. Un widget CTk se dessine
+    dans un canevas intérieur : c'est son propre bind() qui y relaie le clic."""
+    for w in widgets:
+        w.bind("<Button-1>", lambda _e: action(), add="+")
+
+
 class Page(ctk.CTkFrame):
     """Page affichée à la place de la liste : bouton de retour, titre et sous-titre."""
 
@@ -1515,8 +1522,7 @@ class CarteMenu(ctk.CTkFrame):
         fleche = ctk.CTkLabel(self, text="›", font=police(24), text_color=TEXTE_DOUX)
         fleche.pack(side="right", padx=18)
         widgets.append(fleche)
-        for w in widgets:
-            tkinter.Misc.bind(w, "<Button-1>", lambda _e: action(), "+")
+        sur_clic(widgets, action)
         survol(self, lambda: self._etat(True), lambda: self._etat(False))
 
     def _etat(self, survole):
@@ -1624,8 +1630,7 @@ class PageApparence(Page):
                                font=police(12, gras=True), text_color=t["texte"],
                                fg_color="transparent")
         libelle.pack(anchor="w", padx=10)
-        for w in (cadre, carte, ligne, bouton, libelle):
-            tkinter.Misc.bind(w, "<Button-1>", lambda _e: self._changer(theme=nom), "+")
+        sur_clic((cadre, carte, ligne, bouton, libelle), lambda: self._changer(theme=nom))
         if not choisi:
             survol(cadre, lambda: cadre.configure(border_color=BORDURE_ECLAT),
                    lambda: cadre.configure(border_color=t["bordure"]))
@@ -1642,8 +1647,7 @@ class PageApparence(Page):
         libelle = ctk.CTkLabel(bloc, text=nom, font=police(11, gras=choisie),
                                text_color=TEXTE if choisie else TEXTE_DOUX)
         libelle.pack(pady=(2, 0))
-        for w in (bloc, rond, libelle):
-            tkinter.Misc.bind(w, "<Button-1>", lambda _e: self._changer(accent=nom), "+")
+        sur_clic((bloc, rond, libelle), lambda: self._changer(accent=nom))
         if not choisie:
             survol(bloc, lambda: rond.itemconfigure(anneau, outline=BORDURE_ECLAT),
                    lambda: rond.itemconfigure(anneau, outline=CARTE))
