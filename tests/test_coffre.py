@@ -226,6 +226,56 @@ def test_import_fichier_corrompu(tmp_path):
         c.importer(faux, EXPORT)
 
 
+@pytest.mark.parametrize("cle, valeur", [
+    ("memoire", 64 * 1024 * 1024), ("iterations", 10 ** 9), ("voies", 1000),
+    ("memoire", -1), ("iterations", "4"), ("voies", True), ("kdf", "scrypt"),
+])
+def test_import_refuse_parametres_argon2_pieges(tmp_path, monkeypatch, cle, valeur):
+    c = Coffre(tmp_path / "c.vault")
+    c.creer(MAITRE)
+    export = tmp_path / "export.secretlin"
+    c.exporter(export, EXPORT)
+    contenu = json.loads(export.read_text())
+    contenu["entete"][cle] = valeur
+    export.write_text(json.dumps(contenu))
+    # Le calcul de clé ne doit jamais être lancé avec ces paramètres.
+    monkeypatch.setattr(module, "_deriver_cle", lambda *a: pytest.fail("clé dérivée"))
+    with pytest.raises(module.CoffreCorrompu):
+        c.importer(export, EXPORT)
+
+
+@pytest.mark.parametrize("entrees", [
+    {"site": "x"}, ["texte"], [{"site": "x", "utilisateur": "u"}],
+    [{"site": 1, "utilisateur": "u", "mot_de_passe": "p"}],
+    [{"site": "x", "utilisateur": "u", "mot_de_passe": "p", "notes": None}],
+])
+def test_import_refuse_entrees_mal_formees(tmp_path, entrees):
+    c = Coffre(tmp_path / "c.vault")
+    c.creer(MAITRE)
+    c.ajouter("site", "u", "p")
+    entete, sel = module._nouvel_entete()
+    cle = module._deriver_cle(EXPORT, sel, entete["memoire"], entete["iterations"], entete["voies"])
+    export = tmp_path / "export.secretlin"
+    export.write_text(module._chiffrer(cle, entete, entrees))
+    with pytest.raises(module.CoffreCorrompu):
+        c.importer(export, EXPORT)
+    assert len(c.entrees) == 1
+
+
+def test_import_complete_les_champs_facultatifs(tmp_path):
+    c = Coffre(tmp_path / "c.vault")
+    c.creer(MAITRE)
+    entete, sel = module._nouvel_entete()
+    cle = module._deriver_cle(EXPORT, sel, entete["memoire"], entete["iterations"], entete["voies"])
+    export = tmp_path / "export.secretlin"
+    export.write_text(module._chiffrer(cle, entete, [
+        {"site": "x", "utilisateur": "moi@mail.com", "mot_de_passe": "p"}]))
+    assert c.importer(export, EXPORT) == 1
+    e = c.entrees[0]
+    assert (e["utilisateur"], e["email"], e["notes"]) == ("", "moi@mail.com", "")
+    assert e["id"]
+
+
 def test_export_refuse_mot_de_passe_faible_et_coffre_verrouille(tmp_path):
     c = Coffre(tmp_path / "c.vault")
     c.creer(MAITRE)
