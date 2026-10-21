@@ -220,7 +220,9 @@ class BoutonAnime(tkinter.Canvas):
         self._dessiner()
         self._vers(self.survole, duree=0.5)
         if self.commande:
-            self.after(70, self.commande)
+            # Programmé sur la fenêtre principale, pas sur le bouton : la commande peut
+            # détruire la page qui contient ce bouton (« ← Retour », changement de thème…).
+            self._root().after(70, self.commande)
 
     def changer_texte(self, texte):
         self.itemconfigure(self._texte, text=texte)
@@ -389,10 +391,12 @@ class Application(ctk.CTk):
     # --- Navigation -------------------------------------------------------
 
     def _changer_ecran(self, ecran):
-        if self.ecran is not None:
-            self.ecran.destroy()
-        self.ecran = ecran
+        # Le nouvel écran est en place avant la destruction de l'ancien : une erreur pendant
+        # celle-ci ne laisse pas l'application pointer sur un écran à moitié détruit.
+        ancien, self.ecran = self.ecran, ecran
         ecran.pack(fill="both", expand=True)
+        if ancien is not None:
+            ancien.destroy()
 
     def afficher_connexion(self):
         if self.coffre.existe():
@@ -636,7 +640,8 @@ class EcranDeverrouillage(EcranCentre):
             self.app.echecs = 0
             self.app.noter_echecs(0)
             self.afficher_message("Déverrouillé", SUCCES)
-            self.logo.ouvrir(lambda: self.after(150, self.app.afficher_principal))
+            # Sur la fenêtre principale : afficher_principal() détruit cet écran.
+            self.logo.ouvrir(lambda: self.app.after(150, self.app.afficher_principal))
             return
         self.bouton.activer(True, "Déverrouiller")
         self.mdp.delete(0, "end")
@@ -1591,7 +1596,7 @@ class PageApparence(Page):
 
     def _changer(self, **choix):
         # Après la fin du clic : l'écran entier (et ce bouton) va être recréé.
-        self.after(80, lambda: self.app.changer_apparence(**choix))
+        self.app.after(80, lambda: self.app.changer_apparence(**choix))
 
     def _section(self, parent, titre, texte):
         carte = ctk.CTkFrame(parent, fg_color=CARTE, corner_radius=12, border_width=1,
