@@ -118,7 +118,13 @@ class _Element:
             image, self.lignes = Image.new("RGB", (photo.width, self.hauteur), fond), (a, b)
         else:
             image = self.image.copy()
-            self.lignes = (min(a, self.lignes[0]), max(b, self.lignes[1]))
+            debut, fin = self.lignes
+            if a <= fin and b >= debut:
+                self.lignes = (min(a, debut), max(b, fin))
+            elif b - a > fin - debut:
+                # Deux parties séparées par des lignes jamais vues : on garde la plus
+                # grande, et l'élément reste incomplet (il sera repris sur une photo).
+                self.lignes = (a, b)
         image.paste(photo.crop((0, haut + a - haut_photo, photo.width, haut + b - haut_photo)), (0, a))
         self.image = image
 
@@ -221,18 +227,20 @@ class _Bloc:
     # --- Images --------------------------------------------------------------
 
     def bande(self):
-        """Apparence du bloc (image PIL), ou None tant qu'un élément n'a pas été vu."""
+        """Apparence du bloc (image PIL), ou None tant qu'aucun élément n'a été vu. Un
+        élément jamais vu (sorti de la zone visible) y est laissé couleur de fond."""
         if self._bande is None:
-            if any(e.image is None for e in self.elements):
+            vus = [e.image for e in self.elements if e.image is not None]
+            if not vus:
                 return None
             if len(self.elements) == 1:
-                self._bande = self.elements[0].image
+                self._bande = vus[0]
             else:
-                self._bande = Image.new("RGB", (self.elements[0].image.width, self.hauteur),
-                                        self.voile.fond)
+                self._bande = Image.new("RGB", (vus[0].width, self.hauteur), self.voile.fond)
                 haut = 0
                 for e in self.elements:
-                    self._bande.paste(e.image, (0, haut))
+                    if e.image is not None:
+                        self._bande.paste(e.image, (0, haut))
                     haut += e.hauteur
         return self._bande
 
@@ -461,8 +469,10 @@ class Voile:
             self.terminer()
 
     def _sur_appui(self, evenement):
-        """Un clic sur le calque arrête l'animation. Il va à la liste si l'élément visé
-        est déjà à sa place : sinon il tomberait sur un autre que celui qu'on voit."""
+        """Un clic sur un élément déjà à sa place arrête l'animation et va à la liste.
+        Sur un élément qui bouge encore, il est ignoré et l'animation continue : dans la
+        liste, un autre élément occupe peut-être déjà cet endroit (un double-clic y
+        copierait le mot de passe d'un autre compte)."""
         if evenement.num in (4, 5, 6, 7):  # molette sous X11
             self.terminer()
             self._transmettre(self.vue, "<Button-%d>" % evenement.num, evenement)
@@ -472,13 +482,14 @@ class Voile:
             if b.sous(evenement.y):
                 vise = b
                 break
-        transmettre = not self.actif or vise is not None and vise.a_sa_place()
+        if self.actif and (vise is None or not vise.a_sa_place()):
+            return
         self.terminer()
         try:
             cible = self.racine.winfo_containing(evenement.x_root, evenement.y_root)
         except (KeyError, tkinter.TclError):
             cible = None  # fenêtre qui n'appartient pas à tkinter
-        if transmettre and cible is not None and cible is not self.toile:
+        if cible is not None and cible is not self.toile:
             # La souris n'est pas « entrée » dans le widget visé : le calque était dessus.
             self._transmettre(cible, "<Enter>", evenement)
             self._transmettre(cible, "<ButtonPress-%d>" % evenement.num, evenement)
@@ -486,8 +497,16 @@ class Voile:
 
     def _sur_relache(self, evenement):
         cible, self._cible = self._cible, None
-        if cible is not None and cible.winfo_exists():
-            self._transmettre(cible, "<ButtonRelease-%d>" % evenement.num, evenement)
+        if cible is None or not cible.winfo_exists():
+            return
+        try:
+            dessous = self.racine.winfo_containing(evenement.x_root, evenement.y_root)
+        except (KeyError, tkinter.TclError):
+            dessous = None
+        if dessous is not cible:
+            # Relâché ailleurs : comme pour un vrai bouton, le clic est annulé.
+            self._transmettre(cible, "<Leave>", evenement)
+        self._transmettre(cible, "<ButtonRelease-%d>" % evenement.num, evenement)
 
     def _sur_molette(self, evenement):
         self.terminer()
