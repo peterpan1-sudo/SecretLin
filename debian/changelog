@@ -1,3 +1,12 @@
+secretlin (1.1.4) kali-dev; urgency=medium
+
+  * Boutons : plus de bord noir fugace ni de texte qui tremble au survol
+    (surtout visible sur « Ajouter »).
+  * Import : un fichier piégé (paramètres Argon2id démesurés) ou mal formé
+    est refusé proprement au lieu de geler ou faire planter l'application.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Wed, 21 Oct 2026 22:30:00 +0200
+
 secretlin (1.1.3) kali-dev; urgency=medium
 
   * Recherche : les comptes écartés glissent vers le bas et se dissipent en
