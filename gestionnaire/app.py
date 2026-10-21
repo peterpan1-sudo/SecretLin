@@ -19,8 +19,9 @@ from gestionnaire.coffre import (
 from gestionnaire.logo import dessiner as dessiner_logo
 from gestionnaire.marques import style_pastille
 from gestionnaire.effets import (
-    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition, valeur,
+    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition,
 )
+from gestionnaire.voile import Voile
 
 # Palette sobre gris / noir
 FOND = "#0b0b0d"
@@ -609,8 +610,11 @@ class IndexAlphabet(ctk.CTkFrame):
         return TEXTE_DOUX if lettre in self.presentes else TEXTE_ETEINT
 
     def maj(self, presentes):
-        self.presentes = presentes
+        anciennes, self.presentes = self.presentes, presentes
         for lettre, (lab, _f) in self.lettres.items():
+            # Seules les lettres qui changent s'animent : la recherche appelle maj() souvent.
+            if (lettre in anciennes) == (lettre in presentes):
+                continue
             transition(lab, "couleur", self._couleur_repos(lettre), 0.3,
                        lambda c, lab=lab: lab.configure(text_color=c))
 
@@ -626,6 +630,11 @@ class IndexAlphabet(ctk.CTkFrame):
     def _clic(self, lettre):
         if lettre in self.presentes:
             self.aller_a(lettre)
+
+
+def _distance(c1: str, c2: str) -> int:
+    """Écart entre deux couleurs « #rrggbb »."""
+    return sum(abs(int(c1[i:i + 2], 16) - int(c2[i:i + 2], 16)) for i in (1, 3, 5))
 
 
 class Pastille(ctk.CTkLabel):
@@ -644,19 +653,27 @@ class Pastille(ctk.CTkLabel):
         texte = st["texte_survol"] if self.survole else st["texte"]
         definir(self, "fond", fond)
         definir(self, "texte", texte)
-        self.configure(fg_color=fond, text_color=texte,
-                       image=st["image_survol"] if self.survole else st["image"],
+        self._logo = st["image_survol"] if self.survole else st["image"]
+        self.configure(fg_color=fond, text_color=texte, image=self._logo,
                        text="" if st["image"] else (site.strip()[:1].upper() or "?"))
 
     def survol(self, survole):
         self.survole = survole
         st = self.style
-        transition(self, "fond", st["fond_survol"] if survole else st["fond"], 0.25,
-                   lambda c: self.configure(fg_color=c))
+        cible, depart = (st["fond_survol"], st["fond"]) if survole else (st["fond"], st["fond_survol"])
+        image = st["image_survol"] if survole else st["image"]
+
+        def fond(c):
+            self.configure(fg_color=c)
+            # Le logo change de couleur quand le fond est à mi-chemin. Changé dès le début,
+            # il aurait presque la couleur du fond et disparaîtrait un instant.
+            if image is not None and image is not self._logo and \
+                    _distance(c, cible) <= _distance(c, depart):
+                self._logo = image
+                self.configure(image=image)
+        transition(self, "fond", cible, 0.25, fond)
         transition(self, "texte", st["texte_survol"] if survole else st["texte"], 0.25,
                    lambda c: self.configure(text_color=c))
-        if st["image"]:
-            self.configure(image=st["image_survol"] if survole else st["image"])
 
 
 class CarteIdentifiant(ctk.CTkFrame):
@@ -776,6 +793,7 @@ class EcranPrincipal(ctk.CTkFrame):
                                             scrollbar_button_color=BORDURE,
                                             scrollbar_button_hover_color=BORDURE_ECLAT)
         self.liste.pack(fill="both", expand=True)
+        self.voile = Voile(self.liste)
 
         # Notification qui glisse depuis le bas
         self.toast = ctk.CTkFrame(self, fg_color=ACCENT, corner_radius=12)
@@ -826,6 +844,7 @@ class EcranPrincipal(ctk.CTkFrame):
         cible_widget = self.entetes.get(lettre)
         if cible_widget is None:
             return
+        self.voile.terminer()
         self.liste.update_idletasks()
         canvas = self.liste._parent_canvas
         total = max(self.liste.winfo_height(), 1)
@@ -852,14 +871,16 @@ class EcranPrincipal(ctk.CTkFrame):
         # flèches…) ne touche pas à la liste.
         filtre = self.recherche.get().strip().casefold()
         if filtre != self._filtre_affiche:
-            self._afficher(filtre)
+            self._afficher(filtre, anime=True)
 
     def rafraichir(self, animer_entree=False):
         """Recrée toutes les cartes, après un ajout, une modification ou un import."""
+        self.voile.terminer()
         for enfant in self.liste.winfo_children():
             enfant.destroy()
         self._vide = None
-        self._sections = []  # [(lettre, en-tête, [(entrée, carte), …]), …]
+        self._texte_vide = None
+        self._sections = []  # [(lettre, case de l'en-tête, [(entrée, case de la carte), …]), …]
         cartes = []
         lettre_courante = None
         for e in self.app.coffre.entrees:
@@ -869,54 +890,84 @@ class EcranPrincipal(ctk.CTkFrame):
                 lettre_courante = lettre
                 self._sections.append((lettre, self._entete_section(lettre), []))
             anime = animer_entree and len(cartes) < 25
-            carte = CarteIdentifiant(self, self.liste, e, marge_depart=70 if anime else None)
-            self._sections[-1][2].append((e, carte))
+            case = self._case()
+            carte = CarteIdentifiant(self, case, e, marge_depart=70 if anime else None)
+            self._sections[-1][2].append((e, case))
             cartes.append(carte)
-        self._afficher(self.recherche.get().strip().casefold())
+        self._afficher(self.recherche.get().strip().casefold(), anime=False)
 
         if animer_entree:
             for i, carte in enumerate(cartes[:25]):
                 self.after(30 * i, carte.apparaitre)
 
-    def _afficher(self, filtre):
+    def _afficher(self, filtre, anime):
         """Montre les cartes qui correspondent à la recherche. Les cartes existent déjà :
-        on les cache ou on les remet, sans rien recréer, pour que la liste ne clignote pas."""
+        on ne fait que ranger ou ressortir leur case, et le voile anime le changement."""
         self._filtre_affiche = filtre
-        for enfant in self.liste.winfo_children():
-            enfant.pack_forget()
-        if self._vide is not None:
-            self._vide.destroy()
-            self._vide = None
-        self.entetes = {}
+        entetes = {}
+        plan = []  # (case, visible) dans l'ordre de la liste
         nombre = 0
         for lettre, entete, cartes in self._sections:
-            visibles = [carte for e, carte in cartes
-                        if any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))]
-            if not visibles:
-                continue
-            entete.pack(fill="x", padx=14, pady=(16, 4))
-            self.entetes[lettre] = entete
-            for carte in visibles:
-                carte.pack(fill="x", padx=round(valeur(carte, "marge", carte.MARGE)), pady=4)
-            nombre += len(visibles)
-
+            visibles = [any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))
+                        for e, _case in cartes]
+            plan.append((entete, any(visibles)))
+            plan.extend((case, visible) for (_e, case), visible in zip(cartes, visibles))
+            if any(visibles):
+                entetes[lettre] = entete
+            nombre += sum(visibles)
         total = len(self.app.coffre.entrees)
-        self.compteur.configure(text=f"{nombre} / {total}" if filtre else
-                                f"{total} identifiant{'s' if total > 1 else ''}")
+        texte_vide = None if nombre else (
+            "Aucun résultat." if filtre else
+            "Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte.")
 
-        if not nombre:
-            self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
-            self._vide.pack(pady=70)
-            if not filtre:
-                LogoAnime(self._vide, FOND).pack()
-            texte = ("Aucun résultat." if filtre else
-                     "Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte.")
-            ctk.CTkLabel(self._vide, text=texte, font=police(14), text_color=TEXTE_DOUX,
-                         justify="center").pack(pady=(12, 0))
-        self.index.maj(set(self.entetes))
+        def appliquer():
+            self.entetes = entetes
+            if texte_vide != self._texte_vide and self._vide is not None:
+                self._vide.destroy()
+                self._vide = None
+            # Les cases déjà affichées gardent leur place ; celles qui reviennent sont
+            # insérées entre leurs voisines.
+            precedente = None
+            for case, visible in plan:
+                if visible and not case.winfo_manager():
+                    if precedente is not None:
+                        case.pack(fill="x", after=precedente)
+                    else:
+                        suivante = next((c for c, _v in plan if c.winfo_manager()), None)
+                        case.pack(fill="x", before=suivante) if suivante else case.pack(fill="x")
+                elif not visible and case.winfo_manager():
+                    case.pack_forget()
+                if case.winfo_manager():
+                    precedente = case
+            if texte_vide is not None and self._vide is None:
+                self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
+                self._vide.pack(pady=70)
+                if not filtre:
+                    LogoAnime(self._vide, FOND).pack()
+                ctk.CTkLabel(self._vide, text=texte_vide, font=police(14), text_color=TEXTE_DOUX,
+                             justify="center").pack(pady=(12, 0))
+            self._texte_vide = texte_vide
+            self.compteur.configure(text=f"{nombre} / {total}" if filtre else
+                                    f"{total} identifiant{'s' if total > 1 else ''}")
+            self.index.maj(set(entetes))
+
+        change = texte_vide != self._texte_vide or any(
+            visible != bool(case.winfo_manager()) for case, visible in plan)
+        if not change:
+            appliquer()  # rien ne bouge dans la liste : seuls le compteur et l'index changent
+        elif anime:
+            self.voile.changer(appliquer)
+        else:
+            self.voile.terminer()
+            appliquer()
+
+    def _case(self):
+        """Emplacement d'un élément dans la liste : c'est lui qu'on range ou ressort."""
+        return tkinter.Frame(self.liste, bg=FOND, bd=0, highlightthickness=0)
 
     def _entete_section(self, lettre):
-        ligne = ctk.CTkFrame(self.liste, fg_color="transparent")
+        case = self._case()
+        ligne = ctk.CTkFrame(case, fg_color="transparent")
         ligne.pack(fill="x", padx=14, pady=(16, 4))
         lab = ctk.CTkLabel(ligne, text=lettre, font=police(14, gras=True), text_color=TEXTE_DOUX,
                            width=20, anchor="w")
@@ -924,8 +975,8 @@ class EcranPrincipal(ctk.CTkFrame):
         definir(lab, "couleur", TEXTE_DOUX)
         ctk.CTkFrame(ligne, fg_color=BORDURE, height=1, corner_radius=0).pack(
             side="left", fill="x", expand=True, padx=(10, 0))
-        ligne.lettre = lab
-        return ligne
+        case.lettre = lab
+        return case
 
 
 # --- Fenêtres ---------------------------------------------------------------
