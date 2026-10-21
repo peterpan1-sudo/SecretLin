@@ -161,10 +161,10 @@ class BoutonAnime(tkinter.Canvas):
         self._texte = self.create_text(self.l / 2, self.h / 2, text=texte, fill=self.s["texte"],
                                        font=fonte)
         if icone:
-            # Engrenage à gauche du texte, l'ensemble centré.
-            taille = taille_police + 3
+            # Engrenage seul au centre, ou à gauche du texte avec l'ensemble centré.
+            taille = taille_police + 3 if texte else 18
             self._icone = ImageTk.PhotoImage(_engrenage(taille, self.s["texte"]))
-            debut = (self.l - (taille + 7 + fonte.measure(texte))) / 2
+            debut = (self.l - (taille + (7 + fonte.measure(texte) if texte else 0))) / 2
             self.create_image(debut + taille / 2, self.h / 2, image=self._icone)
             self.coords(self._texte, debut + taille + 7, self.h / 2)
             self.itemconfigure(self._texte, anchor="w")
@@ -387,6 +387,7 @@ class Application(ctk.CTk):
         elif action == "ajouter":
             FenetreEntree(self.ecran)
         else:
+            self.ecran.afficher_liste()
             self.ecran.recherche.focus_set()
 
     # --- Navigation -------------------------------------------------------
@@ -818,7 +819,9 @@ class EcranPrincipal(ctk.CTkFrame):
         ctk.CTkLabel(titres, text="Chiffré de bout en bout  ·  AES-256", font=police(11),
                      text_color=TEXTE_DOUX, anchor="w").pack(fill="x")
 
-        BoutonAnime(entete, "Verrouiller", app.verrouiller, width=112).pack(side="right", padx=(0, 16))
+        BoutonAnime(entete, "", self.afficher_reglages, width=38, icone=True).pack(
+            side="right", padx=(0, 16))
+        BoutonAnime(entete, "Verrouiller", app.verrouiller, width=112).pack(side="right")
         BoutonAnime(entete, "+  Ajouter", lambda: FenetreEntree(self), style="principal",
                     width=124).pack(side="right")
 
@@ -836,6 +839,9 @@ class EcranPrincipal(ctk.CTkFrame):
 
         corps = ctk.CTkFrame(self, fg_color="transparent")
         corps.pack(fill="both", expand=True, padx=(18, 18), pady=18)
+        self.corps = corps
+        # Pages ouvertes par-dessus la liste (Réglages, puis Sécurité…), la dernière visible.
+        self.pages = []
 
         self.index = IndexAlphabet(corps, self.aller_a)
         self.index.pack(side="left", fill="y", padx=(0, 14))
@@ -851,8 +857,6 @@ class EcranPrincipal(ctk.CTkFrame):
         self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
         BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
-        BoutonAnime(barre, "Réglages", lambda: FenetreReglages(self), width=124,
-                    icone=True).pack(side="right")
         self.compteur.pack(side="right", padx=(14, 0))
 
         self.liste = ctk.CTkScrollableFrame(contenu, fg_color="transparent",
@@ -891,6 +895,30 @@ class EcranPrincipal(ctk.CTkFrame):
     def copier(self, texte, message):
         self.app.copier(texte)
         self.notifier(message)
+
+    def ouvrir_page(self, classe):
+        """Affiche une page à la place de la liste (ou de la page précédente). L'en-tête
+        reste visible : le verrouillage automatique continue de tourner."""
+        (self.pages[-1] if self.pages else self.corps).pack_forget()
+        page = classe(self)
+        page.pack(fill="both", expand=True, padx=18, pady=18)
+        self.pages.append(page)
+
+    def page_precedente(self):
+        self.pages.pop().destroy()
+        if self.pages:
+            self.pages[-1].pack(fill="both", expand=True, padx=18, pady=18)
+        else:
+            self.corps.pack(fill="both", expand=True, padx=(18, 18), pady=18)
+
+    def afficher_liste(self):
+        while self.pages:
+            self.page_precedente()
+
+    def afficher_reglages(self):
+        if not (self.pages and isinstance(self.pages[-1], PageReglages)):
+            self.afficher_liste()
+            self.ouvrir_page(PageReglages)
 
     def notifier(self, texte):
         self.toast_texte.configure(text=f"✓   {texte}")
@@ -1436,55 +1464,81 @@ class DialogueMotDePasse(Dialogue):
         self.succes(resultat)
 
 
-class FenetreReglages(Dialogue):
-    """Réglages de SecretLin, rangés par onglets. Pour en ajouter un : une entrée
-    dans ONGLETS (titre, classe qui construit son contenu)."""
+# --- Réglages ---------------------------------------------------------------
+
+class Page(ctk.CTkFrame):
+    """Page affichée à la place de la liste : bouton de retour, titre et sous-titre."""
+
+    def __init__(self, ecran: EcranPrincipal, titre, sous_titre, retour="Retour"):
+        super().__init__(ecran, fg_color="transparent")
+        self.ecran = ecran
+        haut = ctk.CTkFrame(self, fg_color="transparent")
+        haut.pack(fill="x")
+        BoutonAnime(haut, "←  " + retour, ecran.page_precedente, width=112).pack(side="left")
+        ctk.CTkLabel(haut, text=titre, font=police(22, gras=True), text_color=TEXTE).pack(
+            side="left", padx=(12, 0))
+        ctk.CTkLabel(self, text=sous_titre, font=police(12), text_color=TEXTE_DOUX,
+                     anchor="w").pack(fill="x", padx=(8, 0), pady=(6, 16))
+
+
+class CarteMenu(ctk.CTkFrame):
+    """Rubrique cliquable des réglages : titre, description et flèche."""
+
+    def __init__(self, parent, titre, description, action):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE, cursor="hand2")
+        definir(self, "bord", BORDURE)
+        textes = ctk.CTkFrame(self, fg_color="transparent")
+        textes.pack(side="left", fill="x", expand=True, padx=18, pady=14)
+        widgets = [self, textes]
+        for texte, taille, gras, couleur in ((titre, 15, True, TEXTE),
+                                             (description, 12, False, TEXTE_DOUX)):
+            l = ctk.CTkLabel(textes, text=texte, font=police(taille, gras=gras),
+                             text_color=couleur, anchor="w")
+            l.pack(fill="x")
+            widgets.append(l)
+        fleche = ctk.CTkLabel(self, text="›", font=police(24), text_color=TEXTE_DOUX)
+        fleche.pack(side="right", padx=18)
+        widgets.append(fleche)
+        for w in widgets:
+            tkinter.Misc.bind(w, "<Button-1>", lambda _e: action(), "+")
+        survol(self, lambda: self._etat(True), lambda: self._etat(False))
+
+    def _etat(self, survole):
+        transition(self, "bord", BORDURE_ECLAT if survole else BORDURE, 0.25,
+                   lambda c: self.configure(border_color=c))
+
+
+class PageReglages(Page):
+    """Liste des rubriques de réglages. Pour en ajouter une : une ligne dans « rubriques »."""
 
     def __init__(self, ecran: EcranPrincipal):
-        super().__init__(ecran.app, "Réglages")
-        self.ecran = ecran
-        corps = ctk.CTkFrame(self, fg_color="transparent")
-        corps.pack(padx=30, pady=26)
-        ctk.CTkLabel(corps, text="Réglages", font=police(20, gras=True), text_color=TEXTE,
-                     anchor="w").pack(fill="x")
-        onglets = {"Sécurité": OngletSecurite}
-        self.barre = ctk.CTkSegmentedButton(
-            corps, values=list(onglets), command=self._afficher, height=34, corner_radius=9,
-            font=police(13, gras=True), fg_color=CARTE, selected_color="#2c2c32",
-            selected_hover_color="#2c2c32", unselected_color=CARTE,
-            unselected_hover_color=CARTE_SURVOL, text_color=TEXTE)
-        self.barre.pack(anchor="w", pady=(10, 14))
-        self.pages = {}
-        for titre, classe in onglets.items():
-            self.pages[titre] = classe(corps, self)
-        BoutonAnime(corps, "Fermer", self.destroy, width=100).pack(side="bottom", anchor="e",
-                                                                   pady=(14, 0))
-        premier = next(iter(onglets))
-        self.barre.set(premier)
-        self._afficher(premier)
-
-    def _afficher(self, titre):
-        for nom, page in self.pages.items():
-            if nom == titre:
-                page.pack(fill="x")
-            else:
-                page.pack_forget()
-
-    def terminer(self, message):
-        """Ferme les réglages et affiche « message » en bas de l'écran principal."""
-        self.destroy()
-        self.ecran.notifier(message)
+        super().__init__(ecran, "Réglages", "Choisissez une rubrique.")
+        rubriques = [
+            ("Sécurité", "Mot de passe maître", PageSecurite),
+        ]
+        for titre, description, classe in rubriques:
+            CarteMenu(self, titre, description,
+                      lambda c=classe: ecran.ouvrir_page(c)).pack(fill="x", pady=4)
 
 
-class OngletSecurite(ctk.CTkFrame):
+class PageSecurite(Page):
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, "Sécurité", "Tout ce qui protège l'accès à votre coffre.",
+                         retour="Réglages")
+        SectionMotDePasse(self, ecran).pack(fill="x", pady=4)
+
+
+class SectionMotDePasse(ctk.CTkFrame):
     """Changer le mot de passe maître : l'actuel est redemandé, pour qu'une personne
     devant l'ordinateur resté ouvert ne puisse pas le remplacer."""
 
-    def __init__(self, parent, fenetre: FenetreReglages):
-        super().__init__(parent, fg_color=CARTE, corner_radius=12)
-        self.fenetre = fenetre
+    def __init__(self, parent, ecran: EcranPrincipal):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE)
+        self.ecran = ecran
         corps = ctk.CTkFrame(self, fg_color="transparent")
-        corps.pack(padx=20, pady=18)
+        corps.pack(anchor="w", padx=20, pady=18)
         ctk.CTkLabel(corps, text="Mot de passe maître", font=police(15, gras=True),
                      text_color=TEXTE, anchor="w").pack(fill="x")
         ctk.CTkLabel(corps, text="Le coffre et ses copies automatiques seront rechiffrés : "
@@ -1527,7 +1581,7 @@ class OngletSecurite(ctk.CTkFrame):
             return
         self.bouton.activer(False, "Patientez…")
         self.message.configure(text="")
-        app = self.fenetre.ecran.app
+        app = self.ecran.app
 
         def fond():
             try:
@@ -1542,21 +1596,23 @@ class OngletSecurite(ctk.CTkFrame):
         threading.Thread(target=fond, daemon=True).start()
 
     def _resultat(self, erreur):
-        app = self.fenetre.ecran.app
+        app = self.ecran.app
         # Le coffre a pu être verrouillé pendant l'opération : on ne le laisse pas ouvert.
-        if not isinstance(app.ecran, EcranPrincipal):
+        if app.ecran is not self.ecran:
             app.coffre.verrouiller()
             return
         if not self.winfo_exists():
             return
+        self.bouton.activer(True, "Changer le mot de passe")
+        self.actuel.delete(0, "end")
         if erreur:
-            self.bouton.activer(True, "Changer le mot de passe")
-            self.actuel.delete(0, "end")
             self.message.configure(text=erreur)
             self.actuel.focus_set()
             return
-        self.fenetre.terminer("Mot de passe maître changé")
-
+        self.nouveau.delete(0, "end")
+        self.confirmation.delete(0, "end")
+        self.jauge.maj("")
+        self.ecran.notifier("Mot de passe maître changé")
 
 def main():
     Application().mainloop()
