@@ -1482,7 +1482,7 @@ class Page(ctk.CTkFrame):
 
 
 class CarteMenu(ctk.CTkFrame):
-    """Rubrique cliquable des réglages : titre, description et flèche."""
+    """Rubrique cliquable des réglages : titre, description facultative et flèche."""
 
     def __init__(self, parent, titre, description, action):
         super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
@@ -1491,8 +1491,10 @@ class CarteMenu(ctk.CTkFrame):
         textes = ctk.CTkFrame(self, fg_color="transparent")
         textes.pack(side="left", fill="x", expand=True, padx=18, pady=14)
         widgets = [self, textes]
-        for texte, taille, gras, couleur in ((titre, 15, True, TEXTE),
-                                             (description, 12, False, TEXTE_DOUX)):
+        lignes = [(titre, 15, True, TEXTE)]
+        if description:
+            lignes.append((description, 12, False, TEXTE_DOUX))
+        for texte, taille, gras, couleur in lignes:
             l = ctk.CTkLabel(textes, text=texte, font=police(taille, gras=gras),
                              text_color=couleur, anchor="w")
             l.pack(fill="x")
@@ -1515,7 +1517,7 @@ class PageReglages(Page):
     def __init__(self, ecran: EcranPrincipal):
         super().__init__(ecran, "Réglages", "Choisissez une rubrique.")
         rubriques = [
-            ("Sécurité", "Mot de passe maître", PageSecurite),
+            ("Sécurité", "", PageSecurite),
         ]
         for titre, description, classe in rubriques:
             CarteMenu(self, titre, description,
