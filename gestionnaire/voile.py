@@ -22,7 +22,7 @@ import tkinter
 from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageTk
 
 from gestionnaire.capture import garder_contenu, photographier
-from gestionnaire.effets import figer, liberer
+from gestionnaire.effets import arreter, figer, liberer
 
 IMAGE_S = 1 / 60
 DUREE_FUMEE = 0.5     # un élément écarté se dissipe
@@ -271,7 +271,13 @@ class _Bloc:
         futur = self._niveaux[n]
         if not futur.done() and not attendre:
             return _PAS_PRET
-        resultat = futur.result()
+        if futur.done() and not futur.cancelled():
+            resultat = futur.result()
+        else:
+            # Calculé ici plutôt qu'attendu : le fil principal n'attend jamais un ouvrier,
+            # qui peut lui-même attendre Tk (pour libérer une image qu'il a ramassée).
+            futur.cancel()
+            resultat = fumee(self._base, self.voile.fond, n / NIVEAUX)
         self._photos[n] = resultat and (
             ImageTk.PhotoImage(resultat[0], master=self.voile.toile), resultat[1], resultat[2])
         return self._photos[n]
@@ -323,6 +329,21 @@ class _Bloc:
     def effacer(self):
         self._oublier()
         self.voile.toile.delete(self.item)
+        self.montre = None  # l'image Tk est libérée tout de suite, dans le fil principal
+
+    def lacher(self):
+        """Comme effacer(), quand la toile est détruite : sans rien demander à Tk."""
+        for futur in self._niveaux.values():
+            futur.cancel()
+        self._niveaux, self._photos, self._chauffe = {}, {}, {}
+        self._nette = self.montre = None
+
+    def sous(self, y):
+        return self.montre is not None and self.y <= y < self.y + self.hauteur
+
+    def a_sa_place(self):
+        """Montré net, à sa place dans la nouvelle liste, et immobile."""
+        return self.au_repos() and self.f == 0 and all(e.apres is not None for e in self.elements)
 
 
 class Voile:
@@ -332,6 +353,7 @@ class Voile:
     def __init__(self, liste):
         self.liste = liste
         self.vue = liste._parent_canvas
+        self.racine = liste._root()
         self.toile = tkinter.Canvas(self.vue.master, bg=self.vue.cget("bg"), bd=0,
                                     highlightthickness=0)
         self.toile.place(in_=self.vue, x=0, y=0, relwidth=1, relheight=1)
@@ -344,7 +366,14 @@ class Voile:
         self._debut_image = 0.0
         self._taille = None
         self._attente = []
+        self._defilement = 0
+        self._cible = None
         self.vue.bind("<Configure>", self._redimensionnee, "+")
+        # Un clic ou la molette pendant l'animation arrête celle-ci et va à la liste.
+        self.toile.bind("<ButtonPress>", self._sur_appui)
+        self.toile.bind("<ButtonRelease>", self._sur_relache)
+        self.toile.bind("<MouseWheel>", self._sur_molette)
+        self.toile.bind("<Destroy>", self._detruite)
 
     # --- Interface -----------------------------------------------------------
 
@@ -361,17 +390,24 @@ class Voile:
             appliquer()
             self._repartir(maintenant)
         except BaseException:
-            self.terminer()
+            self._terminer_malgre_tout()
             raise
         self._planifier()
 
     def terminer(self):
         """Arrête l'animation : la liste s'affiche aussitôt dans son état final."""
         if self._tache is not None:
-            self.toile.after_cancel(self._tache)
+            self.racine.after_cancel(self._tache)
             self._tache = None
         if self.actif:
             self._baisser()
+
+    def _terminer_malgre_tout(self):
+        """Après une erreur : la liste ne doit pas rester cachée sous le calque."""
+        try:
+            self.terminer()
+        except tkinter.TclError:
+            pass
 
     # --- Début et fin --------------------------------------------------------
 
@@ -379,6 +415,8 @@ class Voile:
         """Pose sur la liste un calque qui en montre l'apparence actuelle."""
         if not self.vue.winfo_viewable():
             return False
+        # La liste ne doit plus bouger sous le calque (défilement vers une lettre…).
+        arreter(self.vue)
         if not self.garde:
             # Sans cela, découvrir la liste ou le calque montrerait un instant une zone
             # vide. Demandé une fois les fenêtres affichées : le serveur doit les connaître.
@@ -422,6 +460,58 @@ class Voile:
         if self.actif and (evenement.width, evenement.height) != self._taille:
             self.terminer()
 
+    def _sur_appui(self, evenement):
+        """Un clic sur le calque arrête l'animation. Il va à la liste si l'élément visé
+        est déjà à sa place : sinon il tomberait sur un autre que celui qu'on voit."""
+        if evenement.num in (4, 5, 6, 7):  # molette sous X11
+            self.terminer()
+            self._transmettre(self.vue, "<Button-%d>" % evenement.num, evenement)
+            return
+        vise = None
+        for b in reversed(sorted(self.blocs, key=_Bloc.rang)):  # du dessus vers le dessous
+            if b.sous(evenement.y):
+                vise = b
+                break
+        transmettre = not self.actif or vise is not None and vise.a_sa_place()
+        self.terminer()
+        try:
+            cible = self.racine.winfo_containing(evenement.x_root, evenement.y_root)
+        except (KeyError, tkinter.TclError):
+            cible = None  # fenêtre qui n'appartient pas à tkinter
+        if transmettre and cible is not None and cible is not self.toile:
+            # La souris n'est pas « entrée » dans le widget visé : le calque était dessus.
+            self._transmettre(cible, "<Enter>", evenement)
+            self._transmettre(cible, "<ButtonPress-%d>" % evenement.num, evenement)
+            self._cible = cible
+
+    def _sur_relache(self, evenement):
+        cible, self._cible = self._cible, None
+        if cible is not None and cible.winfo_exists():
+            self._transmettre(cible, "<ButtonRelease-%d>" % evenement.num, evenement)
+
+    def _sur_molette(self, evenement):
+        self.terminer()
+        self._transmettre(self.vue, "<MouseWheel>", evenement, delta=evenement.delta)
+
+    @staticmethod
+    def _transmettre(widget, sequence, evenement, **options):
+        widget.event_generate(sequence, x=evenement.x_root - widget.winfo_rootx(),
+                              y=evenement.y_root - widget.winfo_rooty(), rootx=evenement.x_root,
+                              rooty=evenement.y_root, time=evenement.time, **options)
+
+    def _detruite(self, _evenement):
+        """Écran détruit pendant l'animation (verrouillage…) : plus rien ne doit tourner,
+        ni rester en mémoire."""
+        if self._tache is not None:
+            self.racine.after_cancel(self._tache)
+            self._tache = None
+        for b in self.blocs:
+            b.lacher()
+        self.blocs, self._attente = [], []
+        if self.actif:
+            self.actif = False
+            liberer(self.vue)
+
     # --- Animation -----------------------------------------------------------
 
     def _disposition(self):
@@ -429,7 +519,7 @@ class Voile:
         la zone visible."""
         self.liste.update_idletasks()
         self.vue.configure(scrollregion=self.vue.bbox("all"))
-        defilement = round(self.vue.canvasy(0))
+        self._defilement = defilement = round(self.vue.canvasy(0))
         return [(w, w.winfo_y() - defilement, w.winfo_height()) for w in self.liste.pack_slaves()]
 
     def _repartir(self, t):
@@ -533,35 +623,45 @@ class Voile:
         if self._tache is None:
             maintenant = time.perf_counter()
             delai = max(4, int((self._debut_image + IMAGE_S - maintenant) * 1000))
-            self._tache = self.toile.after(delai, self._image)
+            self._tache = self.racine.after(delai, self._image)
 
     def _image(self):
         self._tache = None
         self._debut_image = time.perf_counter()
         try:
-            if not self.toile.winfo_exists():
-                return
-            t = time.perf_counter()
-            for b in self.blocs:
-                b.avancer(t)
-            restants = []
-            for b in self.blocs:
-                if b.part() and b.au_repos():
-                    b.effacer()  # complètement dissipé
-                else:
-                    restants.append(b)
-            self.blocs = restants
-            for b in self.blocs:
-                b.dessiner()
-            if not self._attente and all(b.au_repos() for b in self.blocs):
-                self._baisser()
-            else:
-                self._planifier()
-                # Le reste du travail attend que cette image soit dessinée et envoyée à
-                # l'écran (tâche d'attente, puis minuterie) : elle ne prend pas de retard.
-                self.toile.after_idle(lambda: self.toile.after(0, self._entre_images))
+            self._image_suivante()
         except tkinter.TclError:
             pass  # écran détruit pendant l'animation (verrouillage…)
+        except BaseException:
+            self._terminer_malgre_tout()
+            raise
+
+    def _image_suivante(self):
+        if not self.toile.winfo_exists():
+            return
+        if round(self.vue.canvasy(0)) != self._defilement:
+            # La liste a défilé sous le calque (barre de défilement) : on la montre.
+            self.terminer()
+            return
+        t = time.perf_counter()
+        for b in self.blocs:
+            b.avancer(t)
+        restants = []
+        for b in self.blocs:
+            if b.part() and b.au_repos():
+                b.effacer()  # complètement dissipé
+            else:
+                restants.append(b)
+        self.blocs = restants
+        for b in self.blocs:
+            b.dessiner()
+        if not self._attente and all(b.au_repos() for b in self.blocs):
+            self._baisser()
+        else:
+            self._planifier()
+            # Le reste du travail attend que cette image soit dessinée et envoyée à
+            # l'écran (tâche d'attente, puis minuterie) : elle ne prend pas de retard.
+            self.racine.after_idle(lambda: self.racine.after(0, self._entre_images))
 
     def _entre_images(self):
         try:
@@ -571,6 +671,9 @@ class Voile:
                     b.anticiper()
         except tkinter.TclError:
             pass
+        except BaseException:
+            self._terminer_malgre_tout()
+            raise
 
     def _photographier_nouvelle_liste(self):
         """Prend l'apparence des éléments qui arrivent sur la vraie liste, cachée sous le

@@ -101,6 +101,16 @@ def animer(widget, cle, duree, etape, fin=None, courbe=adoucir):
     tick()
 
 
+def arreter(widget):
+    """Arrête les animations de « widget » là où elles en sont."""
+    taches = widget.__dict__.get("_animations", {})
+    for cle in list(taches):
+        try:
+            widget._root().after_cancel(taches.pop(cle))
+        except tkinter.TclError:
+            pass
+
+
 def definir(widget, nom, valeur):
     """Fixe la valeur courante d'une propriété animée (sans animation)."""
     widget.__dict__.setdefault("_etats_anim", {})[nom] = valeur
