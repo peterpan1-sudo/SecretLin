@@ -6,11 +6,12 @@ import threading
 import time
 import tkinter
 import tkinter.font
+from functools import lru_cache
 from pathlib import Path
 from tkinter import filedialog
 
 import customtkinter as ctk
-from PIL import ImageTk
+from PIL import Image, ImageDraw, ImageTk
 
 from gestionnaire.coffre import (
     Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
@@ -19,7 +20,7 @@ from gestionnaire.coffre import (
 from gestionnaire.logo import dessiner as dessiner_logo
 from gestionnaire.marques import style_pastille
 from gestionnaire.effets import (
-    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition,
+    adoucir, animer, definir, lineaire, melanger, rebond, survol, transition, valeur,
 )
 from gestionnaire.voile import Voile
 
@@ -96,8 +97,26 @@ def couleur_fond(widget) -> str:
 
 # --- Composants animés ------------------------------------------------------
 
-class BoutonAnime(ctk.CTkFrame):
-    """Bouton qui grossit au survol, s'entoure d'un halo et lance un éclat au clic."""
+@lru_cache(maxsize=2048)
+def _image_bouton(largeur, hauteur, bouton_l, bouton_h, fond_parent, halo, fond, bord):
+    """Halo arrondi et bouton arrondi (bordure 1 px), dessinés en 3× puis réduits :
+    bords lisses et tailles au tiers de pixel près, pour un zoom fluide."""
+    k = 3
+    im = Image.new("RGB", (largeur * k, hauteur * k), fond_parent)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle((0, 0, largeur * k - 1, hauteur * k - 1), radius=12 * k, fill=halo)
+    x0, y0 = (largeur * k - bouton_l) / 2, (hauteur * k - bouton_h) / 2
+    x1, y1 = x0 + bouton_l - 1, y0 + bouton_h - 1
+    d.rounded_rectangle((x0, y0, x1, y1), radius=9 * k, fill=bord)
+    d.rounded_rectangle((x0 + k, y0 + k, x1 - k, y1 - k), radius=8 * k, fill=fond)
+    return im.resize((largeur, hauteur), Image.LANCZOS)
+
+
+class BoutonAnime(tkinter.Canvas):
+    """Bouton qui grossit au survol, s'entoure d'un halo et lance un éclat au clic.
+
+    Tout est dessiné dans une seule image de taille fixe : rien n'est redimensionné
+    pendant l'animation, donc ni bord noir fugace ni texte qui tremble."""
 
     MARGE = 7
 
@@ -106,39 +125,43 @@ class BoutonAnime(ctk.CTkFrame):
         self.s = STYLES[style]
         self.fond_parent = couleur_fond(parent)
         m = self.MARGE
-        super().__init__(parent, width=width + 2 * m, height=height + 2 * m,
-                         corner_radius=12, fg_color=self.fond_parent)
+        self.l, self.h = width + 2 * m, height + 2 * m
+        super().__init__(parent, width=self.l, height=self.h, bg=self.fond_parent,
+                         highlightthickness=0, bd=0, cursor="hand2")
         self.commande = commande
         self.largeur, self.hauteur = width, height
         self.actif = True
         self.survole = False
         self._dernier_clic = 0.0
+        self._image = None
 
-        self.btn = ctk.CTkButton(
-            self, text=texte, command=self._clic, width=width, height=height, corner_radius=9,
-            hover=False, border_width=1, fg_color=self.s["fond"], border_color=self.s["bord"],
-            text_color=self.s["texte"], font=police(taille_police, gras=style == "principal"),
-        )
-        self.btn.place(relx=0.5, rely=0.5, anchor="center")
-        definir(self.btn, "fond", self.s["fond"])
-        definir(self.btn, "bord", self.s["bord"])
-        definir(self.btn, "zoom", 0.0)
+        self._fond_dessin = self.create_image(0, 0, anchor="nw")
+        self._texte = self.create_text(self.l / 2, self.h / 2, text=texte, fill=self.s["texte"],
+                                       font=police(taille_police, gras=style == "principal"))
+        definir(self, "fond", self.s["fond"])
+        definir(self, "bord", self.s["bord"])
         definir(self, "halo", self.fond_parent)
-        survol(self.btn, self._entrer, self._sortir)
-        self.btn.bind("<ButtonPress-1>", self._appui)
+        definir(self, "zoom", 0.0)
+        self._dessiner()
+        survol(self, self._entrer, self._sortir)
+        self.bind("<ButtonPress-1>", self._appui)
+        self.bind("<ButtonRelease-1>", self._relache)
 
-    def _zoom(self, v):
-        self.btn.configure(width=round(self.largeur + 8 * v), height=round(self.hauteur + 6 * v))
+    def _dessiner(self, _v=None):
+        z = valeur(self, "zoom")
+        image = _image_bouton(self.l, self.h, round((self.largeur + 8 * z) * 3),
+                              round((self.hauteur + 6 * z) * 3), self.fond_parent,
+                              valeur(self, "halo"), valeur(self, "fond"), valeur(self, "bord"))
+        self._image = ImageTk.PhotoImage(image)
+        self.itemconfigure(self._fond_dessin, image=self._image)
 
     def _vers(self, survole, duree=0.2):
         s = self.s
-        transition(self.btn, "fond", s["fond_survol"] if survole else s["fond"], duree,
-                   lambda c: self.btn.configure(fg_color=c))
-        transition(self.btn, "bord", s["bord_survol"] if survole else s["bord"], duree,
-                   lambda c: self.btn.configure(border_color=c))
+        transition(self, "fond", s["fond_survol"] if survole else s["fond"], duree, self._dessiner)
+        transition(self, "bord", s["bord_survol"] if survole else s["bord"], duree, self._dessiner)
         transition(self, "halo", s["halo"] if survole else self.fond_parent, duree + 0.1,
-                   lambda c: self.configure(fg_color=c))
-        transition(self.btn, "zoom", 1.0 if survole else 0.0, duree + 0.12, self._zoom,
+                   self._dessiner)
+        transition(self, "zoom", 1.0 if survole else 0.0, duree + 0.12, self._dessiner,
                    courbe=rebond if survole else adoucir)
 
     def _entrer(self):
@@ -152,7 +175,14 @@ class BoutonAnime(ctk.CTkFrame):
 
     def _appui(self, _e=None):
         if self.actif:
-            transition(self.btn, "zoom", -0.6, 0.08, self._zoom)
+            transition(self, "zoom", -0.6, 0.08, self._dessiner)
+
+    def _relache(self, e):
+        # Comme un vrai bouton : le clic compte si la souris est encore dessus au relâché.
+        if 0 <= e.x < self.l and 0 <= e.y < self.h:
+            self._clic()
+        elif self.actif:
+            self._vers(self.survole)
 
     def _clic(self):
         maintenant = time.monotonic()
@@ -160,20 +190,24 @@ class BoutonAnime(ctk.CTkFrame):
             return
         self._dernier_clic = maintenant
         # Éclat : le bouton et son halo s'illuminent puis reviennent doucement.
-        definir(self.btn, "fond", self.s["eclat"])
-        definir(self.btn, "bord", BLANC)
+        definir(self, "fond", self.s["eclat"])
+        definir(self, "bord", BLANC)
         definir(self, "halo", BLANC)
-        self.btn.configure(fg_color=self.s["eclat"], border_color=BLANC)
-        self.configure(fg_color=BLANC)
+        self._dessiner()
         self._vers(self.survole, duree=0.5)
         if self.commande:
             self.after(70, self.commande)
 
+    def changer_texte(self, texte):
+        self.itemconfigure(self._texte, text=texte)
+
     def activer(self, actif, texte=None):
         self.actif = actif
-        self.btn.configure(state="normal" if actif else "disabled")
+        self.configure(cursor="hand2" if actif else "")
+        self.itemconfigure(self._texte, fill=self.s["texte"] if actif
+                           else melanger(self.s["texte"], self.s["fond"], 0.55))
         if texte:
-            self.btn.configure(text=texte)
+            self.changer_texte(texte)
         if not actif:
             self._vers(False)
 
@@ -1109,7 +1143,7 @@ class FenetreEntree(Dialogue):
     def _basculer(self):
         visible = self.mdp.cget("show") == ""
         self.mdp.configure(show="•" if visible else "")
-        self.bouton_voir.btn.configure(text="Afficher" if visible else "Masquer")
+        self.bouton_voir.changer_texte("Afficher" if visible else "Masquer")
 
     def _generer(self):
         mdp = generer_mot_de_passe()
