@@ -26,6 +26,11 @@ ARGON2_MEMOIRE_KIO = 256 * 1024
 ARGON2_ITERATIONS = 4
 ARGON2_VOIES = 4
 LONGUEUR_MIN_MAITRE = 12
+# Limites des paramètres Argon2id acceptés à la lecture d'un fichier : un fichier piégé
+# ne doit pas pouvoir réclamer des Gio de mémoire ou des heures de calcul.
+ARGON2_MEMOIRE_MAX_KIO = 1024 * 1024
+ARGON2_ITERATIONS_MAX = 16
+ARGON2_VOIES_MAX = 16
 
 
 class MotDePasseIncorrect(Exception):
@@ -95,6 +100,20 @@ def _ecrire_atomique(chemin: Path, contenu: str) -> None:
         if os.path.exists(tmp):
             os.remove(tmp)
         raise
+
+
+def _verifier_parametres(entete: dict) -> None:
+    """Refuse un en-tête dont les paramètres Argon2id sont absurdes ou dangereux."""
+    if entete.get("kdf") != "argon2id":
+        raise ValueError("méthode de dérivation inconnue")
+    limites = {"memoire": (8, ARGON2_MEMOIRE_MAX_KIO), "iterations": (1, ARGON2_ITERATIONS_MAX),
+               "voies": (1, ARGON2_VOIES_MAX)}
+    for nom, (mini, maxi) in limites.items():
+        valeur = entete[nom]
+        if type(valeur) is not int or not mini <= valeur <= maxi:
+            raise ValueError(f"paramètre {nom} hors limites")
+    if entete["memoire"] < 8 * entete["voies"]:
+        raise ValueError("paramètre memoire trop petit")
 
 
 def _deriver_cle(mot_de_passe: str, sel: bytes, memoire: int, iterations: int, voies: int) -> bytes:
@@ -201,6 +220,7 @@ def _dechiffrer(chemin: Path, mot_de_passe: str) -> tuple[bytes, dict, list[dict
         nonce = _deb64(contenu["nonce"])
         chiffre = _deb64(contenu["donnees"])
         sel = _deb64(entete["sel"])
+        _verifier_parametres(entete)
         memoire, iterations, voies = entete["memoire"], entete["iterations"], entete["voies"]
     except (OSError, ValueError, KeyError, TypeError) as e:
         raise CoffreCorrompu(str(e)) from e
@@ -212,10 +232,31 @@ def _dechiffrer(chemin: Path, mot_de_passe: str) -> tuple[bytes, dict, list[dict
     except InvalidTag:
         raise MotDePasseIncorrect() from None
 
-    entrees = json.loads(clair.decode("utf-8"))
-    for e in entrees:
-        _separer_email(e)
+    try:
+        entrees = _verifier_entrees(json.loads(clair.decode("utf-8")))
+    except (ValueError, TypeError) as e:
+        raise CoffreCorrompu(str(e)) from e
     return cle, entete, entrees
+
+
+def _verifier_entrees(entrees) -> list[dict]:
+    """Contrôle les entrées déchiffrées : une liste de fiches dont chaque champ est un
+    texte. Les champs facultatifs manquants sont complétés."""
+    if not isinstance(entrees, list):
+        raise ValueError("la liste des comptes est absente")
+    for e in entrees:
+        if not isinstance(e, dict):
+            raise ValueError("compte illisible")
+        for cle in ("site", "utilisateur", "mot_de_passe"):
+            if not isinstance(e.get(cle), str):
+                raise ValueError(f"champ {cle} manquant ou invalide")
+        e.setdefault("notes", "")
+        _separer_email(e)
+        if not isinstance(e["email"], str) or not isinstance(e["notes"], str):
+            raise ValueError("champ email ou notes invalide")
+        if not isinstance(e.get("id"), str) or not e["id"]:
+            e["id"] = secrets.token_hex(8)
+    return entrees
 
 
 def _empreinte(entree: dict) -> tuple:
