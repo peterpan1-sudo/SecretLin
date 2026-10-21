@@ -112,6 +112,27 @@ def _image_bouton(largeur, hauteur, bouton_l, bouton_h, fond_parent, halo, fond,
     return im.resize((largeur, hauteur), Image.LANCZOS)
 
 
+@lru_cache(maxsize=16)
+def _engrenage(taille, couleur):
+    """Icône d'engrenage (8 dents, trou central), dessinée en 4× puis réduite."""
+    k = 4
+    s = taille * k
+    c = s / 2
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    r_dent, r_corps = s * 0.49, s * 0.36
+    points = []
+    for i in range(8):
+        a = 2 * math.pi * i / 8
+        for r, da in ((r_corps, -0.36), (r_dent, -0.2), (r_dent, 0.2), (r_corps, 0.36)):
+            points.append((c + r * math.cos(a + da), c + r * math.sin(a + da)))
+    d.polygon(points, fill=couleur)
+    d.ellipse((c - r_corps, c - r_corps, c + r_corps, c + r_corps), fill=couleur)
+    r_trou = s * 0.15
+    d.ellipse((c - r_trou, c - r_trou, c + r_trou, c + r_trou), fill=(0, 0, 0, 0))
+    return im.resize((taille, taille), Image.LANCZOS)
+
+
 class BoutonAnime(tkinter.Canvas):
     """Bouton qui grossit au survol, s'entoure d'un halo et lance un éclat au clic.
 
@@ -121,7 +142,7 @@ class BoutonAnime(tkinter.Canvas):
     MARGE = 7
 
     def __init__(self, parent, texte, commande, style="secondaire", width=120, height=38,
-                 taille_police=13):
+                 taille_police=13, icone=False):
         self.s = STYLES[style]
         self.fond_parent = couleur_fond(parent)
         m = self.MARGE
@@ -136,8 +157,17 @@ class BoutonAnime(tkinter.Canvas):
         self._image = None
 
         self._fond_dessin = self.create_image(0, 0, anchor="nw")
+        fonte = police(taille_police, gras=style == "principal")
         self._texte = self.create_text(self.l / 2, self.h / 2, text=texte, fill=self.s["texte"],
-                                       font=police(taille_police, gras=style == "principal"))
+                                       font=fonte)
+        if icone:
+            # Engrenage à gauche du texte, l'ensemble centré.
+            taille = taille_police + 3
+            self._icone = ImageTk.PhotoImage(_engrenage(taille, self.s["texte"]))
+            debut = (self.l - (taille + 7 + fonte.measure(texte))) / 2
+            self.create_image(debut + taille / 2, self.h / 2, image=self._icone)
+            self.coords(self._texte, debut + taille + 7, self.h / 2)
+            self.itemconfigure(self._texte, anchor="w")
         definir(self, "fond", self.s["fond"])
         definir(self, "bord", self.s["bord"])
         definir(self, "halo", self.fond_parent)
@@ -821,8 +851,8 @@ class EcranPrincipal(ctk.CTkFrame):
         self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
         BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
-        BoutonAnime(barre, "Mot de passe", lambda: FenetreMotDePasseMaitre(self),
-                    width=124).pack(side="right", padx=(0, 8))
+        BoutonAnime(barre, "Réglages", lambda: FenetreReglages(self), width=124,
+                    icone=True).pack(side="right")
         self.compteur.pack(side="right", padx=(14, 0))
 
         self.liste = ctk.CTkScrollableFrame(contenu, fg_color="transparent",
@@ -1406,16 +1436,56 @@ class DialogueMotDePasse(Dialogue):
         self.succes(resultat)
 
 
-class FenetreMotDePasseMaitre(Dialogue):
-    """Change le mot de passe maître : l'actuel est redemandé, pour qu'une personne
-    devant l'ordinateur resté ouvert ne puisse pas le remplacer."""
+class FenetreReglages(Dialogue):
+    """Réglages de SecretLin, rangés par onglets. Pour en ajouter un : une entrée
+    dans ONGLETS (titre, classe qui construit son contenu)."""
 
     def __init__(self, ecran: EcranPrincipal):
-        super().__init__(ecran.app, "Mot de passe maître")
+        super().__init__(ecran.app, "Réglages")
         self.ecran = ecran
         corps = ctk.CTkFrame(self, fg_color="transparent")
         corps.pack(padx=30, pady=26)
-        ctk.CTkLabel(corps, text="Changer le mot de passe maître", font=police(17, gras=True),
+        ctk.CTkLabel(corps, text="Réglages", font=police(20, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x")
+        onglets = {"Sécurité": OngletSecurite}
+        self.barre = ctk.CTkSegmentedButton(
+            corps, values=list(onglets), command=self._afficher, height=34, corner_radius=9,
+            font=police(13, gras=True), fg_color=CARTE, selected_color="#2c2c32",
+            selected_hover_color="#2c2c32", unselected_color=CARTE,
+            unselected_hover_color=CARTE_SURVOL, text_color=TEXTE)
+        self.barre.pack(anchor="w", pady=(10, 14))
+        self.pages = {}
+        for titre, classe in onglets.items():
+            self.pages[titre] = classe(corps, self)
+        BoutonAnime(corps, "Fermer", self.destroy, width=100).pack(side="bottom", anchor="e",
+                                                                   pady=(14, 0))
+        premier = next(iter(onglets))
+        self.barre.set(premier)
+        self._afficher(premier)
+
+    def _afficher(self, titre):
+        for nom, page in self.pages.items():
+            if nom == titre:
+                page.pack(fill="x")
+            else:
+                page.pack_forget()
+
+    def terminer(self, message):
+        """Ferme les réglages et affiche « message » en bas de l'écran principal."""
+        self.destroy()
+        self.ecran.notifier(message)
+
+
+class OngletSecurite(ctk.CTkFrame):
+    """Changer le mot de passe maître : l'actuel est redemandé, pour qu'une personne
+    devant l'ordinateur resté ouvert ne puisse pas le remplacer."""
+
+    def __init__(self, parent, fenetre: FenetreReglages):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12)
+        self.fenetre = fenetre
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=20, pady=18)
+        ctk.CTkLabel(corps, text="Mot de passe maître", font=police(15, gras=True),
                      text_color=TEXTE, anchor="w").pack(fill="x")
         ctk.CTkLabel(corps, text="Le coffre et ses copies automatiques seront rechiffrés : "
                      "l'ancien mot de passe n'ouvrira plus rien. Les fichiers exportés "
@@ -1435,11 +1505,9 @@ class FenetreMotDePasseMaitre(Dialogue):
         self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
                                     wraplength=340)
         self.message.pack(pady=(6, 0))
-        boutons = ctk.CTkFrame(corps, fg_color="transparent")
-        boutons.pack(fill="x", pady=(4, 0))
-        self.bouton = BoutonAnime(boutons, "Changer", self._valider, style="principal", width=120)
-        self.bouton.pack(side="right")
-        BoutonAnime(boutons, "Annuler", self.destroy, width=100).pack(side="right")
+        self.bouton = BoutonAnime(corps, "Changer le mot de passe", self._valider,
+                                  style="principal", width=200)
+        self.bouton.pack(anchor="e", pady=(4, 0))
         self.after(80, self.actuel.focus_set)
 
     def _valider(self):
@@ -1459,7 +1527,7 @@ class FenetreMotDePasseMaitre(Dialogue):
             return
         self.bouton.activer(False, "Patientez…")
         self.message.configure(text="")
-        app = self.ecran.app
+        app = self.fenetre.ecran.app
 
         def fond():
             try:
@@ -1474,7 +1542,7 @@ class FenetreMotDePasseMaitre(Dialogue):
         threading.Thread(target=fond, daemon=True).start()
 
     def _resultat(self, erreur):
-        app = self.ecran.app
+        app = self.fenetre.ecran.app
         # Le coffre a pu être verrouillé pendant l'opération : on ne le laisse pas ouvert.
         if not isinstance(app.ecran, EcranPrincipal):
             app.coffre.verrouiller()
@@ -1482,13 +1550,12 @@ class FenetreMotDePasseMaitre(Dialogue):
         if not self.winfo_exists():
             return
         if erreur:
-            self.bouton.activer(True, "Changer")
+            self.bouton.activer(True, "Changer le mot de passe")
             self.actuel.delete(0, "end")
             self.message.configure(text=erreur)
             self.actuel.focus_set()
             return
-        self.destroy()
-        self.ecran.notifier("Mot de passe maître changé")
+        self.fenetre.terminer("Mot de passe maître changé")
 
 
 def main():
