@@ -1,3 +1,12 @@
+secretlin (1.1.3) kali-dev; urgency=medium
+
+  * Recherche : les comptes écartés glissent vers le bas et se dissipent en
+    fumée légère, les autres remontent en douceur, sans clignotement, y
+    compris sous Wayland. Un clic ou la molette pendant l'animation
+    l'arrête et agit tout de suite.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Wed, 21 Oct 2026 19:50:00 +0200
+
 secretlin (1.1.2) kali-dev; urgency=medium
 
   * Recherche : la liste des comptes ne clignote plus quand on tape ou
