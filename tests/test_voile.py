@@ -169,10 +169,12 @@ def test_clic_sur_un_element_en_mouvement(liste):
     y = voile.toile.winfo_rooty() + round(bloc_b.y) + 30
     voile.toile.event_generate("<ButtonPress-1>", x=50, y=y - voile.toile.winfo_rooty(), rootx=x, rooty=y)
     voile.toile.event_generate("<ButtonRelease-1>", x=50, y=y - voile.toile.winfo_rooty(), rootx=x, rooty=y)
-    # L'animation s'arrête, mais le clic ne part pas sur une autre carte que celle vue.
-    assert not voile.actif
+    # Le clic ne part pas sur une autre carte que celle vue, et l'animation continue :
+    # le second clic d'un double-clic ne tombe pas non plus sur un autre compte.
+    assert voile.actif
     assert clics_a == clics_b == clics_c == []
-    assert b.winfo_rooty() < position
+    pomper(racine, 1.5)
+    assert not voile.actif and b.winfo_rooty() < position
 
 
 @ecran
@@ -273,3 +275,30 @@ def test_le_fil_principal_n_attend_jamais_un_ouvrier(liste, monkeypatch):
     finally:
         bloque.set()
         ouvrier.shutdown()
+
+
+def test_relever_deux_parties_separees():
+    from gestionnaire.voile import _Element
+    e = _Element(None, 60)
+    photo = Image.new("RGB", (100, 30), (200, 0, 0))
+    e.relever(photo, 0, -30, FOND)   # lignes 30..60 de l'élément
+    e.relever(Image.new("RGB", (100, 18), (200, 0, 0)), 370, 370, FOND)  # lignes 0..18
+    assert not e.complet()  # les lignes 18..30 n'ont jamais été vues
+
+
+@ecran
+def test_clic_relache_ailleurs(liste):
+    from gestionnaire.voile import Voile
+    racine, cadre = liste
+    (a, clics_a), (b, clics_b), (c, _) = cases_cliquables(cadre, ["#aa3333", "#33aa33", "#3333aa"])
+    sorties = []
+    b.winfo_children()[0].bind("<Leave>", lambda _e: sorties.append(1))
+    voile = Voile(cadre)
+    pomper(racine, 0.3)
+    voile.changer(lambda: c.pack_forget())
+    x = b.winfo_rootx() + 50
+    y = b.winfo_rooty() + 30
+    voile.toile.event_generate("<ButtonPress-1>", x=50, y=y - voile.toile.winfo_rooty(), rootx=x, rooty=y)
+    ya = a.winfo_rooty() + 30  # relâché sur une autre carte
+    voile.toile.event_generate("<ButtonRelease-1>", x=50, y=ya - voile.toile.winfo_rooty(), rootx=x, rooty=ya)
+    assert sorties  # le widget appuyé apprend que la souris l'a quitté : clic annulé
