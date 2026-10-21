@@ -821,6 +821,8 @@ class EcranPrincipal(ctk.CTkFrame):
         self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
         BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
+        BoutonAnime(barre, "Mot de passe", lambda: FenetreMotDePasseMaitre(self),
+                    width=124).pack(side="right", padx=(0, 8))
         self.compteur.pack(side="right", padx=(14, 0))
 
         self.liste = ctk.CTkScrollableFrame(contenu, fg_color="transparent",
@@ -1402,6 +1404,91 @@ class DialogueMotDePasse(Dialogue):
             return
         self.destroy()
         self.succes(resultat)
+
+
+class FenetreMotDePasseMaitre(Dialogue):
+    """Change le mot de passe maître : l'actuel est redemandé, pour qu'une personne
+    devant l'ordinateur resté ouvert ne puisse pas le remplacer."""
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran.app, "Mot de passe maître")
+        self.ecran = ecran
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        ctk.CTkLabel(corps, text="Changer le mot de passe maître", font=police(17, gras=True),
+                     text_color=TEXTE, anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text="Le coffre et ses copies automatiques seront rechiffrés : "
+                     "l'ancien mot de passe n'ouvrira plus rien. Les fichiers exportés "
+                     "gardent leur propre mot de passe d'export.",
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=340).pack(fill="x", pady=(4, 14))
+        self.actuel = champ(corps, "Mot de passe actuel", masque=True, width=340)
+        self.actuel.pack(pady=(0, 12))
+        self.nouveau = champ(corps, "Nouveau mot de passe", masque=True, width=340)
+        self.nouveau.pack()
+        self.jauge = JaugeForce(corps)
+        self.jauge.pack(fill="x", pady=(4, 8))
+        self.nouveau.bind("<KeyRelease>", lambda _e: self.jauge.maj(self.nouveau.get()))
+        self.confirmation = champ(corps, "Confirmer le nouveau mot de passe", masque=True, width=340)
+        self.confirmation.pack()
+        self.confirmation.bind("<Return>", lambda _e: self._valider())
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=340)
+        self.message.pack(pady=(6, 0))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(fill="x", pady=(4, 0))
+        self.bouton = BoutonAnime(boutons, "Changer", self._valider, style="principal", width=120)
+        self.bouton.pack(side="right")
+        BoutonAnime(boutons, "Annuler", self.destroy, width=100).pack(side="right")
+        self.after(80, self.actuel.focus_set)
+
+    def _valider(self):
+        actuel, nouveau = self.actuel.get(), self.nouveau.get()
+        if not actuel:
+            self.message.configure(text="Entrez votre mot de passe actuel.")
+            return
+        problemes = verifier_force(nouveau)
+        if problemes:
+            self.message.configure(text="Il manque : " + ", ".join(problemes) + ".")
+            return
+        if nouveau != self.confirmation.get():
+            self.message.configure(text="Les deux nouveaux mots de passe ne correspondent pas.")
+            return
+        if nouveau == actuel:
+            self.message.configure(text="Le nouveau mot de passe doit être différent de l'actuel.")
+            return
+        self.bouton.activer(False, "Patientez…")
+        self.message.configure(text="")
+        app = self.ecran.app
+
+        def fond():
+            try:
+                app.coffre.changer_mot_de_passe(nouveau, actuel=actuel)
+                erreur = None
+            except MotDePasseIncorrect:
+                erreur = "Mot de passe actuel incorrect."
+            except (OSError, RuntimeError) as e:
+                erreur = f"Changement impossible : {e}"
+            app.after(0, lambda: self._resultat(erreur))
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _resultat(self, erreur):
+        app = self.ecran.app
+        # Le coffre a pu être verrouillé pendant l'opération : on ne le laisse pas ouvert.
+        if not isinstance(app.ecran, EcranPrincipal):
+            app.coffre.verrouiller()
+            return
+        if not self.winfo_exists():
+            return
+        if erreur:
+            self.bouton.activer(True, "Changer")
+            self.actuel.delete(0, "end")
+            self.message.configure(text=erreur)
+            self.actuel.focus_set()
+            return
+        self.destroy()
+        self.ecran.notifier("Mot de passe maître changé")
 
 
 def main():

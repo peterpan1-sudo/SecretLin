@@ -6,6 +6,7 @@ Dérivation de clé : Argon2id (résistant aux attaques par force brute sur GPU)
 
 import base64
 import datetime
+import hmac
 import json
 import math
 import os
@@ -425,7 +426,21 @@ class Coffre:
             self.sauvegarder()
         return ajoutees
 
-    def changer_mot_de_passe(self, nouveau: str) -> None:
+    def verifier_mot_de_passe(self, mot_de_passe: str) -> bool:
+        """Vrai si « mot_de_passe » est le mot de passe maître du coffre ouvert."""
+        if self._cle is None:
+            raise RuntimeError("Coffre verrouillé")
+        e = self._entete
+        cle = _deriver_cle(mot_de_passe, _deb64(e["sel"]), e["memoire"], e["iterations"], e["voies"])
+        return hmac.compare_digest(cle, self._cle)
+
+    def changer_mot_de_passe(self, nouveau: str, actuel: str | None = None) -> None:
+        """Rechiffre le coffre avec « nouveau ». Si « actuel » est donné, il doit être
+        le mot de passe maître en place, sinon MotDePasseIncorrect est levée."""
+        if self._cle is None:
+            raise RuntimeError("Coffre verrouillé")
+        if actuel is not None and not self.verifier_mot_de_passe(actuel):
+            raise MotDePasseIncorrect()
         # Les entrées restent intactes : on régénère la clé puis on sauvegarde
         # une seule fois (jamais de coffre vide écrit entre-temps).
         ancienne_cle, ancien_entete = self._cle, self._entete

@@ -351,6 +351,38 @@ def test_restaurer_copie_ouverture(tmp_path):
     assert [e["site"] for e in c.entrees] == ["autre"]
 
 
+def test_verifier_mot_de_passe(tmp_path):
+    c = Coffre(tmp_path / "c.vault")
+    c.creer("MotDePasse!2026x")
+    assert c.verifier_mot_de_passe("MotDePasse!2026x")
+    assert not c.verifier_mot_de_passe("Mauvais!2026x")
+
+
+def test_changer_mot_de_passe_refuse_un_actuel_faux(tmp_path):
+    chemin = tmp_path / "c.vault"
+    c = Coffre(chemin)
+    c.creer("MotDePasse!2026x")
+    c.ajouter("netflix", "moi", "abc")
+
+    with pytest.raises(MotDePasseIncorrect):
+        c.changer_mot_de_passe("NouveauPass!2027y", actuel="Mauvais!2026x")
+
+    # Rien n'a changé : l'ancien mot de passe ouvre toujours le coffre.
+    Coffre(chemin).ouvrir("MotDePasse!2026x")
+    c.changer_mot_de_passe("NouveauPass!2027y", actuel="MotDePasse!2026x")
+    rouvert = Coffre(chemin)
+    rouvert.ouvrir("NouveauPass!2027y")
+    assert rouvert.entrees[0]["mot_de_passe"] == "abc"
+
+
+def test_changer_mot_de_passe_coffre_verrouille(tmp_path):
+    c = Coffre(tmp_path / "c.vault")
+    c.creer("MotDePasse!2026x")
+    c.verrouiller()
+    with pytest.raises(RuntimeError):
+        c.changer_mot_de_passe("NouveauPass!2027y", actuel="MotDePasse!2026x")
+
+
 def test_changer_mot_de_passe_rechiffre_les_copies(tmp_path):
     chemin = tmp_path / "c.vault"
     c = Coffre(chemin)
