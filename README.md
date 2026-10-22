@@ -1,77 +1,168 @@
-# SecretLin
+<div align="center">
 
-Gestionnaire de mots de passe sécurisé.
+# 🔐 SecretLin
 
-Application de bureau pour ranger ses identifiants (site, nom d'utilisateur, mot de passe),
-classés par ordre alphabétique et protégés par un mot de passe maître.
+**Un gestionnaire de mots de passe simple, beau et chiffré, pour Linux.**
 
-## Installation sur Kali Linux / Debian
+🇫🇷 Français · 🇬🇧 [English](README.en.md)
 
-Télécharger les 3 fichiers `.deb` de la [dernière version](https://github.com/peterpan1-sudo/SecretLin/releases/latest)
-(SecretLin et les bibliothèques `customtkinter` et `darkdetect`, absentes des dépôts), puis dans le dossier du téléchargement :
+[![Dernière version](https://img.shields.io/github/v/release/peterpan1-sudo/SecretLin?label=version)](https://github.com/peterpan1-sudo/SecretLin/releases/latest)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
+![Kali Linux / Debian](https://img.shields.io/badge/Kali%20Linux%20%2F%20Debian-.deb-557C94)
+![Python](https://img.shields.io/badge/Python-3-3776AB)
 
-```
-sudo apt install ./python3-darkdetect_*_all.deb ./python3-customtkinter_*_all.deb ./secretlin_*_all.deb
-```
+<img src="docs/captures/liste-fr.png" alt="Liste des identifiants dans SecretLin" width="760">
 
-Lancer ensuite `secretlin`, ou chercher « SecretLin » dans le menu des applications.
+</div>
 
-Pour construire le paquet soi-même : `dpkg-buildpackage -us -uc -b` (dossier `debian/`).
+SecretLin range tous vos identifiants (site, nom d'utilisateur, e-mail, mot de passe) dans
+un **coffre chiffré** sur votre ordinateur. Vous n'avez plus qu'**un seul mot de passe à
+retenir** : le mot de passe maître. Rien n'est envoyé sur Internet.
 
-## Lancer depuis le code
+## Sommaire
 
-```
-.venv/bin/python lancer.py
-```
+- [Fonctionnalités](#-fonctionnalités)
+- [Installation](#-installation)
+- [Premiers pas](#-premiers-pas)
+- [Captures d'écran](#-captures-décran)
+- [Sécurité](#-sécurité)
+- [Sauvegardes](#-sauvegardes)
+- [Questions fréquentes](#-questions-fréquentes)
+- [Pour les développeurs](#-pour-les-développeurs)
+- [Crédits et licence](#-crédits-et-licence)
 
-## Compatibilité
+## ✨ Fonctionnalités
 
-| Système | État |
+| | |
 |---|---|
-| Linux | Testé (Kali Linux). Paquet `.deb` disponible (voir plus haut). `./construire.sh` crée l'exécutable `SecretLin` et l'ajoute au menu et au Bureau. |
-| Windows, macOS | Non testé. Devrait fonctionner en lançant le code avec Python, sans garantie. `construire.sh` ne fonctionne que sous Linux. |
+| 🔒 **Coffre chiffré** | AES-256-GCM, clé dérivée du mot de passe maître avec Argon2id. |
+| 📋 **Copie en un clic** | Nom d'utilisateur, e-mail ou mot de passe ; le presse-papier est vidé au bout de 3 minutes. |
+| 🎲 **Générateur** | Mots de passe solides : longueur, majuscules, chiffres, symboles, sans caractères ambigus. |
+| 🩺 **Bilan de santé** | Repère les mots de passe faibles, réutilisés ou pas changés depuis plus d'un an. |
+| 🔎 **Recherche et index A–Z** | Retrouvez un compte en quelques lettres. Logos des sites connus (Discord, Netflix, Steam…). |
+| ⏱️ **Verrouillage automatique** | Après 5 min sans bouger la souris sur la fenêtre, ou 2 min avec la souris en dehors. |
+| 💾 **Sauvegardes** | Copies automatiques, export et import chiffrés (clé USB, autre disque…). |
+| 🎨 **Personnalisable** | 5 thèmes, 6 couleurs, 10 polices, taille du texte, animations. |
+| 🌍 **10 langues** | Français, anglais, espagnol, allemand, portugais, italien, russe, chinois, japonais, coréen. |
 
-Pour lancer depuis le code (Python 3 avec Tkinter requis) :
+## 📥 Installation
 
+SecretLin est fait pour **Kali Linux** et **Debian** (paquet `.deb`).
+
+### Première installation
+
+1. Ouvrez la page de la [dernière version](https://github.com/peterpan1-sudo/SecretLin/releases/latest).
+2. Téléchargez les **3 fichiers `.deb`** (SecretLin et deux bibliothèques qui ne sont pas dans les dépôts de Kali).
+3. Ouvrez un terminal dans le dossier du téléchargement, puis lancez :
+
+   ```bash
+   cd ~/Téléchargements
+   sudo apt install ./python3-darkdetect_*_all.deb ./python3-customtkinter_*_all.deb ./secretlin_*_all.deb
+   ```
+
+4. Lancez SecretLin depuis le **menu des applications**, ou en tapant `secretlin` dans un terminal.
+
+Les polices de l'interface, y compris celles du chinois, du japonais et du coréen, s'installent automatiquement avec SecretLin.
+
+### Mise à jour
+
+La page de chaque version donne une commande prête à copier, par exemple :
+
+```bash
+cd /tmp && wget -N https://github.com/peterpan1-sudo/SecretLin/releases/download/v1.2.0/secretlin_1.2.0_all.deb && sudo apt install ./secretlin_1.2.0_all.deb
 ```
+
+Votre coffre et vos réglages sont conservés.
+
+## 🚀 Premiers pas
+
+1. **Créez votre mot de passe maître** au premier lancement. Choisissez-le long et notez-le
+   en lieu sûr : sans lui, le coffre ne peut pas être ouvert.
+2. Cliquez sur **« + Ajouter »** pour enregistrer un compte. Le bouton **« Générer »**
+   crée un mot de passe solide pour vous.
+3. Dans la liste, les boutons **« Copier »** copient le nom d'utilisateur, l'e-mail ou le mot de passe.
+4. Ouvrez de temps en temps le **« Bilan de santé »** pour voir les mots de passe à changer.
+5. L'engrenage **⚙** ouvre les réglages : sécurité, générateur, apparence et langue.
+
+**Raccourcis clavier :** `Ctrl+N` ajouter · `Ctrl+F` rechercher · `Ctrl+L` verrouiller.
+
+## 📸 Captures d'écran
+
+| Bilan de santé | Apparence |
+|---|---|
+| <img src="docs/captures/sante-fr.png" alt="Bilan de santé" width="400"> | <img src="docs/captures/apparence-fr.png" alt="Réglages d'apparence" width="400"> |
+
+| Langue | |
+|---|---|
+| <img src="docs/captures/langue-fr.png" alt="Choix de la langue" width="400"> | |
+
+## 🔒 Sécurité
+
+- Le coffre est chiffré en **AES-256-GCM**. La clé est dérivée du mot de passe maître avec
+  **Argon2id**, conçu pour rendre très lentes les attaques par essais successifs.
+- Le mot de passe maître **n'est jamais enregistré**, nulle part.
+- Toute modification du fichier du coffre (par un autre programme, par exemple) est **détectée**.
+- Après 3 mauvais essais, il faut attendre 1 min, puis 3, 5, 10, 15, 30 min et 1 h.
+  L'attente continue même si l'on ferme et relance SecretLin.
+- Le **Bilan de santé** analyse vos mots de passe sur l'ordinateur ; rien n'est envoyé.
+
+## 💾 Sauvegardes
+
+Le coffre est rangé dans `~/.local/share/GestionnaireMDP/coffre.vault`.
+SecretLin en garde aussi des copies, toutes chiffrées :
+
+- avant chaque enregistrement : `coffre.vault.bak` ;
+- à chaque déverrouillage : une copie datée dans `sauvegardes/` (les 5 plus récentes).
+
+Le bouton **« Sauvegarde »** de l'écran principal permet de :
+
+- **Exporter** le coffre dans un fichier chiffré avec un mot de passe d'export, où vous voulez (clé USB, autre disque…) ;
+- **Importer** un tel fichier (les comptes déjà présents ne sont pas ajoutés deux fois) ;
+- **Restaurer** une copie automatique. L'opération est réversible : le coffre actuel devient la copie « Avant le dernier enregistrement ».
+
+## ❓ Questions fréquentes
+
+**J'ai oublié mon mot de passe maître.**
+Il n'existe aucun moyen de le retrouver : c'est ce qui protège vos données. Il faudra
+recréer un coffre. Pensez à le noter en lieu sûr.
+
+**Mes mots de passe sont-ils envoyés sur Internet ?**
+Non. Tout reste sur votre ordinateur, dans un fichier chiffré.
+
+**Comment changer mon mot de passe maître ?**
+⚙ Réglages → Sécurité. Le coffre et ses copies automatiques sont rechiffrés.
+
+**Comment changer la langue ?**
+⚙ Réglages → Langue. Par défaut, SecretLin suit la langue de l'ordinateur.
+
+**Ça marche sous Windows ou macOS ?**
+Ce n'est pas testé. Le code devrait fonctionner avec Python (voir ci-dessous), sans garantie.
+
+## 🔧 Pour les développeurs
+
+Lancer depuis le code (Python 3 avec Tkinter) :
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python lancer.py
 ```
 
-Sous Windows, remplacer `.venv/bin/` par `.venv\Scripts\`.
+Sous Windows, remplacez `.venv/bin/` par `.venv\Scripts\`.
 
-## Sécurité
+| Action | Commande |
+|---|---|
+| Lancer les tests | `xvfb-run -a .venv/bin/python -m pytest -q` |
+| Construire le paquet `.deb` | `dpkg-buildpackage -us -uc -b` (dossier `debian/`) |
+| Construire un exécutable unique (Linux) | `./construire.sh` |
 
-- Coffre chiffré en AES-256-GCM ; clé dérivée du mot de passe maître avec Argon2id.
-- Le mot de passe maître n'est jamais enregistré : s'il est perdu, le coffre est irrécupérable.
-- Toute modification du fichier du coffre est détectée.
-- Après 3 mauvais essais, attente de 1 min, puis 3, 5, 10, 15, 30 min et 1 h ; conservée même si on ferme et relance SecretLin.
-- Verrouillage automatique : 5 min sans bouger la souris sur la fenêtre, ou 2 min avec la souris en dehors.
-- Presse-papier vidé 3 minutes après la copie d'un mot de passe.
-- Bilan de santé : repère les mots de passe faibles, réutilisés sur plusieurs comptes ou pas changés depuis plus d'un an (analyse faite sur l'ordinateur, rien n'est envoyé).
+Les textes de l'interface sont écrits en français dans le code et traduits dans
+`gestionnaire/traductions.json`.
 
-Le coffre est stocké dans `~/.local/share/GestionnaireMDP/coffre.vault`
-(Windows : `%APPDATA%\GestionnaireMDP\coffre.vault`).
-Avant chaque enregistrement, la version précédente est copiée à côté dans
-`coffre.vault.bak`. À chaque déverrouillage, une copie datée est aussi rangée dans
-le sous-dossier `sauvegardes/` (les 5 plus récentes sont gardées, et aucune copie
-n'est refaite si le coffre n'a pas changé). Toutes ces copies restent chiffrées.
+## 📜 Crédits et licence
 
-Le bouton « Sauvegarde » de l'écran principal permet de :
-- **exporter** le coffre dans un fichier chiffré avec un mot de passe d'export
-  distinct, enregistré à l'endroit de votre choix (clé USB, autre disque…) ;
-- **importer** un tel fichier : les entrées déjà présentes à l'identique sont ignorées ;
-- **restaurer** l'une des copies automatiques. Le coffre actuel devient alors la copie
-  « avant le dernier enregistrement » : la restaurer annule l'opération.
-
-## Logos des marques
-
-Les logos des sites (Discord, Netflix, Steam…) proviennent de [Simple Icons](https://simpleicons.org)
-(licence CC0) et sont intégrés dans `gestionnaire/logos.zip` : rien n'est téléchargé à l'utilisation.
-Pour les régénérer : `python outils/preparer_logos.py <dossier package de simple-icons>`.
+Les logos des sites proviennent de [Simple Icons](https://simpleicons.org) (licence CC0)
+et sont intégrés dans `gestionnaire/logos.zip` : rien n'est téléchargé pendant l'utilisation.
 Les marques citées appartiennent à leurs propriétaires respectifs.
 
-## Licence
-
-Ce projet est distribué sous licence [MIT](LICENSE).
+SecretLin est distribué sous [licence MIT](LICENSE).
