@@ -843,6 +843,7 @@ class CarteIdentifiant(ctk.CTkFrame):
             b.pack(side="right")
             if not e.get(cle):
                 b.activer(False)
+        self._jeton_2fa = None
         if totp.valide(e.get("totp", "")):
             self._bouton_2fa = BoutonAnime(actions, "", lambda: ecran.copier(
                 totp.code(e["totp"]), t("Code de double authentification copié")),
@@ -858,11 +859,18 @@ class CarteIdentifiant(ctk.CTkFrame):
 
     def _maj_2fa(self, cle):
         """Code 2FA en cours et secondes restantes, mis à jour chaque seconde."""
-        if not self.winfo_exists():
-            return
         code = totp.code(cle)
         self._bouton_2fa.changer_texte(f"{code[:3]} {code[3:]} · {totp.restant(cle)}s")
-        self.after(1000 - int(time.time() * 1000) % 1000, lambda: self._maj_2fa(cle))
+        self._jeton_2fa = self.after(1000 - int(time.time() * 1000) % 1000,
+                                     lambda: self._maj_2fa(cle))
+
+    def destroy(self):
+        # Un minuteur laissé en route après la destruction appellerait une commande Tcl
+        # supprimée, dont le nom peut être repris par un autre gestionnaire d'événement.
+        if self._jeton_2fa is not None:
+            self.after_cancel(self._jeton_2fa)
+            self._jeton_2fa = None
+        super().destroy()
 
     def _marge(self, v):
         self.pack_configure(padx=round(v))
