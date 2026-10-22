@@ -1,3 +1,18 @@
+secretlin (1.2.0) kali-dev; urgency=medium
+
+  * Réglages (engrenage en haut à droite), en trois rubriques :
+    - Sécurité : changer le mot de passe maître ; le coffre et ses copies
+      automatiques sont rechiffrés.
+    - Générateur : longueur, majuscules, chiffres, symboles, sans caractères
+      ambigus.
+    - Apparence : 5 thèmes, 6 couleurs d'accent, 10 polices, taille du texte,
+      animations. Les choix sont gardés d'une ouverture à l'autre.
+  * Presse-papier vidé 3 minutes (au lieu de 20 secondes) après la copie
+    d'un mot de passe.
+  * Recommande les paquets de polices fonts-inter, fonts-roboto, etc.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Thu, 22 Oct 2026 18:18:36 +0200
+
 secretlin (1.1.4) kali-dev; urgency=medium
 
   * Boutons : plus de bord noir fugace ni de texte qui tremble au survol
