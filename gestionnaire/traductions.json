@@ -32,6 +32,28 @@
   "ja": "{raison} · {duree} 後にロック",
   "ko": "{raison} · {duree} 후 잠금"
  },
+ "{n} identifiant importé": {
+  "en": "{n} login imported",
+  "es": "{n} cuenta importada",
+  "de": "{n} Zugang importiert",
+  "pt": "{n} login importado",
+  "it": "{n} account importato",
+  "ru": "Импортировано записей: {n}",
+  "zh": "已导入 {n} 个账号",
+  "ja": "{n} 件をインポートしました",
+  "ko": "{n}개 가져옴"
+ },
+ "{n} identifiants importés": {
+  "en": "{n} logins imported",
+  "es": "{n} cuentas importadas",
+  "de": "{n} Zugänge importiert",
+  "pt": "{n} logins importados",
+  "it": "{n} account importati",
+  "ru": "Импортировано записей: {n}",
+  "zh": "已导入 {n} 个账号",
+  "ja": "{n} 件をインポートしました",
+  "ko": "{n}개 가져옴"
+ },
  "{n} ans": {
   "en": "{n} years",
   "es": "{n} años",
@@ -384,6 +406,39 @@
   "ja": "インポート…",
   "ko": "가져오기…"
  },
+ "Depuis un autre gestionnaire": {
+  "en": "From another manager",
+  "es": "Desde otro gestor",
+  "de": "Aus einem anderen Manager",
+  "pt": "De outro gerenciador",
+  "it": "Da un altro gestore",
+  "ru": "Из другого менеджера",
+  "zh": "从其他管理器导入",
+  "ja": "他のマネージャーから",
+  "ko": "다른 관리자에서"
+ },
+ "Firefox, Chrome, Bitwarden, KeePass, 1Password ou LastPass : importez leur fichier d'export CSV.": {
+  "en": "Firefox, Chrome, Bitwarden, KeePass, 1Password or LastPass: import their CSV export file.",
+  "es": "Firefox, Chrome, Bitwarden, KeePass, 1Password o LastPass: importa su archivo de exportación CSV.",
+  "de": "Firefox, Chrome, Bitwarden, KeePass, 1Password oder LastPass: deren CSV-Exportdatei importieren.",
+  "pt": "Firefox, Chrome, Bitwarden, KeePass, 1Password ou LastPass: importe o arquivo de exportação CSV.",
+  "it": "Firefox, Chrome, Bitwarden, KeePass, 1Password o LastPass: importa il loro file di esportazione CSV.",
+  "ru": "Firefox, Chrome, Bitwarden, KeePass, 1Password или LastPass: импортируйте их CSV-файл экспорта.",
+  "zh": "Firefox、Chrome、Bitwarden、KeePass、1Password 或 LastPass：导入它们的 CSV 导出文件。",
+  "ja": "Firefox、Chrome、Bitwarden、KeePass、1Password、LastPass の CSV エクスポートファイルをインポートします。",
+  "ko": "Firefox, Chrome, Bitwarden, KeePass, 1Password, LastPass의 CSV 내보내기 파일을 가져옵니다."
+ },
+ "Choisir…": {
+  "en": "Choose…",
+  "es": "Elegir…",
+  "de": "Auswählen…",
+  "pt": "Escolher…",
+  "it": "Scegli…",
+  "ru": "Выбрать…",
+  "zh": "选择…",
+  "ja": "選択…",
+  "ko": "선택…"
+ },
  "Restaurer": {
   "en": "Restore",
   "es": "Restaurar",
@@ -460,6 +515,28 @@
   "zh": "选择要恢复的副本，然后输入能打开它的主密码。当前保险库仍可通过“上次保存之前”找回。",
   "ja": "戻すコピーを選び、それを開くマスターパスワードを入力してください。現在の金庫は「最後の保存の前」から復元できます。",
   "ko": "되돌릴 사본을 고른 뒤 그 사본을 여는 마스터 비밀번호를 입력하세요. 현재 금고는 ‘마지막 저장 전’으로 다시 복구할 수 있습니다."
+ },
+ "Fichier CSV": {
+  "en": "CSV file",
+  "es": "Archivo CSV",
+  "de": "CSV-Datei",
+  "pt": "Arquivo CSV",
+  "it": "File CSV",
+  "ru": "CSV-файл",
+  "zh": "CSV 文件",
+  "ja": "CSV ファイル",
+  "ko": "CSV 파일"
+ },
+ "Export {source}": {
+  "en": "{source} export",
+  "es": "Exportación de {source}",
+  "de": "{source}-Export",
+  "pt": "Exportação do {source}",
+  "it": "Esportazione {source}",
+  "ru": "Экспорт {source}",
+  "zh": "{source} 导出文件",
+  "ja": "{source} のエクスポート",
+  "ko": "{source} 내보내기 파일"
  },
  "Valider": {
   "en": "OK",
@@ -1110,6 +1187,50 @@
   "ja": "エクスポートファイルをインポート",
   "ko": "내보낸 파일 가져오기"
  },
+ "Importer depuis un autre gestionnaire": {
+  "en": "Import from another manager",
+  "es": "Importar desde otro gestor",
+  "de": "Aus einem anderen Manager importieren",
+  "pt": "Importar de outro gerenciador",
+  "it": "Importa da un altro gestore",
+  "ru": "Импорт из другого менеджера",
+  "zh": "从其他管理器导入",
+  "ja": "他のマネージャーからインポート",
+  "ko": "다른 관리자에서 가져오기"
+ },
+ "Supprimer le fichier CSV après l'import": {
+  "en": "Delete the CSV file after importing",
+  "es": "Eliminar el archivo CSV después de importar",
+  "de": "CSV-Datei nach dem Import löschen",
+  "pt": "Excluir o arquivo CSV após importar",
+  "it": "Elimina il file CSV dopo l'importazione",
+  "ru": "Удалить CSV-файл после импорта",
+  "zh": "导入后删除 CSV 文件",
+  "ja": "インポート後に CSV ファイルを削除",
+  "ko": "가져온 후 CSV 파일 삭제"
+ },
+ "{n} déjà présent": {
+  "en": "{n} already there",
+  "es": "{n} ya presente",
+  "de": "{n} bereits vorhanden",
+  "pt": "{n} já presente",
+  "it": "{n} già presente",
+  "ru": "Уже были: {n}",
+  "zh": "{n} 个已存在",
+  "ja": "{n} 件は登録済み",
+  "ko": "{n}개 이미 있음"
+ },
+ "{n} déjà présents": {
+  "en": "{n} already there",
+  "es": "{n} ya presentes",
+  "de": "{n} bereits vorhanden",
+  "pt": "{n} já presentes",
+  "it": "{n} già presenti",
+  "ru": "Уже были: {n}",
+  "zh": "{n} 个已存在",
+  "ja": "{n} 件は登録済み",
+  "ko": "{n}개 이미 있음"
+ },
  "Majuscules (A–Z)": {
   "en": "Uppercase (A–Z)",
   "es": "Mayúsculas (A–Z)",
@@ -1726,6 +1847,61 @@
   "ja": "コピーを復元しました",
   "ko": "사본을 복원했습니다"
  },
+ "{n} identifiant trouvé dans ce fichier.": {
+  "en": "{n} login found in this file.",
+  "es": "{n} cuenta encontrada en este archivo.",
+  "de": "{n} Zugang in dieser Datei gefunden.",
+  "pt": "{n} login encontrado neste arquivo.",
+  "it": "{n} account trovato in questo file.",
+  "ru": "Найдено записей: {n}.",
+  "zh": "在此文件中找到 {n} 个账号。",
+  "ja": "このファイルに {n} 件見つかりました。",
+  "ko": "이 파일에서 {n}개를 찾았습니다."
+ },
+ "{n} identifiants trouvés dans ce fichier.": {
+  "en": "{n} logins found in this file.",
+  "es": "{n} cuentas encontradas en este archivo.",
+  "de": "{n} Zugänge in dieser Datei gefunden.",
+  "pt": "{n} logins encontrados neste arquivo.",
+  "it": "{n} account trovati in questo file.",
+  "ru": "Найдено записей: {n}.",
+  "zh": "在此文件中找到 {n} 个账号。",
+  "ja": "このファイルに {n} 件見つかりました。",
+  "ko": "이 파일에서 {n}개를 찾았습니다."
+ },
+ "Les comptes déjà présents dans le coffre ne seront pas ajoutés deux fois.": {
+  "en": "Accounts already in the vault will not be added twice.",
+  "es": "Las cuentas que ya están en la caja fuerte no se añadirán dos veces.",
+  "de": "Konten, die schon im Tresor sind, werden nicht doppelt hinzugefügt.",
+  "pt": "Contas que já estão no cofre não serão adicionadas duas vezes.",
+  "it": "Gli account già presenti nella cassaforte non verranno aggiunti due volte.",
+  "ru": "Записи, которые уже есть в хранилище, не будут добавлены повторно.",
+  "zh": "保险库中已有的账号不会重复添加。",
+  "ja": "金庫に登録済みのアカウントは重複して追加されません。",
+  "ko": "금고에 이미 있는 계정은 중복으로 추가되지 않습니다."
+ },
+ "⚠  Ce fichier contient vos mots de passe en clair : supprimez-le après l'import.": {
+  "en": "⚠  This file contains your passwords in plain text: delete it after importing.",
+  "es": "⚠  Este archivo contiene tus contraseñas sin cifrar: elimínalo después de importar.",
+  "de": "⚠  Diese Datei enthält deine Passwörter im Klartext: Lösche sie nach dem Import.",
+  "pt": "⚠  Este arquivo contém suas senhas sem criptografia: exclua-o após importar.",
+  "it": "⚠  Questo file contiene le tue password in chiaro: eliminalo dopo l'importazione.",
+  "ru": "⚠  В этом файле пароли хранятся открытым текстом: удалите его после импорта.",
+  "zh": "⚠  此文件以明文保存你的密码：导入后请删除。",
+  "ja": "⚠  このファイルにはパスワードが平文で入っています。インポート後に削除してください。",
+  "ko": "⚠  이 파일에는 비밀번호가 암호화되지 않은 채 들어 있습니다. 가져온 후 삭제하세요."
+ },
+ "le fichier CSV n'a pas pu être supprimé": {
+  "en": "the CSV file could not be deleted",
+  "es": "no se pudo eliminar el archivo CSV",
+  "de": "die CSV-Datei konnte nicht gelöscht werden",
+  "pt": "não foi possível excluir o arquivo CSV",
+  "it": "impossibile eliminare il file CSV",
+  "ru": "не удалось удалить CSV-файл",
+  "zh": "无法删除 CSV 文件",
+  "ja": "CSV ファイルを削除できませんでした",
+  "ko": "CSV 파일을 삭제하지 못했습니다"
+ },
  "Ce fichier est illisible ou n'est pas un export SecretLin.": {
   "en": "This file is unreadable or is not a SecretLin export.",
   "es": "Este archivo es ilegible o no es una exportación de SecretLin.",
@@ -1803,28 +1979,6 @@
   "ja": "新しいログイン情報",
   "ko": "새 로그인 정보"
  },
- "{n} identifiant importé": {
-  "en": "{n} login imported",
-  "es": "{n} cuenta importada",
-  "de": "{n} Zugang importiert",
-  "pt": "{n} login importado",
-  "it": "{n} account importato",
-  "ru": "Импортировано записей: {n}",
-  "zh": "已导入 {n} 个账号",
-  "ja": "{n} 件をインポートしました",
-  "ko": "{n}개 가져옴"
- },
- "{n} identifiants importés": {
-  "en": "{n} logins imported",
-  "es": "{n} cuentas importadas",
-  "de": "{n} Zugänge importiert",
-  "pt": "{n} logins importados",
-  "it": "{n} account importati",
-  "ru": "Импортировано записей: {n}",
-  "zh": "已导入 {n} 个账号",
-  "ja": "{n} 件をインポートしました",
-  "ko": "{n}개 가져옴"
- },
  "Rien à importer : tout est déjà dans le coffre": {
   "en": "Nothing to import: everything is already in the vault",
   "es": "Nada que importar: todo está ya en la caja fuerte",
@@ -1835,6 +1989,17 @@
   "zh": "没有可导入的内容：全部已在保险库中",
   "ja": "インポートするものはありません。すべて金庫にあります",
   "ko": "가져올 항목이 없습니다. 모두 이미 금고에 있습니다"
+ },
+ "Fichier illisible.": {
+  "en": "Unreadable file.",
+  "es": "Archivo ilegible.",
+  "de": "Datei unlesbar.",
+  "pt": "Arquivo ilegível.",
+  "it": "File illeggibile.",
+  "ru": "Файл не читается.",
+  "zh": "文件无法读取。",
+  "ja": "ファイルを読み取れません。",
+  "ko": "파일을 읽을 수 없습니다."
  },
  "Retour": {
   "en": "Back",
@@ -1934,6 +2099,39 @@
   "zh": "导出密码太弱：缺少 {liste}",
   "ja": "エクスポート用パスワードが弱すぎます。不足：{liste}",
   "ko": "내보내기 비밀번호가 너무 약합니다. 부족한 항목: {liste}"
+ },
+ "Ce fichier est vide.": {
+  "en": "This file is empty.",
+  "es": "Este archivo está vacío.",
+  "de": "Diese Datei ist leer.",
+  "pt": "Este arquivo está vazio.",
+  "it": "Questo file è vuoto.",
+  "ru": "Файл пуст.",
+  "zh": "此文件为空。",
+  "ja": "このファイルは空です。",
+  "ko": "이 파일은 비어 있습니다."
+ },
+ "Ce fichier n'est pas un export CSV reconnu.": {
+  "en": "This file is not a recognised CSV export.",
+  "es": "Este archivo no es una exportación CSV reconocida.",
+  "de": "Diese Datei ist kein erkannter CSV-Export.",
+  "pt": "Este arquivo não é uma exportação CSV reconhecida.",
+  "it": "Questo file non è un'esportazione CSV riconosciuta.",
+  "ru": "Этот файл не похож на известный CSV-экспорт.",
+  "zh": "此文件不是可识别的 CSV 导出文件。",
+  "ja": "このファイルは対応する CSV エクスポートではありません。",
+  "ko": "인식할 수 있는 CSV 내보내기 파일이 아닙니다."
+ },
+ "Sans nom": {
+  "en": "Untitled",
+  "es": "Sin nombre",
+  "de": "Ohne Namen",
+  "pt": "Sem nome",
+  "it": "Senza nome",
+  "ru": "Без названия",
+  "zh": "未命名",
+  "ja": "名前なし",
+  "ko": "이름 없음"
  },
  "Graphite": {
   "en": "Graphite",

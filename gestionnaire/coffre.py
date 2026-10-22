@@ -445,6 +445,38 @@ class Coffre:
             self.sauvegarder()
         return ajoutees
 
+    def ajouter_externes(self, entrees: list[dict]) -> tuple[int, int]:
+        """Ajoute des identifiants venus d'un autre gestionnaire (voir import_externe).
+        Un compte déjà présent (même site, utilisateur, e-mail et mot de passe) est ignoré.
+        Renvoie (ajoutés, ignorés)."""
+        if self._cle is None:
+            raise RuntimeError(t("Coffre verrouillé"))
+
+        def cle(e):
+            return (e["site"].strip().casefold(), e["utilisateur"].strip(),
+                    e.get("email", "").strip().casefold(), e["mot_de_passe"])
+
+        connues = {cle(e) for e in self.entrees}
+        aujourdhui = datetime.date.today().isoformat()
+        ajoutees = 0
+        for e in entrees:
+            if cle(e) in connues:
+                continue
+            connues.add(cle(e))
+            self.entrees.append({
+                "id": secrets.token_hex(8),
+                "site": e["site"].strip(),
+                "utilisateur": e["utilisateur"].strip(),
+                "email": e.get("email", "").strip(),
+                "mot_de_passe": e["mot_de_passe"],
+                "notes": e.get("notes", "").strip(),
+                "change_le": aujourdhui,
+            })
+            ajoutees += 1
+        if ajoutees:
+            self.sauvegarder()
+        return ajoutees, len(entrees) - ajoutees
+
     def verifier_mot_de_passe(self, mot_de_passe: str) -> bool:
         """Vrai si « mot_de_passe » est le mot de passe maître du coffre ouvert."""
         if self._cle is None:

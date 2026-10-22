@@ -13,7 +13,7 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
-from gestionnaire import apparence, effets, langue, sante
+from gestionnaire import apparence, effets, import_externe, langue, sante
 from gestionnaire.coffre import (
     AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
@@ -1378,12 +1378,18 @@ class FenetreSauvegarde(Dialogue):
                                 "avec un mot de passe d'export."), t("Exporter…"), self._exporter)
         rangee(t("Importer"), t("Ajoute les identifiants d'un fichier exporté. "
                                 "Les doublons sont ignorés."), t("Importer…"), self._importer)
+        rangee(t("Depuis un autre gestionnaire"),
+               t("Firefox, Chrome, Bitwarden, KeePass, 1Password ou LastPass : importez leur "
+                 "fichier d'export CSV."), t("Choisir…"), self._importer_externe)
         rangee(t("Restaurer"), t("Revient à une copie automatique : celle d'avant le dernier "
                                  "enregistrement, ou celle faite à l'un des derniers "
                                  "déverrouillages."),
                t("Restaurer…"), self._restaurer, actif=ecran.app.coffre.a_une_sauvegarde())
 
-        BoutonAnime(corps, t("Fermer"), self.destroy, width=100).pack(anchor="e", pady=(10, 0))
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=480)
+        self.message.pack(pady=(6, 0))
+        BoutonAnime(corps, t("Fermer"), self.destroy, width=100).pack(anchor="e", pady=(4, 0))
 
     def _exporter(self):
         nom = f"secretlin-{datetime.date.today().isoformat()}{self.EXTENSION}"
@@ -1412,6 +1418,21 @@ class FenetreSauvegarde(Dialogue):
                 tn("{n} identifiant importé", "{n} identifiants importés", n) if n
                 else t("Rien à importer : tout est déjà dans le coffre")))
 
+    def _importer_externe(self):
+        chemin = filedialog.askopenfilename(
+            parent=self, title=t("Importer depuis un autre gestionnaire"),
+            filetypes=[(t("Fichier CSV"), "*.csv"), (t("Tous les fichiers"), "*")])
+        if not chemin:
+            return
+        try:
+            source, entrees = import_externe.lire(Path(chemin))
+        except (OSError, ValueError) as e:
+            self.message.configure(text=str(e) if isinstance(e, import_externe.FormatInconnu)
+                                   else t("Fichier illisible."))
+            return
+        self.message.configure(text="")
+        DialogueImportExterne(self, Path(chemin), source, entrees)
+
     def _restaurer(self):
         coffre = self.ecran.app.coffre
         choix = []
@@ -1435,6 +1456,56 @@ class FenetreSauvegarde(Dialogue):
         self.ecran.rafraichir()
         self.ecran.notifier(message)
         self.destroy()
+
+
+class DialogueImportExterne(Dialogue):
+    """Confirmation avant d'importer un CSV d'un autre gestionnaire, avec l'option de
+    supprimer ce fichier, qui contient les mots de passe en clair."""
+
+    def __init__(self, fenetre: FenetreSauvegarde, chemin: Path, source: str, entrees: list):
+        super().__init__(fenetre, t("Importer"))
+        self.fenetre, self.chemin, self.entrees = fenetre, chemin, entrees
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        titre = (t("Fichier CSV") if source == "CSV"
+                 else t("Export {source}", source=source))
+        ctk.CTkLabel(corps, text=titre, font=police(17, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text=tn("{n} identifiant trouvé dans ce fichier.",
+                                    "{n} identifiants trouvés dans ce fichier.", len(entrees)),
+                     font=police(13), text_color=TEXTE, anchor="w").pack(fill="x", pady=(6, 2))
+        ctk.CTkLabel(corps, text=t("Les comptes déjà présents dans le coffre ne seront pas "
+                                   "ajoutés deux fois."),
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=360).pack(fill="x")
+        ctk.CTkLabel(corps, text=t("⚠  Ce fichier contient vos mots de passe en clair : "
+                                   "supprimez-le après l'import."),
+                     font=police(12), text_color="#f0883e", anchor="w", justify="left",
+                     wraplength=360).pack(fill="x", pady=(12, 6))
+        self.supprimer = ctk.CTkCheckBox(corps, text=t("Supprimer le fichier CSV après l'import"),
+                                         font=police(12), text_color=TEXTE, fg_color=ACCENT,
+                                         hover_color=STYLES["principal"]["fond_survol"],
+                                         border_color=BORDURE_ECLAT, checkmark_color=ACCENT_TEXTE)
+        self.supprimer.pack(anchor="w", pady=(0, 14))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(fill="x")
+        bouton = BoutonAnime(boutons, t("Importer"), self._importer, style="principal", width=120)
+        bouton.pack(side="right")
+        bouton.activer(bool(entrees))
+        BoutonAnime(boutons, t("Annuler"), self.destroy, width=100).pack(side="right")
+
+    def _importer(self):
+        ajoutees, ignorees = self.fenetre.ecran.app.coffre.ajouter_externes(self.entrees)
+        message = tn("{n} identifiant importé", "{n} identifiants importés", ajoutees)
+        if ignorees:
+            message += "  ·  " + tn("{n} déjà présent", "{n} déjà présents", ignorees)
+        if self.supprimer.get():
+            try:
+                self.chemin.unlink()
+            except OSError:
+                message += "  ·  " + t("le fichier CSV n'a pas pu être supprimé")
+        self.destroy()
+        self.fenetre._fin(message)
 
 
 class DialogueMotDePasse(Dialogue):
