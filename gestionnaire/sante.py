@@ -1,5 +1,6 @@
-"""Bilan de santé des mots de passe : faibles, réutilisés sur plusieurs comptes, ou
-pas changés depuis longtemps."""
+"""Bilan de santé des mots de passe : faibles, réutilisés sur plusieurs comptes, pas
+changés depuis longtemps, ou apparus dans des fuites de données (si la vérification en
+ligne a été faite, voir fuites.py)."""
 
 import datetime
 from collections import Counter
@@ -19,14 +20,17 @@ def age_jours(entree: dict, aujourdhui: datetime.date | None = None) -> int | No
     return ((aujourdhui or datetime.date.today()) - change).days
 
 
-def bilan(entrees: list[dict], aujourdhui: datetime.date | None = None) -> dict:
+def bilan(entrees: list[dict], aujourdhui: datetime.date | None = None,
+          fuites: dict[str, int] | None = None) -> dict:
     """Comptes à problème, par catégorie, et note globale de 0 à 100 (part des comptes
-    sans aucun problème)."""
+    sans aucun problème). « fuites » : mot de passe → nombre de fuites où il apparaît."""
+    fuites = fuites or {}
     usages = Counter(e["mot_de_passe"] for e in entrees if e["mot_de_passe"])
     faibles = [e for e in entrees if evaluer_force(e["mot_de_passe"]) < FORCE_MIN]
     reutilises = [e for e in entrees if usages[e["mot_de_passe"]] > 1]
     anciens = [e for e in entrees if (age_jours(e, aujourdhui) or 0) > AGE_MAX_JOURS]
-    a_probleme = {e["id"] for e in faibles + reutilises + anciens}
+    pirates = [e for e in entrees if fuites.get(e["mot_de_passe"], 0) > 0]
+    a_probleme = {e["id"] for e in faibles + reutilises + anciens + pirates}
     note = round(100 * (len(entrees) - len(a_probleme)) / len(entrees)) if entrees else 100
     return {"faibles": faibles, "reutilises": reutilises, "anciens": anciens,
-            "usages": usages, "note": note, "a_probleme": len(a_probleme)}
+            "pirates": pirates, "usages": usages, "note": note, "a_probleme": len(a_probleme)}

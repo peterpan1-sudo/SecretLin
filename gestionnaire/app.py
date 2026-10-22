@@ -13,7 +13,7 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
-from gestionnaire import apparence, effets, import_externe, langue, sante, totp
+from gestionnaire import apparence, effets, fuites, import_externe, langue, sante, totp
 from gestionnaire.coffre import (
     AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
@@ -385,6 +385,10 @@ class Application(ctk.CTk):
         self.echecs, bloque = self.coffre.lire_echecs()
         self.bloque_jusqua = time.monotonic() + max(0.0, bloque - time.time())
         self._jeton_presse_papier = None
+        # Vérification des fuites (Have I Been Pwned) : mot de passe → nombre de fuites,
+        # gardé en mémoire jusqu'au verrouillage seulement.
+        self.fuites = {}
+        self.etat_fuites = ""
 
         for evt in ("<Any-KeyPress>", "<Any-ButtonPress>"):
             self.bind_all(evt, self._activite, add="+")
@@ -465,6 +469,7 @@ class Application(ctk.CTk):
             if isinstance(fenetre, ctk.CTkToplevel):
                 fenetre.destroy()
         self.coffre.verrouiller()
+        self.fuites, self.etat_fuites = {}, ""
         self.vider_presse_papier()
         self.afficher_connexion()
 
@@ -2090,29 +2095,79 @@ def duree_depuis(jours: int) -> str:
 
 
 class PageSante(Page):
-    """Bilan de santé : les mots de passe faibles, réutilisés ou trop anciens, chacun avec
-    un bouton pour le changer."""
+    """Bilan de santé : les mots de passe faibles, réutilisés, trop anciens ou piratés,
+    chacun avec un bouton pour le changer."""
 
     def __init__(self, ecran: EcranPrincipal):
-        super().__init__(ecran, t("Bilan de santé"), t("Les mots de passe à changer en priorité. "
-                                                       "Rien ne quitte votre ordinateur : tout est "
-                                                       "analysé ici."))
+        super().__init__(ecran, t("Bilan de santé"), t("Les mots de passe à changer en priorité."))
+        self.app = ecran.app
         self.defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
                                                  scrollbar_button_color=BORDURE,
                                                  scrollbar_button_hover_color=BORDURE_ECLAT)
         self.defilement.pack(fill="both", expand=True)
         self._remplir()
+        self._verifier_fuites()
 
     def coffre_modifie(self):
+        self._redessiner()
+        self._verifier_fuites()
+
+    def _redessiner(self):
+        if not self.winfo_exists():
+            return
         for enfant in self.defilement.winfo_children():
             enfant.destroy()
         self._remplir()
 
+    def _verifier_fuites(self, tout=False):
+        """Vérifie en ligne les mots de passe pas encore vérifiés (tous si « tout »), si
+        l'option est activée."""
+        app = self.app
+        if not app.reglages["verifier_fuites"]:
+            return
+        a_verifier = {e["mot_de_passe"] for e in app.coffre.entrees}
+        if not tout:
+            a_verifier -= set(app.fuites)
+        if not a_verifier:
+            return
+        app.etat_fuites = t("Vérification en cours…")
+        self._redessiner()
+
+        def fond():
+            try:
+                resultats, etat = fuites.verifier(a_verifier), ""
+            except OSError:
+                resultats, etat = {}, t("Vérification impossible : pas de connexion Internet ?")
+            app.after(0, lambda: fin(resultats, etat))
+
+        def fin(resultats, etat):
+            if not isinstance(app.ecran, EcranPrincipal):
+                return  # verrouillé entre-temps : on ne garde rien
+            app.fuites.update(resultats)
+            app.etat_fuites = etat
+            self._redessiner()
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _changer_option_fuites(self, active):
+        self.app.enregistrer_reglages(verifier_fuites=active)
+        if not active:
+            self.app.fuites, self.app.etat_fuites = {}, ""
+            self._redessiner()
+        else:
+            self._verifier_fuites(tout=True)
+
     def _remplir(self):
-        entrees = self.ecran.app.coffre.entrees
-        b = sante.bilan(entrees)
-        self._resume(b, len(entrees))
+        entrees = self.app.coffre.entrees
+        verifie = self.app.reglages["verifier_fuites"]
+        b = sante.bilan(entrees, fuites=self.app.fuites if verifie else None)
+        self._resume(b, len(entrees), verifie)
+        self._section_fuites(verifie)
         categories = (
+            ("pirates", t("Mots de passe piratés"),
+             t("Ils apparaissent dans des fuites de données publiques : changez-les en premier."),
+             lambda e: t("Vu {n} fois dans des fuites",
+                         n=f"{self.app.fuites[e['mot_de_passe']]:,}".replace(",", " "))),
             ("faibles", t("Mots de passe faibles"),
              t("Trop courts ou trop simples : faciles à deviner pour un programme."),
              lambda e: t("Force : {niveau}",
@@ -2130,7 +2185,33 @@ class PageSante(Page):
                 for e in b[cle]:
                     self._ligne(section, e, raison(e))
 
-    def _resume(self, b, total):
+    def _section_fuites(self, verifie):
+        section = self._section(self.defilement, t("Fuites de données"),
+                                t("Vérifie si vos mots de passe apparaissent dans des fuites "
+                                  "connues, avec le service Have I Been Pwned."))
+        interrupteur = ctk.CTkSwitch(
+            section, text=t("Vérifier en ligne (Internet)"), font=police(13), text_color=TEXTE,
+            command=lambda: self._changer_option_fuites(bool(interrupteur.get())),
+            fg_color=BORDURE, progress_color=ACCENT, button_color=TEXTE_DOUX,
+            button_hover_color=TEXTE)
+        if verifie:
+            interrupteur.select()
+        interrupteur.pack(anchor="w")
+        ctk.CTkLabel(section, text=t("Vos mots de passe ne sont jamais envoyés : seuls les 5 "
+                                     "premiers caractères de leur empreinte partent sur "
+                                     "Internet, et la comparaison se fait sur l'ordinateur."),
+                     font=police(11), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=640).pack(fill="x", pady=(6, 0))
+        if verifie and self.app.etat_fuites:
+            ctk.CTkLabel(section, text=self.app.etat_fuites, font=police(12),
+                         text_color=TEXTE if "…" in self.app.etat_fuites else DANGER,
+                         anchor="w").pack(fill="x", pady=(6, 0))
+        if verifie and not self.app.etat_fuites.endswith("…"):
+            BoutonAnime(section, t("Vérifier à nouveau"),
+                        lambda: self.app.after(50, lambda: self._verifier_fuites(tout=True)),
+                        width=160, height=32, taille_police=12).pack(anchor="w", pady=(8, 0))
+
+    def _resume(self, b, total, verifie=False):
         carte = ctk.CTkFrame(self.defilement, fg_color=CARTE, corner_radius=12, border_width=1,
                              border_color=BORDURE)
         carte.pack(fill="x", pady=4)
@@ -2155,8 +2236,11 @@ class PageSante(Page):
                      anchor="w").pack(fill="x", pady=(2, 0))
         compteurs = ctk.CTkFrame(carte, fg_color="transparent")
         compteurs.pack(side="right", padx=20)
-        for cle, nom in (("faibles", t("Faibles")), ("reutilises", t("Réutilisés")),
-                         ("anciens", t("Anciens"))):
+        compteurs_affiches = [("faibles", t("Faibles")), ("reutilises", t("Réutilisés")),
+                              ("anciens", t("Anciens"))]
+        if verifie:
+            compteurs_affiches.insert(0, ("pirates", t("Piratés")))
+        for cle, nom in compteurs_affiches:
             bloc = ctk.CTkFrame(compteurs, fg_color="transparent")
             bloc.pack(side="left", padx=10)
             n = len(b[cle])

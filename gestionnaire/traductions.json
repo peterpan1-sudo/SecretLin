@@ -153,6 +153,17 @@
   "ja": "{n} 年",
   "ko": "{n}년"
  },
+ "Vérification en cours…": {
+  "en": "Checking…",
+  "es": "Comprobando…",
+  "de": "Wird geprüft…",
+  "pt": "Verificando…",
+  "it": "Verifica in corso…",
+  "ru": "Проверка…",
+  "zh": "正在检查…",
+  "ja": "確認中…",
+  "ko": "확인 중…"
+ },
  "Bienvenue sur SecretLin": {
   "en": "Welcome to SecretLin",
   "es": "Bienvenido a SecretLin",
@@ -1033,16 +1044,38 @@
   "ja": "ヘルスチェック",
   "ko": "보안 점검"
  },
- "Les mots de passe à changer en priorité. Rien ne quitte votre ordinateur : tout est analysé ici.": {
-  "en": "The passwords to change first. Nothing leaves your computer: everything is checked here.",
-  "es": "Las contraseñas que debes cambiar primero. Nada sale de tu ordenador: todo se analiza aquí.",
-  "de": "Die Passwörter, die du zuerst ändern solltest. Nichts verlässt deinen Computer: Alles wird hier geprüft.",
-  "pt": "As senhas para trocar primeiro. Nada sai do seu computador: tudo é analisado aqui.",
-  "it": "Le password da cambiare per prime. Nulla lascia il tuo computer: tutto viene analizzato qui.",
-  "ru": "Пароли, которые стоит сменить в первую очередь. Ничего не покидает компьютер: всё проверяется здесь.",
-  "zh": "应优先更换的密码。数据不会离开你的电脑：所有分析都在本地完成。",
-  "ja": "優先して変更すべきパスワードです。データはこのコンピューターから外に出ません。すべてここで分析されます。",
-  "ko": "먼저 바꿔야 할 비밀번호입니다. 아무것도 컴퓨터 밖으로 나가지 않으며 모든 분석은 여기서 이루어집니다."
+ "Les mots de passe à changer en priorité.": {
+  "en": "The passwords to change first.",
+  "es": "Las contraseñas que debes cambiar primero.",
+  "de": "Die Passwörter, die du zuerst ändern solltest.",
+  "pt": "As senhas para trocar primeiro.",
+  "it": "Le password da cambiare per prime.",
+  "ru": "Пароли, которые стоит сменить в первую очередь.",
+  "zh": "应优先更换的密码。",
+  "ja": "優先して変更すべきパスワードです。",
+  "ko": "먼저 바꿔야 할 비밀번호입니다."
+ },
+ "Fuites de données": {
+  "en": "Data breaches",
+  "es": "Filtraciones de datos",
+  "de": "Datenlecks",
+  "pt": "Vazamentos de dados",
+  "it": "Violazioni di dati",
+  "ru": "Утечки данных",
+  "zh": "数据泄露",
+  "ja": "データ漏えい",
+  "ko": "데이터 유출"
+ },
+ "Vérifie si vos mots de passe apparaissent dans des fuites connues, avec le service Have I Been Pwned.": {
+  "en": "Checks whether your passwords appear in known breaches, using the Have I Been Pwned service.",
+  "es": "Comprueba si tus contraseñas aparecen en filtraciones conocidas, con el servicio Have I Been Pwned.",
+  "de": "Prüft mit dem Dienst Have I Been Pwned, ob deine Passwörter in bekannten Datenlecks vorkommen.",
+  "pt": "Verifica se suas senhas aparecem em vazamentos conhecidos, com o serviço Have I Been Pwned.",
+  "it": "Controlla se le tue password compaiono in violazioni note, con il servizio Have I Been Pwned.",
+  "ru": "Проверяет через сервис Have I Been Pwned, встречаются ли ваши пароли в известных утечках.",
+  "zh": "通过 Have I Been Pwned 服务检查你的密码是否出现在已知的数据泄露中。",
+  "ja": "Have I Been Pwned サービスで、パスワードが既知の漏えいに含まれていないか確認します。",
+  "ko": "Have I Been Pwned 서비스로 비밀번호가 알려진 유출에 포함되었는지 확인합니다."
  },
  "Mot de passe actuel": {
   "en": "Current password",
@@ -1418,6 +1451,28 @@
   "ja": "{n} 文字",
   "ko": "{n}자"
  },
+ "Mots de passe piratés": {
+  "en": "Breached passwords",
+  "es": "Contraseñas filtradas",
+  "de": "Geleakte Passwörter",
+  "pt": "Senhas vazadas",
+  "it": "Password violate",
+  "ru": "Взломанные пароли",
+  "zh": "已泄露的密码",
+  "ja": "漏えいしたパスワード",
+  "ko": "유출된 비밀번호"
+ },
+ "Ils apparaissent dans des fuites de données publiques : changez-les en premier.": {
+  "en": "They appear in public data breaches: change them first.",
+  "es": "Aparecen en filtraciones de datos públicas: cámbialas primero.",
+  "de": "Sie tauchen in öffentlichen Datenlecks auf: Ändere sie zuerst.",
+  "pt": "Elas aparecem em vazamentos de dados públicos: troque-as primeiro.",
+  "it": "Compaiono in violazioni di dati pubbliche: cambiale per prime.",
+  "ru": "Они есть в публичных утечках данных: смените их в первую очередь.",
+  "zh": "这些密码出现在公开的数据泄露中：请优先更换。",
+  "ja": "公開されたデータ漏えいに含まれています。最優先で変更してください。",
+  "ko": "공개된 데이터 유출에 포함되어 있습니다. 가장 먼저 바꾸세요."
+ },
  "Mots de passe faibles": {
   "en": "Weak passwords",
   "es": "Contraseñas débiles",
@@ -1483,6 +1538,17 @@
   "zh": "超过一年未更改。",
   "ja": "1 年以上変更されていません。",
   "ko": "1년 넘게 바뀌지 않았습니다."
+ },
+ "Vérifier en ligne (Internet)": {
+  "en": "Check online (Internet)",
+  "es": "Comprobar en línea (Internet)",
+  "de": "Online prüfen (Internet)",
+  "pt": "Verificar on-line (Internet)",
+  "it": "Controlla online (Internet)",
+  "ru": "Проверять онлайн (Интернет)",
+  "zh": "在线检查（需联网）",
+  "ja": "オンラインで確認（インターネット）",
+  "ko": "온라인 확인 (인터넷)"
  },
  "Aucun identifiant": {
   "en": "No logins",
@@ -1803,6 +1869,17 @@
   "ja": "未インストール",
   "ko": "설치 안 됨"
  },
+ "Vu {n} fois dans des fuites": {
+  "en": "Seen {n} times in breaches",
+  "es": "Visto {n} veces en filtraciones",
+  "de": "{n}-mal in Datenlecks gesehen",
+  "pt": "Visto {n} vezes em vazamentos",
+  "it": "Visto {n} volte in violazioni",
+  "ru": "Встречается в утечках: {n} раз(а)",
+  "zh": "在泄露中出现 {n} 次",
+  "ja": "漏えいで {n} 回確認",
+  "ko": "유출에서 {n}회 발견"
+ },
  "Force : {niveau}": {
   "en": "Strength: {niveau}",
   "es": "Seguridad: {niveau}",
@@ -1835,6 +1912,17 @@
   "zh": "{duree}未更改",
   "ja": "{duree}変更なし",
   "ko": "{duree} 동안 변경 안 됨"
+ },
+ "Piratés": {
+  "en": "Breached",
+  "es": "Filtradas",
+  "de": "Geleakt",
+  "pt": "Vazadas",
+  "it": "Violate",
+  "ru": "Утечки",
+  "zh": "泄露",
+  "ja": "漏えい",
+  "ko": "유출"
  },
  "Changer": {
   "en": "Change",
@@ -2143,6 +2231,39 @@
   "zh": "操作失败：{erreur}",
   "ja": "操作できません：{erreur}",
   "ko": "작업을 할 수 없습니다: {erreur}"
+ },
+ "Vérification impossible : pas de connexion Internet ?": {
+  "en": "Could not check: no Internet connection?",
+  "es": "No se pudo comprobar: ¿sin conexión a Internet?",
+  "de": "Prüfung nicht möglich: keine Internetverbindung?",
+  "pt": "Não foi possível verificar: sem conexão com a Internet?",
+  "it": "Controllo impossibile: nessuna connessione a Internet?",
+  "ru": "Проверка невозможна: нет подключения к Интернету?",
+  "zh": "无法检查：没有网络连接？",
+  "ja": "確認できません：インターネットに接続されていますか？",
+  "ko": "확인할 수 없습니다. 인터넷에 연결되어 있나요?"
+ },
+ "Vos mots de passe ne sont jamais envoyés : seuls les 5 premiers caractères de leur empreinte partent sur Internet, et la comparaison se fait sur l'ordinateur.": {
+  "en": "Your passwords are never sent: only the first 5 characters of their fingerprint go over the Internet, and the comparison happens on the computer.",
+  "es": "Tus contraseñas nunca se envían: solo salen a Internet los 5 primeros caracteres de su huella, y la comparación se hace en el ordenador.",
+  "de": "Deine Passwörter werden nie gesendet: Nur die ersten 5 Zeichen ihres Fingerabdrucks gehen ins Internet, der Vergleich erfolgt auf dem Computer.",
+  "pt": "Suas senhas nunca são enviadas: só os 5 primeiros caracteres da impressão digital vão para a Internet, e a comparação é feita no computador.",
+  "it": "Le tue password non vengono mai inviate: solo i primi 5 caratteri della loro impronta vanno su Internet e il confronto avviene sul computer.",
+  "ru": "Пароли никогда не отправляются: в Интернет уходят только первые 5 символов их отпечатка, а сравнение происходит на компьютере.",
+  "zh": "密码永远不会被发送：只有其指纹的前 5 个字符会发送到网络，比对在电脑上完成。",
+  "ja": "パスワードが送信されることはありません。送られるのは指紋の最初の 5 文字だけで、照合はコンピューター上で行われます。",
+  "ko": "비밀번호는 절대 전송되지 않습니다. 지문의 처음 5글자만 인터넷으로 보내고 비교는 컴퓨터에서 합니다."
+ },
+ "Vérifier à nouveau": {
+  "en": "Check again",
+  "es": "Comprobar de nuevo",
+  "de": "Erneut prüfen",
+  "pt": "Verificar de novo",
+  "it": "Controlla di nuovo",
+  "ru": "Проверить снова",
+  "zh": "重新检查",
+  "ja": "もう一度確認",
+  "ko": "다시 확인"
  },
  "Le coffre et ses copies automatiques seront rechiffrés : l'ancien mot de passe n'ouvrira plus rien. Les fichiers exportés gardent leur propre mot de passe d'export.": {
   "en": "The vault and its automatic copies will be re-encrypted: the old password will no longer open anything. Exported files keep their own export password.",
