@@ -1,3 +1,19 @@
+secretlin (1.5.0) kali-dev; urgency=medium
+
+  * Remplissage rapide (Ctrl+Alt+P) : recherche d'un compte, code PIN, copie
+    de l'identifiant puis du mot de passe, même pour une application de bureau.
+  * Code PIN à 4 chiffres (Réglages → Sécurité), valable tant que SecretLin a
+    été déverrouillé avec le mot de passe maître depuis moins de 8 heures ;
+    avec un code, SecretLin reste ouvert en arrière-plan.
+  * Extension de navigateur (Firefox et navigateurs Chromium) : les comptes du
+    site sont proposés sous les champs de connexion ; correspondance stricte
+    des noms de site contre l'hameçonnage. Le paquet déclare le programme
+    intermédiaire pour Firefox, Chromium, Chrome et Edge.
+  * Tutoriel vidéo pour couper les suggestions du navigateur.
+  * Relancer SecretLin montre la fenêtre déjà ouverte.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Thu, 22 Oct 2026 22:16:16 +0200
+
 secretlin (1.4.0) kali-dev; urgency=medium
 
   * Import depuis d'autres gestionnaires : fichiers CSV de Firefox, Chrome,
