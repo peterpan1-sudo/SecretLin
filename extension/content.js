@@ -224,6 +224,18 @@
   // --- Déclenchement ----------------------------------------------------------------
 
   let comptesPage = null;  // comptes du site, demandés une fois par page
+  let aucunSignale = false;  // « aucun compte » n'est montré qu'une fois par page
+
+  function afficherAucun(champ) {
+    const boite = ouvrir(champ);
+    texte(boite, t("aucun"));
+    texte(boite, t("aucunAide"));
+    setTimeout(() => {
+      if (racine && boite.isConnected) {
+        fermer();
+      }
+    }, 4000);
+  }
 
   async function auFocus(e) {
     const champ = e.target;
@@ -245,8 +257,14 @@
     if (comptesPage === null) {
       comptesPage = (await envoyer({ type: "comptes" })).comptes || [];
     }
-    if (comptesPage.length && document.activeElement === champ) {
+    if (document.activeElement !== champ) {
+      return;
+    }
+    if (comptesPage.length) {
       afficherComptes(champ, comptesPage);
+    } else if (!aucunSignale) {
+      aucunSignale = true;
+      afficherAucun(champ);
     }
   }
 

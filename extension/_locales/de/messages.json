@@ -37,5 +37,8 @@
   },
   "autreSite": {
     "message": "„$1“ gehört nicht zu dieser Website. Trotzdem ausfüllen? Prüfe die Adresse: Eine gefälschte Seite kann die echte nachahmen."
+  },
+  "aucunAide": {
+    "message": "Suche es über die SecretLin-Schaltfläche in der Browserleiste oder füge es in SecretLin hinzu."
   }
 }

@@ -9,6 +9,12 @@ from urllib.parse import urlsplit
 from gestionnaire import acces_rapide, totp
 
 RESULTATS_MAX = 30
+# Fins de nom de compte courantes : « ProtonMail » va avec proton.me, « Amazon Prime » avec
+# amazon.fr. Seuls ces mots sont acceptés après le nom du site, pour ne rien proposer sur
+# un faux site au nom raccourci (« amazo.com » pour un compte « Amazon »).
+FINS_COURANTES = {"mail", "app", "web", "login", "account", "accounts", "compte", "online",
+                  "pay", "prime", "store", "shop", "drive", "cloud", "id", "plus", "pro",
+                  "vpn", "pass", "music", "tv", "video", "games", "gaming"}
 # Avant-derniers morceaux d'adresse qui ne sont pas le nom du site (« amazon.co.uk »).
 SUFFIXES_DOUBLES = {"co", "com", "org", "net", "gov", "gouv", "ac", "edu", "ne", "or"}
 
@@ -43,7 +49,8 @@ def correspond(entree: dict, adresse: str) -> bool:
     proposer sur un site d'hameçonnage au nom ressemblant (« amaz.com », « netflix-x.com ») :
     - une adresse notée dans les notes, le même site ou l'un de ses sous-domaines ;
     - ou le nom du compte (ou son premier mot) égal au nom du site : « Discord » pour
-      discord.com, « Proton Mail » pour proton.me, « netflix.com » pour netflix.com."""
+      discord.com, « Proton Mail » pour proton.me, « netflix.com » pour netflix.com ;
+    - ou le nom du site suivi d'une fin courante : « ProtonMail » pour proton.me."""
     nom_hote = hote(adresse)
     if not nom_hote:
         return False
@@ -54,8 +61,12 @@ def correspond(entree: dict, adresse: str) -> bool:
     if not nom:
         return False
     mots = re.findall(r"\w+", entree["site"].casefold())
-    return nom in (_simplifier(entree["site"]), _simplifier(mots[0]) if mots else "") \
-        or hote(entree["site"]) == nom_hote
+    site = _simplifier(entree["site"])
+    if nom in (site, _simplifier(mots[0]) if mots else "") or hote(entree["site"]) == nom_hote:
+        return True
+    # Jamais l'inverse (adresse plus longue que le nom du compte) : « amazon-login.com »
+    # est le piège d'hameçonnage le plus courant.
+    return site.startswith(nom) and site[len(nom):] in FINS_COURANTES
 
 
 def _resume(e: dict) -> dict:

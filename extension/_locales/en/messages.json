@@ -37,5 +37,8 @@
   },
   "autreSite": {
     "message": "“$1” is not linked to this site. Fill it in anyway? Check the address: a fake site can imitate the real one."
+  },
+  "aucunAide": {
+    "message": "Search for it with the SecretLin button in the browser toolbar, or add it in SecretLin."
   }
 }

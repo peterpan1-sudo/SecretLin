@@ -140,3 +140,20 @@ def test_porte_aller_retour(tmp_path, monkeypatch):
     finally:
         p.fermer()
     assert porte.demander({"action": "etat"}) is None
+
+
+def test_correspondance_stricte_mais_pas_trop():
+    E = lambda site, notes="": {"site": site, "notes": notes}
+    oui = [("Discord", "https://discord.com/login"),
+           ("ProtonMail", "https://account.proton.me"), ("Proton Mail", "https://proton.me"),
+           ("Amazon", "https://www.amazon.co.uk/"), ("Linux.org", "https://www.linux.org/login"),
+           ("Banque", "https://www.ma-banque.fr/x"), ("GitHub", "https://github.com")]
+    non = [("Amazon", "https://amaz.com"), ("Amazon", "https://amazon-login.com"),
+           ("Amazon", "https://amazo.com"), ("Netflix", "https://netflix-x.com"),
+           ("ProtonMail", "https://protonmailx.com"), ("Gmail", "https://accounts.google.com"),
+           ("Discord", "https://discordapp-login.com"), ("PayPal", "https://paypal-secure.net")]
+    notes = {"Banque": "https://www.ma-banque.fr/espace"}
+    for site, adresse in oui:
+        assert guichet.correspond(E(site, notes.get(site, "")), adresse), (site, adresse)
+    for site, adresse in non:
+        assert not guichet.correspond(E(site), adresse), (site, adresse)

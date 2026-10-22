@@ -37,5 +37,8 @@
   },
   "autreSite": {
     "message": "“$1”与此网站无关。仍要填写吗？请检查网址：假网站可能冒充真网站。"
+  },
+  "aucunAide": {
+    "message": "可通过浏览器工具栏中的 SecretLin 按钮搜索，或在 SecretLin 中添加。"
   }
 }

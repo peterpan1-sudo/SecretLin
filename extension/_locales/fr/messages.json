@@ -37,5 +37,8 @@
   },
   "autreSite": {
     "message": "« $1 » n'est pas associé à ce site. Le remplir quand même ? Vérifiez l'adresse : un faux site peut imiter le vrai."
+  },
+  "aucunAide": {
+    "message": "Cherchez-le avec le bouton SecretLin de la barre du navigateur, ou ajoutez-le dans SecretLin."
   }
 }
