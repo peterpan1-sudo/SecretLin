@@ -72,7 +72,7 @@ OPTIONS_GENERATEUR = ("majuscules", "chiffres", "symboles", "sans_ambigus")
 DEFAUT = {"langue": langue.AUTO, "theme": "Graphite", "accent": "Neutre", "police": "Inter",
           "taille": "Normale", "animations": True,
           "longueur": 20, "majuscules": True, "chiffres": True, "symboles": True,
-          "sans_ambigus": False}
+          "sans_ambigus": False, "verifier_fuites": False, "fichier_cle": ""}
 # Réglages remis à zéro par « Revenir à l'apparence d'origine ».
 CLES_APPARENCE = ("theme", "accent", "police", "taille", "animations")
 
@@ -149,9 +149,11 @@ def charger(chemin: Path) -> dict:
                          ("taille", TAILLES)):
         if lus.get(cle) in permis:
             reglages[cle] = lus[cle]
-    for cle in ("animations",) + OPTIONS_GENERATEUR:
+    for cle in ("animations", "verifier_fuites") + OPTIONS_GENERATEUR:
         if isinstance(lus.get(cle), bool):
             reglages[cle] = lus[cle]
+    if isinstance(lus.get("fichier_cle"), str):
+        reglages["fichier_cle"] = lus["fichier_cle"]  # emplacement seulement, pas le contenu
     longueur = lus.get("longueur")
     if type(longueur) is int and LONGUEUR_MIN <= longueur <= LONGUEUR_MAX:
         reglages["longueur"] = longueur

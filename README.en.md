@@ -38,7 +38,11 @@ password. Nothing is sent over the Internet.
 | 🔒 **Encrypted vault** | AES-256-GCM, key derived from the master password with Argon2id. |
 | 📋 **One-click copy** | Username, email or password; the clipboard is cleared after 3 minutes. |
 | 🎲 **Generator** | Strong passwords: length, uppercase, digits, symbols, no look-alike characters. |
-| 🩺 **Health check** | Finds weak passwords, reused ones, and ones not changed for over a year. |
+| 🩺 **Health check** | Finds weak passwords, reused ones, ones not changed for over a year and, optionally, ones found in data breaches. |
+| 🔑 **2FA codes** | Six-digit two-factor authentication codes, like Google Authenticator. |
+| ⭐ **Favourites and categories** | Favourite accounts at the top of the list, categories (Games, Banking…) and a filter. |
+| 🕘 **History** | The last 10 passwords of each account can still be viewed. |
+| 📦 **Import** | From Firefox, Chrome, Bitwarden, KeePass, 1Password or LastPass (CSV file). |
 | 🔎 **Search and A–Z index** | Find an account in a few keystrokes. Logos for well-known sites (Discord, Netflix, Steam…). |
 | ⏱️ **Auto-lock** | After 5 min without moving the mouse over the window, or 2 min with the mouse outside it. |
 | 💾 **Backups** | Automatic copies, encrypted export and import (USB stick, another drive…). |
@@ -100,11 +104,19 @@ Your vault and settings are kept.
 
 - The vault is encrypted with **AES-256-GCM**. The key is derived from the master password
   with **Argon2id**, which is designed to make guessing attacks very slow.
-- The master password is **never stored** anywhere.
+- The master password is **never stored** anywhere. It must be at least 12 characters long
+  (lowercase, uppercase, digit, special character), and SecretLin checks that it does not
+  appear in a known data breach (the box can be unticked).
+- Optional **key file** (⚙ Settings → Security): the vault then only opens with the master
+  password **and** a file, for example on a USB stick. It is a second factor: a stolen
+  password is no longer enough.
 - Any change to the vault file (by another program, for example) is **detected**.
 - After 3 wrong attempts you must wait 1 min, then 3, 5, 10, 15, 30 min and 1 h.
   The wait continues even if SecretLin is closed and reopened.
-- The **Health check** analyses your passwords on the computer; nothing is sent.
+- The **Health check** analyses your passwords on the computer.
+- The **data breach** check (Have I Been Pwned) is **off by default**. When it is on, your
+  passwords are still never sent: only the first 5 characters of their SHA-1 fingerprint
+  go over the Internet, and the comparison happens on the computer (“k-anonymity”).
 
 ## 💾 Backups
 
@@ -118,6 +130,9 @@ The **“Backup”** button on the main screen lets you:
 
 - **Export** the vault to a file encrypted with an export password, wherever you like (USB stick, another drive…);
 - **Import** such a file (accounts already present are not added twice);
+- **Import from another manager**: the CSV file exported by Firefox, Chrome, Bitwarden,
+  KeePass, 1Password or LastPass (categories, favourites and 2FA keys included).
+  Delete that file afterwards: it contains your passwords in plain text;
 - **Restore** an automatic copy. This can be undone: the current vault becomes the “Before the last save” copy.
 
 ## ❓ FAQ
@@ -127,7 +142,16 @@ There is no way to recover it: that is what protects your data. You will have to
 a new vault. Remember to write it down somewhere safe.
 
 **Are my passwords sent over the Internet?**
-No. Everything stays on your computer, in an encrypted file.
+No. Everything stays on your computer, in an encrypted file. Only the breach check, if you
+turn it on, uses the Internet, and it never sends your passwords.
+
+**How do I switch from Bitwarden (or Firefox, Chrome…) to SecretLin?**
+Export your passwords to CSV from the other manager, then in SecretLin:
+Backup → From another manager.
+
+**How can I protect my vault even more?**
+Turn on the key file: ⚙ Settings → Security → Create a key file, and keep it on a USB
+stick. Keep a copy of it: without this file, the vault can no longer be opened.
 
 **How do I change my master password?**
 ⚙ Settings → Security. The vault and its automatic copies are re-encrypted.

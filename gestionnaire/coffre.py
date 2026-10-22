@@ -6,6 +6,7 @@ Dérivation de clé : Argon2id (résistant aux attaques par force brute sur GPU)
 
 import base64
 import datetime
+import hashlib
 import hmac
 import json
 import math
@@ -29,6 +30,8 @@ ARGON2_MEMOIRE_KIO = 256 * 1024
 ARGON2_ITERATIONS = 4
 ARGON2_VOIES = 4
 LONGUEUR_MIN_MAITRE = 12
+HISTORIQUE_MAX = 10  # anciens mots de passe gardés par compte
+FICHIER_CLE_MAX_OCTETS = 10 * 1024 * 1024
 # Limites des paramètres Argon2id acceptés à la lecture d'un fichier : un fichier piégé
 # ne doit pas pouvoir réclamer des Gio de mémoire ou des heures de calcul.
 ARGON2_MEMOIRE_MAX_KIO = 1024 * 1024
@@ -38,6 +41,10 @@ ARGON2_VOIES_MAX = 16
 
 class MotDePasseIncorrect(Exception):
     pass
+
+
+class FichierCleRequis(Exception):
+    """Le coffre ne s'ouvre qu'avec un fichier-clé, et aucun n'a été donné."""
 
 
 class CoffreCorrompu(Exception):
@@ -105,6 +112,22 @@ def _ecrire_atomique(chemin: Path, contenu: str) -> None:
         raise
 
 
+def _ecrire_atomique_octets(chemin: Path, contenu: bytes) -> None:
+    fd, tmp = tempfile.mkstemp(dir=chemin.parent, prefix=".cle-")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(contenu)
+            f.flush()
+            os.fsync(f.fileno())
+        if sys.platform != "win32":
+            os.chmod(tmp, 0o600)
+        os.replace(tmp, chemin)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
+
+
 def _verifier_parametres(entete: dict) -> None:
     """Refuse un en-tête dont les paramètres Argon2id sont absurdes ou dangereux."""
     if entete.get("kdf") != "argon2id":
@@ -119,7 +142,17 @@ def _verifier_parametres(entete: dict) -> None:
         raise ValueError("paramètre memoire trop petit")
 
 
-def _deriver_cle(mot_de_passe: str, sel: bytes, memoire: int, iterations: int, voies: int) -> bytes:
+def _secret(mot_de_passe: str, fichier_cle: bytes | None) -> bytes:
+    """Ce qui est donné à Argon2id : le mot de passe seul, ou, avec un fichier-clé,
+    l'empreinte du mot de passe suivie de celle du fichier (les deux sont indispensables)."""
+    if fichier_cle is None:
+        return mot_de_passe.encode("utf-8")
+    return (hashlib.sha256(mot_de_passe.encode("utf-8")).digest()
+            + hashlib.sha256(fichier_cle).digest())
+
+
+def _deriver_cle(mot_de_passe: str, sel: bytes, memoire: int, iterations: int, voies: int,
+                 fichier_cle: bytes | None = None) -> bytes:
     kdf = Argon2id(
         salt=sel,
         length=32,
@@ -127,7 +160,7 @@ def _deriver_cle(mot_de_passe: str, sel: bytes, memoire: int, iterations: int, v
         lanes=voies,
         memory_cost=memoire,
     )
-    return kdf.derive(mot_de_passe.encode("utf-8"))
+    return kdf.derive(_secret(mot_de_passe, fichier_cle))
 
 
 def verifier_force(mot_de_passe: str) -> list[str]:
@@ -203,8 +236,9 @@ def _separer_email(entree: dict) -> None:
         entree["email"] = ""
 
 
-def _nouvel_entete() -> tuple[dict, bytes]:
-    """En-tête neuf (sel aléatoire, paramètres Argon2id actuels) et sel brut."""
+def _nouvel_entete(fichier_cle: bool = False) -> tuple[dict, bytes]:
+    """En-tête neuf (sel aléatoire, paramètres Argon2id actuels) et sel brut. L'en-tête
+    sert de données authentifiées : retirer « fichier_cle » rendrait le coffre illisible."""
     sel = secrets.token_bytes(16)
     entete = {
         "version": VERSION,
@@ -214,6 +248,8 @@ def _nouvel_entete() -> tuple[dict, bytes]:
         "iterations": ARGON2_ITERATIONS,
         "voies": ARGON2_VOIES,
     }
+    if fichier_cle:
+        entete["fichier_cle"] = True
     return entete, sel
 
 
@@ -229,8 +265,10 @@ def _chiffrer(cle: bytes, entete: dict, entrees: list[dict]) -> str:
     })
 
 
-def _dechiffrer(chemin: Path, mot_de_passe: str) -> tuple[bytes, dict, list[dict]]:
-    """Lit et déchiffre un fichier au format coffre. Renvoie (clé, en-tête, entrées)."""
+def _dechiffrer(chemin: Path, mot_de_passe: str,
+                fichier_cle: bytes | None = None) -> tuple[bytes, dict, list[dict]]:
+    """Lit et déchiffre un fichier au format coffre. Renvoie (clé, en-tête, entrées).
+    « fichier_cle » (contenu du fichier) n'est utilisé que si l'en-tête l'exige."""
     try:
         contenu = json.loads(chemin.read_text(encoding="utf-8"))
         entete = contenu["entete"]
@@ -239,10 +277,16 @@ def _dechiffrer(chemin: Path, mot_de_passe: str) -> tuple[bytes, dict, list[dict
         sel = _deb64(entete["sel"])
         _verifier_parametres(entete)
         memoire, iterations, voies = entete["memoire"], entete["iterations"], entete["voies"]
+        avec_fichier = entete.get("fichier_cle", False)
+        if type(avec_fichier) is not bool:
+            raise ValueError("indication de fichier-clé invalide")
     except (OSError, ValueError, KeyError, TypeError) as e:
         raise CoffreCorrompu(str(e)) from e
+    if avec_fichier and fichier_cle is None:
+        raise FichierCleRequis()
 
-    cle = _deriver_cle(mot_de_passe, sel, memoire, iterations, voies)
+    cle = _deriver_cle(mot_de_passe, sel, memoire, iterations, voies,
+                       fichier_cle if avec_fichier else None)
     aad = json.dumps(entete, sort_keys=True).encode("utf-8")
     try:
         clair = AESGCM(cle).decrypt(nonce, chiffre, aad)
@@ -275,6 +319,18 @@ def _verifier_entrees(entrees) -> list[dict]:
             e["id"] = secrets.token_hex(8)
         if not isinstance(e.get("change_le"), str):
             e.pop("change_le", None)  # date inconnue (compte créé avant le bilan de santé)
+        if not isinstance(e.get("favori"), bool):
+            e["favori"] = False
+        if not isinstance(e.get("categorie"), str):
+            e["categorie"] = ""
+        if not isinstance(e.get("totp"), str):
+            e["totp"] = ""
+        historique = e.get("historique")
+        if not isinstance(historique, list):
+            historique = []
+        e["historique"] = [h for h in historique if isinstance(h, dict)
+                           and isinstance(h.get("mot_de_passe"), str)
+                           and isinstance(h.get("remplace_le"), str)]
     return entrees
 
 
@@ -289,15 +345,31 @@ class Coffre:
         self.entrees: list[dict] = []
         self._cle: bytes | None = None
         self._entete: dict | None = None
+        # Contenu du fichier-clé, gardé en mémoire tant que le coffre est ouvert (comme la
+        # clé) : il sert à vérifier le mot de passe et à rechiffrer.
+        self._fichier_cle: bytes | None = None
 
     def existe(self) -> bool:
         return self.chemin.exists()
 
-    def _nouveau_chiffrement(self, mot_de_passe: str) -> None:
-        """Régénère sel, en-tête et clé pour « mot_de_passe ». Ne touche ni aux
-        entrées ni au fichier : l'appelant sauvegarde une seule fois ensuite."""
-        self._entete, sel = _nouvel_entete()
-        self._cle = _deriver_cle(mot_de_passe, sel, ARGON2_MEMOIRE_KIO, ARGON2_ITERATIONS, ARGON2_VOIES)
+    def _nouveau_chiffrement(self, mot_de_passe: str, fichier_cle: bytes | None = None) -> None:
+        """Régénère sel, en-tête et clé pour « mot_de_passe » (et le fichier-clé s'il est
+        donné). Ne touche ni aux entrées ni au fichier : l'appelant sauvegarde une seule
+        fois ensuite."""
+        self._entete, sel = _nouvel_entete(fichier_cle is not None)
+        self._cle = _deriver_cle(mot_de_passe, sel, ARGON2_MEMOIRE_KIO, ARGON2_ITERATIONS,
+                                 ARGON2_VOIES, fichier_cle)
+        self._fichier_cle = fichier_cle
+
+    def besoin_fichier_cle(self) -> bool:
+        """Vrai si le coffre (même verrouillé) ne s'ouvre qu'avec un fichier-clé."""
+        if self._cle is not None and self._entete is not None:
+            return self._entete.get("fichier_cle", False) is True
+        try:
+            entete = json.loads(self.chemin.read_text(encoding="utf-8"))["entete"]
+            return entete.get("fichier_cle", False) is True
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            return False
 
     def creer(self, mot_de_passe: str) -> None:
         self._nouveau_chiffrement(mot_de_passe)
@@ -338,13 +410,33 @@ class Coffre:
             return
         _ecrire_atomique(self.chemin_echecs, json.dumps({"echecs": echecs, "bloque_jusqua": bloque_jusqua}))
 
-    def ouvrir(self, mot_de_passe: str) -> None:
-        self._cle, self._entete, self.entrees = _dechiffrer(self.chemin, mot_de_passe)
+    def ouvrir(self, mot_de_passe: str, fichier_cle: bytes | None = None) -> None:
+        self._cle, self._entete, self.entrees = _dechiffrer(self.chemin, mot_de_passe,
+                                                            fichier_cle)
+        self._fichier_cle = fichier_cle if self.besoin_fichier_cle() else None
         self._trier()
         try:
             self._copie_ouverture()
         except OSError:
             pass  # une copie impossible (disque plein…) ne doit pas empêcher d'ouvrir le coffre
+
+    @staticmethod
+    def lire_fichier_cle(chemin: Path) -> bytes:
+        """Contenu d'un fichier-clé (n'importe quel fichier convient, jusqu'à 10 Mo)."""
+        chemin = Path(chemin)
+        if chemin.stat().st_size > FICHIER_CLE_MAX_OCTETS:
+            raise ValueError(t("Ce fichier est trop gros pour servir de fichier-clé."))
+        contenu = chemin.read_bytes()
+        if not contenu:
+            raise ValueError(t("Ce fichier est vide."))
+        return contenu
+
+    @staticmethod
+    def creer_fichier_cle(chemin: Path) -> bytes:
+        """Écrit un nouveau fichier-clé aléatoire (64 octets) et renvoie son contenu."""
+        contenu = secrets.token_bytes(64)
+        _ecrire_atomique_octets(Path(chemin), contenu)
+        return contenu
 
     def _copie_ouverture(self) -> None:
         """Copie le coffre tel qu'il est au déverrouillage, sauf s'il n'a pas changé depuis
@@ -376,6 +468,7 @@ class Coffre:
 
     def verrouiller(self) -> None:
         self._cle = None
+        self._fichier_cle = None
         self.entrees = []
 
     def sauvegarder(self) -> None:
@@ -399,7 +492,7 @@ class Coffre:
         d'avant le dernier enregistrement : une restauration faite par erreur s'annule
         en restaurant cette copie."""
         source = Path(source) if source else self.chemin_sauvegarde
-        cle, entete, entrees = _dechiffrer(source, mot_de_passe)
+        cle, entete, entrees = _dechiffrer(source, mot_de_passe, self._fichier_cle)
         contenu = source.read_text(encoding="utf-8")
         if self.chemin.exists():
             _ecrire_atomique(self.chemin_sauvegarde, self.chemin.read_text(encoding="utf-8"))
@@ -445,12 +538,49 @@ class Coffre:
             self.sauvegarder()
         return ajoutees
 
+    def ajouter_externes(self, entrees: list[dict]) -> tuple[int, int]:
+        """Ajoute des identifiants venus d'un autre gestionnaire (voir import_externe).
+        Un compte déjà présent (même site, utilisateur, e-mail et mot de passe) est ignoré.
+        Renvoie (ajoutés, ignorés)."""
+        if self._cle is None:
+            raise RuntimeError(t("Coffre verrouillé"))
+
+        def cle(e):
+            return (e["site"].strip().casefold(), e["utilisateur"].strip(),
+                    e.get("email", "").strip().casefold(), e["mot_de_passe"])
+
+        connues = {cle(e) for e in self.entrees}
+        aujourdhui = datetime.date.today().isoformat()
+        ajoutees = 0
+        for e in entrees:
+            if cle(e) in connues:
+                continue
+            connues.add(cle(e))
+            self.entrees.append({
+                "id": secrets.token_hex(8),
+                "site": e["site"].strip(),
+                "utilisateur": e["utilisateur"].strip(),
+                "email": e.get("email", "").strip(),
+                "mot_de_passe": e["mot_de_passe"],
+                "notes": e.get("notes", "").strip(),
+                "change_le": aujourdhui,
+                "categorie": e.get("categorie", "").strip(),
+                "favori": bool(e.get("favori", False)),
+                "historique": [],
+                "totp": e.get("totp", "").strip(),
+            })
+            ajoutees += 1
+        if ajoutees:
+            self.sauvegarder()
+        return ajoutees, len(entrees) - ajoutees
+
     def verifier_mot_de_passe(self, mot_de_passe: str) -> bool:
         """Vrai si « mot_de_passe » est le mot de passe maître du coffre ouvert."""
         if self._cle is None:
             raise RuntimeError(t("Coffre verrouillé"))
         e = self._entete
-        cle = _deriver_cle(mot_de_passe, _deb64(e["sel"]), e["memoire"], e["iterations"], e["voies"])
+        cle = _deriver_cle(mot_de_passe, _deb64(e["sel"]), e["memoire"], e["iterations"],
+                           e["voies"], self._fichier_cle)
         return hmac.compare_digest(cle, self._cle)
 
     def changer_mot_de_passe(self, nouveau: str, actuel: str | None = None) -> None:
@@ -460,10 +590,30 @@ class Coffre:
             raise RuntimeError(t("Coffre verrouillé"))
         if actuel is not None and not self.verifier_mot_de_passe(actuel):
             raise MotDePasseIncorrect()
+        self._rechiffrer(nouveau, self._fichier_cle)
+
+    def activer_fichier_cle(self, contenu: bytes, actuel: str) -> None:
+        """Le coffre ne s'ouvrira plus qu'avec le mot de passe « actuel » ET ce fichier."""
+        if self._cle is None:
+            raise RuntimeError(t("Coffre verrouillé"))
+        if not self.verifier_mot_de_passe(actuel):
+            raise MotDePasseIncorrect()
+        if not contenu:
+            raise ValueError(t("Ce fichier est vide."))
+        self._rechiffrer(actuel, contenu)
+
+    def retirer_fichier_cle(self, actuel: str) -> None:
+        if self._cle is None:
+            raise RuntimeError(t("Coffre verrouillé"))
+        if not self.verifier_mot_de_passe(actuel):
+            raise MotDePasseIncorrect()
+        self._rechiffrer(actuel, None)
+
+    def _rechiffrer(self, mot_de_passe: str, fichier_cle: bytes | None) -> None:
         # Les entrées restent intactes : on régénère la clé puis on sauvegarde
         # une seule fois (jamais de coffre vide écrit entre-temps).
         ancienne_cle, ancien_entete = self._cle, self._entete
-        self._nouveau_chiffrement(nouveau)
+        self._nouveau_chiffrement(mot_de_passe, fichier_cle)
         self.sauvegarder()
         self._rechiffrer_copies(ancienne_cle, ancien_entete)
 
@@ -490,7 +640,8 @@ class Coffre:
         self.entrees.sort(key=lambda e: (e["site"].casefold(), e["utilisateur"].casefold()))
 
     def ajouter(self, site: str, utilisateur: str, mot_de_passe: str, notes: str = "",
-                email: str = "") -> None:
+                email: str = "", categorie: str = "", favori: bool = False,
+                totp: str = "") -> None:
         self.entrees.append({
             "id": secrets.token_hex(8),
             "site": site.strip(),
@@ -499,6 +650,10 @@ class Coffre:
             "mot_de_passe": mot_de_passe,
             "notes": notes.strip(),
             "change_le": datetime.date.today().isoformat(),
+            "categorie": categorie.strip(),
+            "favori": favori,
+            "historique": [],
+            "totp": totp.strip(),
         })
         self.sauvegarder()
 
@@ -506,10 +661,27 @@ class Coffre:
         for e in self.entrees:
             if e["id"] == id_entree:
                 if "mot_de_passe" in champs and champs["mot_de_passe"] != e["mot_de_passe"]:
+                    # L'ancien mot de passe est gardé : utile si le changement sur le site
+                    # n'a pas abouti.
+                    ancien = {"mot_de_passe": e["mot_de_passe"],
+                              "remplace_le": datetime.date.today().isoformat()}
+                    e["historique"] = ([ancien] + e.get("historique", []))[:HISTORIQUE_MAX]
                     e["change_le"] = datetime.date.today().isoformat()
-                e.update({k: v.strip() if k != "mot_de_passe" else v for k, v in champs.items()})
+                e.update({k: v.strip() if isinstance(v, str) and k != "mot_de_passe" else v
+                          for k, v in champs.items()})
                 break
         self.sauvegarder()
+
+    def basculer_favori(self, id_entree: str) -> None:
+        for e in self.entrees:
+            if e["id"] == id_entree:
+                e["favori"] = not e.get("favori", False)
+        self.sauvegarder()
+
+    def categories(self) -> list[str]:
+        """Catégories utilisées, sans doublon, par ordre alphabétique."""
+        return sorted({e["categorie"] for e in self.entrees if e.get("categorie")},
+                      key=str.casefold)
 
     def supprimer(self, id_entree: str) -> None:
         self.entrees = [e for e in self.entrees if e["id"] != id_entree]

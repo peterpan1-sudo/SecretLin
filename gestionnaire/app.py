@@ -13,9 +13,10 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
-from gestionnaire import apparence, effets, langue, sante
+from gestionnaire import apparence, effets, fuites, import_externe, langue, sante, totp
 from gestionnaire.coffre import (
-    AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
+    AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, FichierCleRequis, MotDePasseIncorrect, attente_apres,
+    evaluer_force,
     generer_mot_de_passe, verifier_force,
 )
 from gestionnaire.logo import dessiner as dessiner_logo
@@ -30,6 +31,13 @@ DANGER = apparence.DANGER
 SUCCES = apparence.SUCCES
 BLEU = "#2f6fed"
 LIBELLES_FORCE = ["", "Faible", "Moyen", "Fort", "Très fort"]  # traduits à l'affichage
+FAVORI = "#f5b83d"  # étoile des favoris
+
+
+def categories_proposees() -> list[str]:
+    """Catégories proposées dans la fiche d'un compte, en plus de celles déjà utilisées."""
+    return [t("Réseaux sociaux"), t("E-mail"), t("Banque"), t("Achats"), t("Jeux"),
+            t("Divertissement"), t("Travail"), t("Études")]
 
 
 def appliquer_apparence(reglages):
@@ -378,6 +386,10 @@ class Application(ctk.CTk):
         self.echecs, bloque = self.coffre.lire_echecs()
         self.bloque_jusqua = time.monotonic() + max(0.0, bloque - time.time())
         self._jeton_presse_papier = None
+        # Vérification des fuites (Have I Been Pwned) : mot de passe → nombre de fuites,
+        # gardé en mémoire jusqu'au verrouillage seulement.
+        self.fuites = {}
+        self.etat_fuites = ""
 
         for evt in ("<Any-KeyPress>", "<Any-ButtonPress>"):
             self.bind_all(evt, self._activite, add="+")
@@ -458,6 +470,7 @@ class Application(ctk.CTk):
             if isinstance(fenetre, ctk.CTkToplevel):
                 fenetre.destroy()
         self.coffre.verrouiller()
+        self.fuites, self.etat_fuites = {}, ""
         self.vider_presse_papier()
         self.afficher_connexion()
 
@@ -525,6 +538,30 @@ class Application(ctk.CTk):
 
 # --- Écrans de connexion ----------------------------------------------------
 
+def case_fuites(parent):
+    """Case « vérifier que le mot de passe maître n'a pas fuité », cochée par défaut."""
+    case = ctk.CTkCheckBox(parent, text=t("Vérifier qu'il n'a pas fuité (Have I Been Pwned)"),
+                           font=police(12), text_color=TEXTE_DOUX, fg_color=ACCENT,
+                           hover_color=STYLES["principal"]["fond_survol"],
+                           border_color=BORDURE_ECLAT, checkmark_color=ACCENT_TEXTE)
+    case.select()
+    return case
+
+
+def probleme_fuite(mdp) -> str | None:
+    """Message d'erreur si le mot de passe a fuité ou ne peut pas être vérifié, sinon None.
+    Seul le début de son empreinte part sur Internet (voir fuites.py)."""
+    try:
+        n = fuites.verifier([mdp])[mdp]
+    except OSError:
+        return t("Vérification des fuites impossible (pas d'Internet ?). Décochez la case "
+                 "pour continuer sans vérifier.")
+    if n:
+        return t("Ce mot de passe apparaît dans des fuites de données (vu {n} fois) : "
+                 "choisissez-en un autre.", n=f"{n:,}".replace(",", " "))
+    return None
+
+
 class EcranCentre(ctk.CTkFrame):
     """Carte centrée utilisée pour la création et le déverrouillage."""
 
@@ -582,6 +619,8 @@ class EcranCreation(EcranCentre):
         self.confirmation = champ(self.interieur, t("Confirmer le mot de passe"), masque=True,
                                   width=340)
         self.confirmation.pack(pady=(0, 4))
+        self.case_fuites = case_fuites(self.interieur)
+        self.case_fuites.pack(anchor="w", pady=(6, 0))
         self.message.pack(pady=(6, 6))
         self.bouton = BoutonAnime(self.interieur, t("Créer le coffre"), self._creer, style="principal",
                                   width=340, height=44)
@@ -602,12 +641,22 @@ class EcranCreation(EcranCentre):
             return
         self.bouton.activer(False, t("Création…"))
         self.afficher_message("")
+        verifier = bool(self.case_fuites.get())
 
         def travail():
+            probleme = probleme_fuite(mdp) if verifier else None
+            if probleme:
+                self.app.after(0, lambda: self._refuse(probleme))
+                return
             self.app.coffre.creer(mdp)
             self.app.after(0, lambda: self.logo.ouvrir(self.app.afficher_principal))
 
         threading.Thread(target=travail, daemon=True).start()
+
+    def _refuse(self, probleme):
+        self.bouton.activer(True, t("Créer le coffre"))
+        self.afficher_message(probleme)
+        self.secouer()
 
 
 class EcranDeverrouillage(EcranCentre):
@@ -615,6 +664,16 @@ class EcranDeverrouillage(EcranCentre):
         super().__init__(app, t("Coffre verrouillé"), t("Entrez votre mot de passe maître."))
         self.mdp = champ(self.interieur, t("Mot de passe maître"), masque=True, width=340)
         self.mdp.pack(pady=(0, 4))
+        self.avec_fichier = app.coffre.besoin_fichier_cle()
+        if self.avec_fichier:
+            ligne = ctk.CTkFrame(self.interieur, fg_color="transparent")
+            ligne.pack(fill="x", pady=(6, 0))
+            self.nom_fichier = ctk.CTkLabel(ligne, text="", font=police(12), anchor="w",
+                                            width=230, text_color=TEXTE_DOUX)
+            self.nom_fichier.pack(side="left", fill="x", expand=True)
+            BoutonAnime(ligne, t("Fichier-clé…"), self._choisir_fichier, width=106, height=34,
+                        taille_police=12).pack(side="right")
+            self._afficher_fichier()
         self.message.pack(pady=(6, 6))
         self.bouton = BoutonAnime(self.interieur, t("Déverrouiller"), self._ouvrir, style="principal",
                                   width=340, height=44)
@@ -622,6 +681,20 @@ class EcranDeverrouillage(EcranCentre):
         self.mdp.bind("<Return>", lambda _e: self._ouvrir())
         self.mdp.focus_set()
         self._decompte()
+
+    def _afficher_fichier(self):
+        chemin = self.app.reglages["fichier_cle"]
+        if chemin:
+            self.nom_fichier.configure(text="🔑  " + Path(chemin).name, text_color=TEXTE)
+        else:
+            self.nom_fichier.configure(text=t("Aucun fichier-clé choisi"), text_color=TEXTE_DOUX)
+
+    def _choisir_fichier(self):
+        chemin = filedialog.askopenfilename(parent=self, title=t("Choisir le fichier-clé"))
+        if chemin:
+            self.app.enregistrer_reglages(fichier_cle=chemin)
+            self._afficher_fichier()
+            self.afficher_message("")
 
     def _decompte(self):
         """Pendant l'attente, le bouton reste grisé et le temps restant défile chaque seconde."""
@@ -645,14 +718,28 @@ class EcranDeverrouillage(EcranCentre):
         if not mdp:
             self.secouer()
             return
+        contenu_cle = None
+        if self.avec_fichier:
+            chemin = self.app.reglages["fichier_cle"]
+            if not chemin:
+                self.afficher_message(t("Ce coffre s'ouvre avec un fichier-clé : choisissez-le."))
+                self.secouer()
+                return
+            try:
+                contenu_cle = self.app.coffre.lire_fichier_cle(Path(chemin))
+            except (OSError, ValueError):
+                self.afficher_message(t("Fichier-clé introuvable ou illisible. Branchez la clé "
+                                        "USB ou choisissez le fichier."))
+                self.secouer()
+                return
         self.bouton.activer(False, t("Vérification…"))
         self.afficher_message("")
 
         def travail():
             try:
-                self.app.coffre.ouvrir(mdp)
+                self.app.coffre.ouvrir(mdp, contenu_cle)
                 resultat = None
-            except MotDePasseIncorrect:
+            except (MotDePasseIncorrect, FichierCleRequis):
                 resultat = "incorrect"
             except CoffreCorrompu:
                 resultat = "corrompu"
@@ -683,7 +770,8 @@ class EcranDeverrouillage(EcranCentre):
             self._decompte()
         else:
             self.app.noter_echecs(0)
-            self.afficher_message(t("Mot de passe incorrect."))
+            self.afficher_message(t("Mot de passe ou fichier-clé incorrect.") if self.avec_fichier
+                                  else t("Mot de passe incorrect."))
 
 
 # --- Écran principal --------------------------------------------------------
@@ -691,7 +779,7 @@ class EcranDeverrouillage(EcranCentre):
 class IndexAlphabet(ctk.CTkFrame):
     """Colonne A–Z : un clic fait défiler la liste jusqu'à la lettre."""
 
-    LETTRES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
+    LETTRES = "★ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
 
     def __init__(self, parent, aller_a):
         super().__init__(parent, fg_color=PANNEAU, corner_radius=14, border_width=1,
@@ -797,14 +885,23 @@ class CarteIdentifiant(ctk.CTkFrame):
         definir(self, "marge", float(depart))
         definir(self, "bord", BORDURE)
 
+        etoile = ctk.CTkLabel(self, text="★" if e.get("favori") else "☆", width=22,
+                              font=police(17), cursor="hand2",
+                              text_color=FAVORI if e.get("favori") else TEXTE_ETEINT)
+        etoile.pack(side="left", padx=(12, 0))
+        etoile.bind("<Button-1>", lambda _e: ecran.basculer_favori(e))
+        if not e.get("favori"):
+            survol(etoile, lambda: etoile.configure(text_color=TEXTE_DOUX),
+                   lambda: etoile.configure(text_color=TEXTE_ETEINT))
         self.pastille = Pastille(self, e["site"])
-        self.pastille.pack(side="left", padx=(14, 14), pady=12)
+        self.pastille.pack(side="left", padx=(8, 14), pady=12)
 
         textes = ctk.CTkFrame(self, fg_color="transparent")
         textes.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(textes, text=e["site"], font=police(15, gras=True), text_color=TEXTE,
                      anchor="w").pack(fill="x")
-        details = "  ·  ".join(v for v in (e["utilisateur"], e.get("email", "")) if v) or "—"
+        details = "  ·  ".join(v for v in (e["utilisateur"], e.get("email", ""),
+                                           e.get("categorie", "")) if v) or "—"
         ctk.CTkLabel(textes, text=details, font=police(12), text_color=TEXTE_DOUX,
                      anchor="w").pack(fill="x")
 
@@ -822,12 +919,34 @@ class CarteIdentifiant(ctk.CTkFrame):
             b.pack(side="right")
             if not e.get(cle):
                 b.activer(False)
+        self._jeton_2fa = None
+        if totp.valide(e.get("totp", "")):
+            self._bouton_2fa = BoutonAnime(actions, "", lambda: ecran.copier(
+                totp.code(e["totp"]), t("Code de double authentification copié")),
+                width=118, height=32, taille_police=12)
+            self._bouton_2fa.pack(side="right")
+            self._maj_2fa(e["totp"])
         ctk.CTkLabel(actions, text=t("Copier"), font=police(11), text_color=TEXTE_DOUX).pack(
             side="right", padx=(0, 4))
 
         survol(self, lambda: self._etat(True), lambda: self._etat(False))
         for w in (self, textes, self.pastille):
             tkinter.Misc.bind(w, "<Double-Button-1>", lambda _e: FenetreEntree(ecran, e), "+")
+
+    def _maj_2fa(self, cle):
+        """Code 2FA en cours et secondes restantes, mis à jour chaque seconde."""
+        code = totp.code(cle)
+        self._bouton_2fa.changer_texte(f"{code[:3]} {code[3:]} · {totp.restant(cle)}s")
+        self._jeton_2fa = self.after(1000 - int(time.time() * 1000) % 1000,
+                                     lambda: self._maj_2fa(cle))
+
+    def destroy(self):
+        # Un minuteur laissé en route après la destruction appellerait une commande Tcl
+        # supprimée, dont le nom peut être repris par un autre gestionnaire d'événement.
+        if self._jeton_2fa is not None:
+            self.after_cancel(self._jeton_2fa)
+            self._jeton_2fa = None
+        super().destroy()
 
     def _marge(self, v):
         self.pack_configure(padx=round(v))
@@ -902,6 +1021,14 @@ class EcranPrincipal(ctk.CTkFrame):
         self.recherche.bind("<KeyRelease>", lambda _e: self._recherche_modifiee())
         self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
+        self.categorie = None  # catégorie affichée (None : toutes)
+        self.filtre_categorie = ctk.CTkOptionMenu(
+            barre, values=[t("Toutes les catégories")], width=170, height=40, corner_radius=9,
+            fg_color=CARTE, button_color=CARTE, button_hover_color=CARTE_SURVOL,
+            text_color=TEXTE, font=police(12), dropdown_font=police(12),
+            dropdown_fg_color=PANNEAU, dropdown_hover_color=CARTE_SURVOL,
+            dropdown_text_color=TEXTE, command=self._categorie_choisie)
+        self.filtre_categorie.pack(side="left", padx=(8, 0))
         BoutonAnime(barre, t("Sauvegarde"), lambda: FenetreSauvegarde(self), width=112).pack(side="right")
         BoutonAnime(barre, t("Bilan de santé"), lambda: self.ouvrir_page(PageSante),
                     width=132).pack(side="right", padx=(0, 8))
@@ -943,6 +1070,11 @@ class EcranPrincipal(ctk.CTkFrame):
     def copier(self, texte, message):
         self.app.copier(texte)
         self.notifier(message)
+
+    def basculer_favori(self, e):
+        self.app.coffre.basculer_favori(e["id"])
+        self.notifier(t("Ajouté aux favoris") if e["favori"] else t("Retiré des favoris"))
+        self.rafraichir()
 
     def ouvrir_page(self, classe):
         """Affiche une page à la place de la liste (ou de la page précédente). L'en-tête
@@ -1012,6 +1144,21 @@ class EcranPrincipal(ctk.CTkFrame):
         lab.configure(text_color=ECLAT)
         transition(lab, "couleur", TEXTE_DOUX, 1.2, lambda c: lab.configure(text_color=c))
 
+    def _categorie_choisie(self, choix):
+        self.categorie = None if choix == t("Toutes les catégories") else choix
+        self._afficher(self.recherche.get().strip().casefold(), anime=True)
+
+    def _maj_filtre_categorie(self):
+        categories = self.app.coffre.categories()
+        if self.categorie not in categories:
+            self.categorie = None
+        self.filtre_categorie.configure(values=[t("Toutes les catégories")] + categories)
+        self.filtre_categorie.set(self.categorie or t("Toutes les catégories"))
+        if categories:
+            self.filtre_categorie.pack(side="left", padx=(8, 0), after=self.recherche)
+        else:
+            self.filtre_categorie.pack_forget()
+
     def _recherche_modifiee(self):
         """Attend une courte pause dans la frappe avant de refiltrer la liste."""
         if self._jeton_recherche is not None:
@@ -1038,9 +1185,14 @@ class EcranPrincipal(ctk.CTkFrame):
         self._sections = []  # [(lettre, case de l'en-tête, [(entrée, case de la carte), …]), …]
         cartes = []
         lettre_courante = None
-        for e in self.app.coffre.entrees:
+        entrees = self.app.coffre.entrees
+        # Favoris d'abord (section ★), puis les autres par ordre alphabétique.
+        for e in [e for e in entrees if e.get("favori")] + [e for e in entrees if not e.get("favori")]:
             initiale = e["site"][:1].upper()
-            lettre = initiale if initiale.isalpha() and initiale in IndexAlphabet.LETTRES else "#"
+            if e.get("favori"):
+                lettre = "★"
+            else:
+                lettre = initiale if initiale.isalpha() and initiale in IndexAlphabet.LETTRES else "#"
             if lettre != lettre_courante:
                 lettre_courante = lettre
                 self._sections.append((lettre, self._entete_section(lettre), []))
@@ -1049,6 +1201,7 @@ class EcranPrincipal(ctk.CTkFrame):
             carte = CarteIdentifiant(self, case, e, marge_depart=70 if anime else None)
             self._sections[-1][2].append((e, case))
             cartes.append(carte)
+        self._maj_filtre_categorie()
         self._afficher(self.recherche.get().strip().casefold(), anime=False)
 
         for page in self.pages:
@@ -1066,7 +1219,9 @@ class EcranPrincipal(ctk.CTkFrame):
         plan = []  # (case, visible) dans l'ordre de la liste
         nombre = 0
         for lettre, entete, cartes in self._sections:
-            visibles = [any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))
+            visibles = [any(filtre in e.get(k, "").casefold()
+                            for k in ("site", "utilisateur", "email", "categorie"))
+                        and (self.categorie is None or e.get("categorie") == self.categorie)
                         for e, _case in cartes]
             plan.append((entete, any(visibles)))
             plan.extend((case, visible) for (_e, case), visible in zip(cartes, visibles))
@@ -1074,8 +1229,9 @@ class EcranPrincipal(ctk.CTkFrame):
                 entetes[lettre] = entete
             nombre += sum(visibles)
         total = len(self.app.coffre.entrees)
+        filtre_actif = filtre or self.categorie is not None
         texte_vide = None if nombre else (
-            t("Aucun résultat.") if filtre else
+            t("Aucun résultat.") if filtre_actif else
             t("Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte."))
 
         def appliquer():
@@ -1100,12 +1256,12 @@ class EcranPrincipal(ctk.CTkFrame):
             if texte_vide is not None and self._vide is None:
                 self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
                 self._vide.pack(pady=70)
-                if not filtre:
+                if not filtre_actif:
                     LogoAnime(self._vide, FOND).pack()
                 ctk.CTkLabel(self._vide, text=texte_vide, font=police(14), text_color=TEXTE_DOUX,
                              justify="center").pack(pady=(12, 0))
             self._texte_vide = texte_vide
-            self.compteur.configure(text=f"{nombre} / {total}" if filtre else
+            self.compteur.configure(text=f"{nombre} / {total}" if filtre_actif else
                                     tn("{n} identifiant", "{n} identifiants", total))
             self.index.maj(set(entetes))
 
@@ -1127,8 +1283,8 @@ class EcranPrincipal(ctk.CTkFrame):
         case = self._case()
         ligne = ctk.CTkFrame(case, fg_color="transparent")
         ligne.pack(fill="x", padx=14, pady=(16, 4))
-        lab = ctk.CTkLabel(ligne, text=lettre, font=police(14, gras=True), text_color=TEXTE_DOUX,
-                           width=20, anchor="w")
+        lab = ctk.CTkLabel(ligne, text="★  " + t("Favoris") if lettre == "★" else lettre,
+                           font=police(14, gras=True), text_color=TEXTE_DOUX, width=20, anchor="w")
         lab.pack(side="left")
         definir(lab, "couleur", TEXTE_DOUX)
         ctk.CTkFrame(ligne, fg_color=BORDURE, height=1, corner_radius=0).pack(
@@ -1230,6 +1386,32 @@ class FenetreEntree(Dialogue):
         self.jauge.pack(fill="x", pady=(4, 0))
         self.mdp.bind("<KeyRelease>", lambda _e: self.jauge.maj(self.mdp.get()))
 
+        etiquette(t("Clé de double authentification (facultatif)"))
+        self.totp = champ(corps, t("ex. JBSWY3DPEHPK3PXP ou otpauth://…"))
+        self.totp.pack(fill="x")
+        if entree and entree.get("totp"):
+            self.totp.insert(0, entree["totp"])
+
+        etiquette(t("Catégorie (facultatif)"))
+        ligne = ctk.CTkFrame(corps, fg_color="transparent")
+        ligne.pack(fill="x")
+        utilisees = ecran.app.coffre.categories()
+        self.categorie = ctk.CTkComboBox(
+            ligne, values=utilisees + [c for c in categories_proposees() if c not in utilisees],
+            height=42, corner_radius=9, fg_color=FOND, border_color=BORDURE, border_width=1,
+            button_color=CARTE, button_hover_color=CARTE_SURVOL, text_color=TEXTE,
+            font=police(13), dropdown_font=police(12), dropdown_fg_color=PANNEAU,
+            dropdown_hover_color=CARTE_SURVOL, dropdown_text_color=TEXTE)
+        self.categorie.set(entree.get("categorie", "") if entree else "")
+        self.categorie.pack(side="left", fill="x", expand=True)
+        self.favori = ctk.CTkCheckBox(ligne, text="★  " + t("Favori"), font=police(13),
+                                      text_color=TEXTE, fg_color=ACCENT,
+                                      hover_color=STYLES["principal"]["fond_survol"],
+                                      border_color=BORDURE_ECLAT, checkmark_color=ACCENT_TEXTE)
+        if entree and entree.get("favori"):
+            self.favori.select()
+        self.favori.pack(side="left", padx=(14, 0))
+
         etiquette(t("Notes (facultatif)"))
         self.notes = ctk.CTkTextbox(corps, width=520, height=60, fg_color=FOND, border_color=BORDURE,
                                     border_width=1, corner_radius=9, text_color=TEXTE, font=police(13))
@@ -1246,6 +1428,9 @@ class FenetreEntree(Dialogue):
         if entree:
             BoutonAnime(boutons, t("Supprimer"), self._supprimer, style="danger",
                         width=104).pack(side="left")
+            if entree.get("historique"):
+                BoutonAnime(boutons, t("Historique"), lambda: DialogueHistorique(self, entree),
+                            width=110).pack(side="left", padx=(8, 0))
             self.site.insert(0, entree["site"])
             self.utilisateur.insert(0, entree["utilisateur"])
             self.email.insert(0, entree.get("email", ""))
@@ -1301,8 +1486,14 @@ class FenetreEntree(Dialogue):
             self.message.configure(text=t("L'adresse e-mail ne semble pas valide."),
                                    text_color=DANGER)
             return
+        cle_2fa = self.totp.get().strip()
+        if cle_2fa and not totp.valide(cle_2fa):
+            self.message.configure(text=t("La clé de double authentification n'est pas valable."),
+                                   text_color=DANGER)
+            return
         champs = dict(site=site, utilisateur=self.utilisateur.get(), email=email, mot_de_passe=mdp,
-                      notes=self.notes.get("1.0", "end"))
+                      notes=self.notes.get("1.0", "end"), categorie=self.categorie.get(),
+                      favori=bool(self.favori.get()), totp=cle_2fa)
         coffre = self.ecran.app.coffre
         if self.entree:
             coffre.modifier(self.entree["id"], **champs)
@@ -1321,6 +1512,55 @@ class FenetreEntree(Dialogue):
         self.ecran.notifier(t("Identifiant supprimé"))
         self.ecran.rafraichir()
         self.destroy()
+
+
+class DialogueHistorique(Dialogue):
+    """Anciens mots de passe d'un compte, du plus récent au plus ancien."""
+
+    def __init__(self, parent, entree):
+        super().__init__(parent, t("Historique"))
+        app = parent.winfo_toplevel()
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        ctk.CTkLabel(corps, text=t("Anciens mots de passe de « {nom} »", nom=entree["site"]),
+                     font=police(17, gras=True), text_color=TEXTE, anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text=t("Utile si le changement sur le site n'a pas abouti."),
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w").pack(fill="x",
+                                                                            pady=(2, 12))
+        familles = set(tkinter.font.families())
+        mono = next((f for f in ("JetBrains Mono", "DejaVu Sans Mono") if f in familles),
+                    "TkFixedFont")
+        for ancien in entree["historique"]:
+            ligne = ctk.CTkFrame(corps, fg_color=CARTE, corner_radius=10)
+            ligne.pack(fill="x", pady=3)
+            try:
+                date = datetime.date.fromisoformat(ancien["remplace_le"]).strftime("%d/%m/%Y")
+            except ValueError:
+                date = ancien["remplace_le"]
+            ctk.CTkLabel(ligne, text=t("Remplacé le {date}", date=date), font=police(11),
+                         text_color=TEXTE_DOUX, width=130, anchor="w").pack(side="left",
+                                                                           padx=(14, 6), pady=8)
+            texte = ctk.CTkLabel(ligne, text="•" * 12, text_color=TEXTE, anchor="w", width=220,
+                                 font=ctk.CTkFont(family=mono, size=round(13 * ECHELLE_TEXTE)))
+            texte.pack(side="left", fill="x", expand=True)
+            mdp = ancien["mot_de_passe"]
+            BoutonAnime(ligne, t("Copier"), lambda m=mdp: self._copier(app, m), width=80, height=30,
+                        taille_police=12).pack(side="right", padx=(0, 8))
+            voir = BoutonAnime(ligne, t("Afficher"), None, width=84, height=30, taille_police=12)
+            voir.commande = lambda w=texte, m=mdp, b=voir: self._basculer(w, m, b)
+            voir.pack(side="right", padx=(0, 6))
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=SUCCES)
+        self.message.pack(pady=(6, 0))
+        BoutonAnime(corps, t("Fermer"), self.destroy, width=100).pack(anchor="e", pady=(4, 0))
+
+    def _basculer(self, libelle, mdp, bouton):
+        visible = libelle.cget("text") == mdp
+        libelle.configure(text="•" * 12 if visible else mdp)
+        bouton.changer_texte(t("Afficher") if visible else t("Masquer"))
+
+    def _copier(self, app, mdp):
+        app.copier(mdp)
+        self.message.configure(text="✓  " + mdp_copie())
 
 
 class ConfirmationSuppression(Dialogue):
@@ -1378,12 +1618,18 @@ class FenetreSauvegarde(Dialogue):
                                 "avec un mot de passe d'export."), t("Exporter…"), self._exporter)
         rangee(t("Importer"), t("Ajoute les identifiants d'un fichier exporté. "
                                 "Les doublons sont ignorés."), t("Importer…"), self._importer)
+        rangee(t("Depuis un autre gestionnaire"),
+               t("Firefox, Chrome, Bitwarden, KeePass, 1Password ou LastPass : importez leur "
+                 "fichier d'export CSV."), t("Choisir…"), self._importer_externe)
         rangee(t("Restaurer"), t("Revient à une copie automatique : celle d'avant le dernier "
                                  "enregistrement, ou celle faite à l'un des derniers "
                                  "déverrouillages."),
                t("Restaurer…"), self._restaurer, actif=ecran.app.coffre.a_une_sauvegarde())
 
-        BoutonAnime(corps, t("Fermer"), self.destroy, width=100).pack(anchor="e", pady=(10, 0))
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=480)
+        self.message.pack(pady=(6, 0))
+        BoutonAnime(corps, t("Fermer"), self.destroy, width=100).pack(anchor="e", pady=(4, 0))
 
     def _exporter(self):
         nom = f"secretlin-{datetime.date.today().isoformat()}{self.EXTENSION}"
@@ -1412,6 +1658,21 @@ class FenetreSauvegarde(Dialogue):
                 tn("{n} identifiant importé", "{n} identifiants importés", n) if n
                 else t("Rien à importer : tout est déjà dans le coffre")))
 
+    def _importer_externe(self):
+        chemin = filedialog.askopenfilename(
+            parent=self, title=t("Importer depuis un autre gestionnaire"),
+            filetypes=[(t("Fichier CSV"), "*.csv"), (t("Tous les fichiers"), "*")])
+        if not chemin:
+            return
+        try:
+            source, entrees = import_externe.lire(Path(chemin))
+        except (OSError, ValueError) as e:
+            self.message.configure(text=str(e) if isinstance(e, import_externe.FormatInconnu)
+                                   else t("Fichier illisible."))
+            return
+        self.message.configure(text="")
+        DialogueImportExterne(self, Path(chemin), source, entrees)
+
     def _restaurer(self):
         coffre = self.ecran.app.coffre
         choix = []
@@ -1435,6 +1696,56 @@ class FenetreSauvegarde(Dialogue):
         self.ecran.rafraichir()
         self.ecran.notifier(message)
         self.destroy()
+
+
+class DialogueImportExterne(Dialogue):
+    """Confirmation avant d'importer un CSV d'un autre gestionnaire, avec l'option de
+    supprimer ce fichier, qui contient les mots de passe en clair."""
+
+    def __init__(self, fenetre: FenetreSauvegarde, chemin: Path, source: str, entrees: list):
+        super().__init__(fenetre, t("Importer"))
+        self.fenetre, self.chemin, self.entrees = fenetre, chemin, entrees
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        titre = (t("Fichier CSV") if source == "CSV"
+                 else t("Export {source}", source=source))
+        ctk.CTkLabel(corps, text=titre, font=police(17, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text=tn("{n} identifiant trouvé dans ce fichier.",
+                                    "{n} identifiants trouvés dans ce fichier.", len(entrees)),
+                     font=police(13), text_color=TEXTE, anchor="w").pack(fill="x", pady=(6, 2))
+        ctk.CTkLabel(corps, text=t("Les comptes déjà présents dans le coffre ne seront pas "
+                                   "ajoutés deux fois."),
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=360).pack(fill="x")
+        ctk.CTkLabel(corps, text=t("⚠  Ce fichier contient vos mots de passe en clair : "
+                                   "supprimez-le après l'import."),
+                     font=police(12), text_color="#f0883e", anchor="w", justify="left",
+                     wraplength=360).pack(fill="x", pady=(12, 6))
+        self.supprimer = ctk.CTkCheckBox(corps, text=t("Supprimer le fichier CSV après l'import"),
+                                         font=police(12), text_color=TEXTE, fg_color=ACCENT,
+                                         hover_color=STYLES["principal"]["fond_survol"],
+                                         border_color=BORDURE_ECLAT, checkmark_color=ACCENT_TEXTE)
+        self.supprimer.pack(anchor="w", pady=(0, 14))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(fill="x")
+        bouton = BoutonAnime(boutons, t("Importer"), self._importer, style="principal", width=120)
+        bouton.pack(side="right")
+        bouton.activer(bool(entrees))
+        BoutonAnime(boutons, t("Annuler"), self.destroy, width=100).pack(side="right")
+
+    def _importer(self):
+        ajoutees, ignorees = self.fenetre.ecran.app.coffre.ajouter_externes(self.entrees)
+        message = tn("{n} identifiant importé", "{n} identifiants importés", ajoutees)
+        if ignorees:
+            message += "  ·  " + tn("{n} déjà présent", "{n} déjà présents", ignorees)
+        if self.supprimer.get():
+            try:
+                self.chemin.unlink()
+            except OSError:
+                message += "  ·  " + t("le fichier CSV n'a pas pu être supprimé")
+        self.destroy()
+        self.fenetre._fin(message)
 
 
 class DialogueMotDePasse(Dialogue):
@@ -1628,8 +1939,13 @@ class PageSecurite(Page):
     def __init__(self, ecran: EcranPrincipal):
         super().__init__(ecran, t("Sécurité"), t("Tout ce qui protège l'accès à votre coffre."),
                          retour=t("Réglages"))
-        self.section = SectionMotDePasse(self, ecran)
+        defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                            scrollbar_button_color=BORDURE,
+                                            scrollbar_button_hover_color=BORDURE_ECLAT)
+        defilement.pack(fill="both", expand=True)
+        self.section = SectionMotDePasse(defilement, ecran)
         self.section.pack(fill="x", pady=4)
+        SectionFichierCle(defilement, ecran).pack(fill="x", pady=4)
 
     def affichee(self):
         self.after(80, self.section.actuel.focus_set)
@@ -1868,29 +2184,79 @@ def duree_depuis(jours: int) -> str:
 
 
 class PageSante(Page):
-    """Bilan de santé : les mots de passe faibles, réutilisés ou trop anciens, chacun avec
-    un bouton pour le changer."""
+    """Bilan de santé : les mots de passe faibles, réutilisés, trop anciens ou piratés,
+    chacun avec un bouton pour le changer."""
 
     def __init__(self, ecran: EcranPrincipal):
-        super().__init__(ecran, t("Bilan de santé"), t("Les mots de passe à changer en priorité. "
-                                                       "Rien ne quitte votre ordinateur : tout est "
-                                                       "analysé ici."))
+        super().__init__(ecran, t("Bilan de santé"), t("Les mots de passe à changer en priorité."))
+        self.app = ecran.app
         self.defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
                                                  scrollbar_button_color=BORDURE,
                                                  scrollbar_button_hover_color=BORDURE_ECLAT)
         self.defilement.pack(fill="both", expand=True)
         self._remplir()
+        self._verifier_fuites()
 
     def coffre_modifie(self):
+        self._redessiner()
+        self._verifier_fuites()
+
+    def _redessiner(self):
+        if not self.winfo_exists():
+            return
         for enfant in self.defilement.winfo_children():
             enfant.destroy()
         self._remplir()
 
+    def _verifier_fuites(self, tout=False):
+        """Vérifie en ligne les mots de passe pas encore vérifiés (tous si « tout »), si
+        l'option est activée."""
+        app = self.app
+        if not app.reglages["verifier_fuites"]:
+            return
+        a_verifier = {e["mot_de_passe"] for e in app.coffre.entrees}
+        if not tout:
+            a_verifier -= set(app.fuites)
+        if not a_verifier:
+            return
+        app.etat_fuites = t("Vérification en cours…")
+        self._redessiner()
+
+        def fond():
+            try:
+                resultats, etat = fuites.verifier(a_verifier), ""
+            except OSError:
+                resultats, etat = {}, t("Vérification impossible : pas de connexion Internet ?")
+            app.after(0, lambda: fin(resultats, etat))
+
+        def fin(resultats, etat):
+            if not isinstance(app.ecran, EcranPrincipal):
+                return  # verrouillé entre-temps : on ne garde rien
+            app.fuites.update(resultats)
+            app.etat_fuites = etat
+            self._redessiner()
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _changer_option_fuites(self, active):
+        self.app.enregistrer_reglages(verifier_fuites=active)
+        if not active:
+            self.app.fuites, self.app.etat_fuites = {}, ""
+            self._redessiner()
+        else:
+            self._verifier_fuites(tout=True)
+
     def _remplir(self):
-        entrees = self.ecran.app.coffre.entrees
-        b = sante.bilan(entrees)
-        self._resume(b, len(entrees))
+        entrees = self.app.coffre.entrees
+        verifie = self.app.reglages["verifier_fuites"]
+        b = sante.bilan(entrees, fuites=self.app.fuites if verifie else None)
+        self._resume(b, len(entrees), verifie)
+        self._section_fuites(verifie)
         categories = (
+            ("pirates", t("Mots de passe piratés"),
+             t("Ils apparaissent dans des fuites de données publiques : changez-les en premier."),
+             lambda e: t("Vu {n} fois dans des fuites",
+                         n=f"{self.app.fuites[e['mot_de_passe']]:,}".replace(",", " "))),
             ("faibles", t("Mots de passe faibles"),
              t("Trop courts ou trop simples : faciles à deviner pour un programme."),
              lambda e: t("Force : {niveau}",
@@ -1908,7 +2274,33 @@ class PageSante(Page):
                 for e in b[cle]:
                     self._ligne(section, e, raison(e))
 
-    def _resume(self, b, total):
+    def _section_fuites(self, verifie):
+        section = self._section(self.defilement, t("Fuites de données"),
+                                t("Vérifie si vos mots de passe apparaissent dans des fuites "
+                                  "connues, avec le service Have I Been Pwned."))
+        interrupteur = ctk.CTkSwitch(
+            section, text=t("Vérifier en ligne (Internet)"), font=police(13), text_color=TEXTE,
+            command=lambda: self._changer_option_fuites(bool(interrupteur.get())),
+            fg_color=BORDURE, progress_color=ACCENT, button_color=TEXTE_DOUX,
+            button_hover_color=TEXTE)
+        if verifie:
+            interrupteur.select()
+        interrupteur.pack(anchor="w")
+        ctk.CTkLabel(section, text=t("Vos mots de passe ne sont jamais envoyés : seuls les 5 "
+                                     "premiers caractères de leur empreinte partent sur "
+                                     "Internet, et la comparaison se fait sur l'ordinateur."),
+                     font=police(11), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=640).pack(fill="x", pady=(6, 0))
+        if verifie and self.app.etat_fuites:
+            ctk.CTkLabel(section, text=self.app.etat_fuites, font=police(12),
+                         text_color=TEXTE if "…" in self.app.etat_fuites else DANGER,
+                         anchor="w").pack(fill="x", pady=(6, 0))
+        if verifie and not self.app.etat_fuites.endswith("…"):
+            BoutonAnime(section, t("Vérifier à nouveau"),
+                        lambda: self.app.after(50, lambda: self._verifier_fuites(tout=True)),
+                        width=160, height=32, taille_police=12).pack(anchor="w", pady=(8, 0))
+
+    def _resume(self, b, total, verifie=False):
         carte = ctk.CTkFrame(self.defilement, fg_color=CARTE, corner_radius=12, border_width=1,
                              border_color=BORDURE)
         carte.pack(fill="x", pady=4)
@@ -1933,8 +2325,11 @@ class PageSante(Page):
                      anchor="w").pack(fill="x", pady=(2, 0))
         compteurs = ctk.CTkFrame(carte, fg_color="transparent")
         compteurs.pack(side="right", padx=20)
-        for cle, nom in (("faibles", t("Faibles")), ("reutilises", t("Réutilisés")),
-                         ("anciens", t("Anciens"))):
+        compteurs_affiches = [("faibles", t("Faibles")), ("reutilises", t("Réutilisés")),
+                              ("anciens", t("Anciens"))]
+        if verifie:
+            compteurs_affiches.insert(0, ("pirates", t("Piratés")))
+        for cle, nom in compteurs_affiches:
             bloc = ctk.CTkFrame(compteurs, fg_color="transparent")
             bloc.pack(side="left", padx=10)
             n = len(b[cle])
@@ -1984,6 +2379,8 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.confirmation = champ(corps, t("Confirmer le nouveau mot de passe"), masque=True,
                                   width=340)
         self.confirmation.pack()
+        self.case_fuites = case_fuites(corps)
+        self.case_fuites.pack(anchor="w", pady=(8, 0))
         self.confirmation.bind("<Return>", lambda _e: self._valider())
         self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
                                     wraplength=340)
@@ -2010,11 +2407,13 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.bouton.activer(False, t("Patientez…"))
         self.message.configure(text="")
         app = self.ecran.app
+        verifier = bool(self.case_fuites.get())
 
         def fond():
             try:
-                app.coffre.changer_mot_de_passe(nouveau, actuel=actuel)
-                erreur = None
+                erreur = probleme_fuite(nouveau) if verifier else None
+                if erreur is None:
+                    app.coffre.changer_mot_de_passe(nouveau, actuel=actuel)
             except MotDePasseIncorrect:
                 erreur = t("Mot de passe actuel incorrect.")
             except (OSError, RuntimeError) as e:
@@ -2041,6 +2440,127 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.confirmation.delete(0, "end")
         self.jauge.maj("")
         self.ecran.notifier(t("Mot de passe maître changé"))
+
+class SectionFichierCle(ctk.CTkFrame):
+    """Fichier-clé : un deuxième facteur pour ouvrir le coffre, en plus du mot de passe."""
+
+    def __init__(self, parent, ecran: EcranPrincipal):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE)
+        self.ecran = ecran
+        app = ecran.app
+        self.actif = app.coffre.besoin_fichier_cle()
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(anchor="w", padx=20, pady=18)
+        ctk.CTkLabel(corps, text=t("Fichier-clé (deuxième facteur)"), font=police(15, gras=True),
+                     text_color=TEXTE, anchor="w").pack(fill="x")
+        if self.actif:
+            nom = Path(app.reglages["fichier_cle"]).name or "?"
+            texte = t("Activé : le coffre s'ouvre avec le mot de passe maître et le fichier "
+                      "« {nom} ».", nom=nom)
+        else:
+            texte = t("En plus du mot de passe maître, le coffre ne s'ouvrira qu'avec ce fichier, "
+                      "par exemple rangé sur une clé USB.")
+        ctk.CTkLabel(corps, text=texte, font=police(12), text_color=TEXTE_DOUX, anchor="w",
+                     justify="left", wraplength=420).pack(fill="x", pady=(4, 4))
+        ctk.CTkLabel(corps, text=t("⚠  Si vous perdez ce fichier, le coffre ne pourra plus jamais "
+                                   "être ouvert : gardez-en une copie en lieu sûr."),
+                     font=police(12), text_color="#f0883e", anchor="w", justify="left",
+                     wraplength=420).pack(fill="x", pady=(0, 12))
+        self.actuel = champ(corps, t("Mot de passe maître actuel"), masque=True, width=340)
+        self.actuel.pack(anchor="w")
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=420)
+        self.message.pack(pady=(6, 0))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(anchor="w", pady=(4, 0))
+        self.boutons = []
+        if self.actif:
+            self.boutons.append(BoutonAnime(boutons, t("Retirer le fichier-clé"), self._retirer,
+                                            style="danger", width=180))
+        else:
+            self.boutons.append(BoutonAnime(boutons, t("Créer un fichier-clé…"), self._creer,
+                                            style="principal", width=180))
+            self.boutons.append(BoutonAnime(boutons, t("Utiliser un fichier existant…"),
+                                            self._existant, width=200))
+        for b in self.boutons:
+            b.pack(side="left", padx=(0, 8))
+
+    def _mot_de_passe(self):
+        actuel = self.actuel.get()
+        if not actuel:
+            self.message.configure(text=t("Entrez votre mot de passe actuel."))
+        return actuel
+
+    def _creer(self):
+        if not (actuel := self._mot_de_passe()):
+            return
+        chemin = filedialog.asksaveasfilename(parent=self, title=t("Enregistrer le fichier-clé"),
+                                              initialfile="secretlin.cle")
+        if chemin:
+            self._lancer(actuel, chemin, nouveau=True)
+
+    def _existant(self):
+        if not (actuel := self._mot_de_passe()):
+            return
+        chemin = filedialog.askopenfilename(parent=self, title=t("Choisir le fichier-clé"))
+        if chemin:
+            self._lancer(actuel, chemin, nouveau=False)
+
+    def _retirer(self):
+        if actuel := self._mot_de_passe():
+            self._lancer(actuel, "", nouveau=False)
+
+    def _lancer(self, actuel, chemin, nouveau):
+        """Vérifie le mot de passe puis active (chemin donné) ou retire le fichier-clé, en
+        arrière-plan : Argon2id prend du temps."""
+        app = self.ecran.app
+        for b in self.boutons:
+            b.activer(False)
+        self.message.configure(text=t("Patientez…"), text_color=TEXTE_DOUX)
+
+        def fond():
+            try:
+                if not app.coffre.verifier_mot_de_passe(actuel):
+                    raise MotDePasseIncorrect()
+                if not chemin:
+                    app.coffre.retirer_fichier_cle(actuel)
+                else:
+                    contenu = (app.coffre.creer_fichier_cle(Path(chemin)) if nouveau
+                               else app.coffre.lire_fichier_cle(Path(chemin)))
+                    app.coffre.activer_fichier_cle(contenu, actuel)
+                erreur = None
+            except MotDePasseIncorrect:
+                erreur = t("Mot de passe actuel incorrect.")
+            except (OSError, RuntimeError, ValueError) as e:
+                erreur = t("Opération impossible : {erreur}", erreur=e)
+            app.after(0, lambda: self._resultat(erreur, chemin))
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _resultat(self, erreur, chemin):
+        app = self.ecran.app
+        if app.ecran is not self.ecran:
+            app.coffre.verrouiller()
+            return
+        if not self.winfo_exists():
+            return
+        if erreur:
+            for b in self.boutons:
+                b.activer(True)
+            self.actuel.delete(0, "end")
+            self.message.configure(text=erreur, text_color=DANGER)
+            return
+        app.enregistrer_reglages(fichier_cle=chemin)
+        # La page préparée d'avance montrerait l'ancien état.
+        ancienne = self.ecran._pages_pretes.pop(PageSecurite, None)
+        if ancienne is not None:
+            ancienne.destroy()
+        self.ecran.notifier(t("Fichier-clé activé") if chemin else t("Fichier-clé retiré"))
+        # La page est redessinée pour montrer le nouvel état.
+        self.ecran.page_precedente()
+        self.ecran.ouvrir_page(PageSecurite)
+
 
 def main():
     Application().mainloop()
