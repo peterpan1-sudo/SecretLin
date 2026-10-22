@@ -280,6 +280,8 @@ def _verifier_entrees(entrees) -> list[dict]:
             e["favori"] = False
         if not isinstance(e.get("categorie"), str):
             e["categorie"] = ""
+        if not isinstance(e.get("totp"), str):
+            e["totp"] = ""
         historique = e.get("historique")
         if not isinstance(historique, list):
             historique = []
@@ -485,6 +487,7 @@ class Coffre:
                 "categorie": e.get("categorie", "").strip(),
                 "favori": bool(e.get("favori", False)),
                 "historique": [],
+                "totp": e.get("totp", "").strip(),
             })
             ajoutees += 1
         if ajoutees:
@@ -536,7 +539,8 @@ class Coffre:
         self.entrees.sort(key=lambda e: (e["site"].casefold(), e["utilisateur"].casefold()))
 
     def ajouter(self, site: str, utilisateur: str, mot_de_passe: str, notes: str = "",
-                email: str = "", categorie: str = "", favori: bool = False) -> None:
+                email: str = "", categorie: str = "", favori: bool = False,
+                totp: str = "") -> None:
         self.entrees.append({
             "id": secrets.token_hex(8),
             "site": site.strip(),
@@ -548,6 +552,7 @@ class Coffre:
             "categorie": categorie.strip(),
             "favori": favori,
             "historique": [],
+            "totp": totp.strip(),
         })
         self.sauvegarder()
 

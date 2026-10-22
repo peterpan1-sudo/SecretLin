@@ -72,3 +72,14 @@ def test_ajout_au_coffre_sans_doublons(tmp_path):
     c.verrouiller()
     c.ouvrir("Maitre-Tres-Solide-42!")
     assert c.entrees[1]["utilisateur"] == "joueur" and c.entrees[1]["change_le"]
+
+
+def test_cle_2fa_importee(tmp_path):
+    chemin = tmp_path / "bw.csv"
+    chemin.write_text("folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,"
+                      "login_password,login_totp\n"
+                      "Jeux,1,login,Steam,,,0,,joueur,Secret-1,JBSWY3DPEHPK3PXP\n"
+                      ",,login,Autre,,,0,,moi,Secret-2,steam://pas-pris-en-charge\n", encoding="utf-8")
+    _, (steam, autre) = import_externe.lire(chemin)
+    assert (steam["totp"], steam["categorie"], steam["favori"]) == ("JBSWY3DPEHPK3PXP", "Jeux", True)
+    assert autre["totp"] == ""

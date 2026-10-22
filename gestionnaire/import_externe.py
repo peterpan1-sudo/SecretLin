@@ -5,6 +5,7 @@ import csv
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from gestionnaire import totp
 from gestionnaire.langue import t
 
 # (nom de la source, colonnes qui la reconnaissent, colonnes de chaque champ : la première
@@ -13,19 +14,19 @@ FORMATS = [
     ("Bitwarden", {"login_uri", "login_password"},
      dict(site=("name",), url=("login_uri",), utilisateur=("login_username",),
           mot_de_passe=("login_password",), notes=("notes",), categorie=("folder",),
-          favori=("favorite",))),
+          favori=("favorite",), totp=("login_totp",))),
     ("KeePass", {"title", "group", "password"},
      dict(site=("title",), url=("url",), utilisateur=("username",), mot_de_passe=("password",),
-          notes=("notes",), categorie=("group",))),
+          notes=("notes",), categorie=("group",), totp=("totp",))),
     ("KeePass", {"account", "login name"},
      dict(site=("account",), url=("web site",), utilisateur=("login name",),
           mot_de_passe=("password",), notes=("comments",))),
     ("1Password", {"title", "otpauth"},
      dict(site=("title",), url=("url",), utilisateur=("username",), mot_de_passe=("password",),
-          notes=("notes",), categorie=("tags",), favori=("favorite",))),
+          notes=("notes",), categorie=("tags",), favori=("favorite",), totp=("otpauth",))),
     ("LastPass", {"grouping", "extra"},
      dict(site=("name",), url=("url",), utilisateur=("username",), mot_de_passe=("password",),
-          notes=("extra",), categorie=("grouping",), favori=("fav",))),
+          notes=("extra",), categorie=("grouping",), favori=("fav",), totp=("totp",))),
     ("Firefox", {"httprealm", "formactionorigin"},
      dict(site=(), url=("url",), utilisateur=("username",), mot_de_passe=("password",), notes=())),
     ("Chrome", {"name", "url", "username", "password"},
@@ -105,6 +106,8 @@ def lire(chemin: Path) -> tuple[str, list[dict]]:
         if categorie.casefold() in GROUPES_RACINE:
             categorie = ""
         favori = valeur(ligne, champs.get("favori", ())).casefold() in VRAI
+        cle_2fa = valeur(ligne, champs.get("totp", ()))
         entrees.append(dict(site=site, utilisateur=utilisateur, email=email, mot_de_passe=mdp,
-                            notes=notes, categorie=categorie, favori=favori))
+                            notes=notes, categorie=categorie, favori=favori,
+                            totp=cle_2fa if totp.valide(cle_2fa) else ""))
     return source, entrees

@@ -384,6 +384,28 @@
   "ja": "表示",
   "ko": "보기"
  },
+ "Clé de double authentification (facultatif)": {
+  "en": "Two-factor authentication key (optional)",
+  "es": "Clave de verificación en dos pasos (opcional)",
+  "de": "Schlüssel für Zwei-Faktor-Authentifizierung (optional)",
+  "pt": "Chave de autenticação em dois fatores (opcional)",
+  "it": "Chiave di autenticazione a due fattori (facoltativa)",
+  "ru": "Ключ двухфакторной аутентификации (необязательно)",
+  "zh": "双重验证密钥（可选）",
+  "ja": "2 段階認証キー（任意）",
+  "ko": "2단계 인증 키 (선택)"
+ },
+ "ex. JBSWY3DPEHPK3PXP ou otpauth://…": {
+  "en": "e.g. JBSWY3DPEHPK3PXP or otpauth://…",
+  "es": "p. ej. JBSWY3DPEHPK3PXP u otpauth://…",
+  "de": "z. B. JBSWY3DPEHPK3PXP oder otpauth://…",
+  "pt": "ex.: JBSWY3DPEHPK3PXP ou otpauth://…",
+  "it": "es. JBSWY3DPEHPK3PXP o otpauth://…",
+  "ru": "напр. JBSWY3DPEHPK3PXP или otpauth://…",
+  "zh": "例如 JBSWY3DPEHPK3PXP 或 otpauth://…",
+  "ja": "例：JBSWY3DPEHPK3PXP または otpauth://…",
+  "ko": "예: JBSWY3DPEHPK3PXP 또는 otpauth://…"
+ },
  "Catégorie (facultatif)": {
   "en": "Category (optional)",
   "es": "Categoría (opcional)",
@@ -1693,6 +1715,17 @@
   "ja": "メールアドレスが正しくないようです。",
   "ko": "이메일 주소가 올바르지 않은 것 같습니다."
  },
+ "La clé de double authentification n'est pas valable.": {
+  "en": "The two-factor authentication key is not valid.",
+  "es": "La clave de verificación en dos pasos no es válida.",
+  "de": "Der Schlüssel für die Zwei-Faktor-Authentifizierung ist ungültig.",
+  "pt": "A chave de autenticação em dois fatores não é válida.",
+  "it": "La chiave di autenticazione a due fattori non è valida.",
+  "ru": "Ключ двухфакторной аутентификации недействителен.",
+  "zh": "双重验证密钥无效。",
+  "ja": "2 段階認証キーが正しくありません。",
+  "ko": "2단계 인증 키가 올바르지 않습니다."
+ },
  "Fermer": {
   "en": "Close",
   "es": "Cerrar",
@@ -1868,6 +1901,17 @@
   "zh": "无法更改：{erreur}",
   "ja": "変更できません：{erreur}",
   "ko": "변경할 수 없습니다: {erreur}"
+ },
+ "Code de double authentification copié": {
+  "en": "Two-factor code copied",
+  "es": "Código de verificación copiado",
+  "de": "Zwei-Faktor-Code kopiert",
+  "pt": "Código de autenticação copiado",
+  "it": "Codice a due fattori copiato",
+  "ru": "Код двухфакторной аутентификации скопирован",
+  "zh": "验证码已复制",
+  "ja": "認証コードをコピーしました",
+  "ko": "인증 코드 복사됨"
  },
  "Ajouter": {
   "en": "Add",

@@ -13,7 +13,7 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
-from gestionnaire import apparence, effets, import_externe, langue, sante
+from gestionnaire import apparence, effets, import_externe, langue, sante, totp
 from gestionnaire.coffre import (
     AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
@@ -838,12 +838,26 @@ class CarteIdentifiant(ctk.CTkFrame):
             b.pack(side="right")
             if not e.get(cle):
                 b.activer(False)
+        if totp.valide(e.get("totp", "")):
+            self._bouton_2fa = BoutonAnime(actions, "", lambda: ecran.copier(
+                totp.code(e["totp"]), t("Code de double authentification copié")),
+                width=118, height=32, taille_police=12)
+            self._bouton_2fa.pack(side="right")
+            self._maj_2fa(e["totp"])
         ctk.CTkLabel(actions, text=t("Copier"), font=police(11), text_color=TEXTE_DOUX).pack(
             side="right", padx=(0, 4))
 
         survol(self, lambda: self._etat(True), lambda: self._etat(False))
         for w in (self, textes, self.pastille):
             tkinter.Misc.bind(w, "<Double-Button-1>", lambda _e: FenetreEntree(ecran, e), "+")
+
+    def _maj_2fa(self, cle):
+        """Code 2FA en cours et secondes restantes, mis à jour chaque seconde."""
+        if not self.winfo_exists():
+            return
+        code = totp.code(cle)
+        self._bouton_2fa.changer_texte(f"{code[:3]} {code[3:]} · {totp.restant(cle)}s")
+        self.after(1000 - int(time.time() * 1000) % 1000, lambda: self._maj_2fa(cle))
 
     def _marge(self, v):
         self.pack_configure(padx=round(v))
@@ -1283,6 +1297,12 @@ class FenetreEntree(Dialogue):
         self.jauge.pack(fill="x", pady=(4, 0))
         self.mdp.bind("<KeyRelease>", lambda _e: self.jauge.maj(self.mdp.get()))
 
+        etiquette(t("Clé de double authentification (facultatif)"))
+        self.totp = champ(corps, t("ex. JBSWY3DPEHPK3PXP ou otpauth://…"))
+        self.totp.pack(fill="x")
+        if entree and entree.get("totp"):
+            self.totp.insert(0, entree["totp"])
+
         etiquette(t("Catégorie (facultatif)"))
         ligne = ctk.CTkFrame(corps, fg_color="transparent")
         ligne.pack(fill="x")
@@ -1377,9 +1397,14 @@ class FenetreEntree(Dialogue):
             self.message.configure(text=t("L'adresse e-mail ne semble pas valide."),
                                    text_color=DANGER)
             return
+        cle_2fa = self.totp.get().strip()
+        if cle_2fa and not totp.valide(cle_2fa):
+            self.message.configure(text=t("La clé de double authentification n'est pas valable."),
+                                   text_color=DANGER)
+            return
         champs = dict(site=site, utilisateur=self.utilisateur.get(), email=email, mot_de_passe=mdp,
                       notes=self.notes.get("1.0", "end"), categorie=self.categorie.get(),
-                      favori=bool(self.favori.get()))
+                      favori=bool(self.favori.get()), totp=cle_2fa)
         coffre = self.ecran.app.coffre
         if self.entree:
             coffre.modifier(self.entree["id"], **champs)
