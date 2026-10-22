@@ -439,3 +439,22 @@ def test_compteur_echecs_illisible_ou_horloge_reculee(tmp_path):
 def test_paliers_d_attente():
     assert [module.attente_apres(n) for n in range(1, 11)] == [
         0, 0, 60, 180, 300, 600, 900, 1800, 3600, 3600]
+
+
+def test_generateur_respecte_les_options():
+    for _ in range(50):
+        mdp = generer_mot_de_passe(longueur=12, majuscules=False, chiffres=True, symboles=False)
+        assert len(mdp) == 12
+        assert any(c.isdigit() for c in mdp)
+        assert not any(c.isupper() or c in module.SYMBOLES for c in mdp)
+    for _ in range(50):
+        mdp = generer_mot_de_passe(longueur=30, sans_ambigus=True)
+        assert not set(mdp) & set(module.AMBIGUS)
+        assert all(any(c in f for c in mdp) for f in ("abcdefghijkmnpqrstuvwxyz",
+                                                       "ABCDEFGHJKLMNPQRSTUVWXYZ",
+                                                       "23456789", module.SYMBOLES))
+
+
+def test_generateur_trop_court_pour_tous_les_types():
+    # Chaque type demandé doit être présent : la longueur est relevée si besoin.
+    assert len(generer_mot_de_passe(longueur=2)) == 4

@@ -1,6 +1,7 @@
-"""Apparence de SecretLin : thème de couleurs, couleur d'accent, taille du texte et
-animations. Les choix sont rangés dans « reglages.json » à côté du coffre : rien de
-secret dedans, il n'est donc pas chiffré."""
+"""Réglages de SecretLin : apparence (thème de couleurs, couleur d'accent, police, taille
+du texte, animations) et options du générateur de mots de passe. Les choix sont rangés
+dans « reglages.json » à côté du coffre : rien de secret dedans, il n'est donc pas
+chiffré."""
 
 import json
 import os
@@ -57,7 +58,20 @@ ACCENTS = {
 
 TAILLES = {"Petite": 0.9, "Normale": 1.0, "Grande": 1.15}
 
-DEFAUT = {"theme": "Graphite", "accent": "Neutre", "taille": "Normale", "animations": True}
+# Polices parmi les plus utilisées (classement Google Fonts et choix des designers d'interface).
+# Sous Debian/Kali, chacune vient d'un paquet « fonts-… » (voir debian/control).
+POLICES = ("Inter", "Roboto", "Open Sans", "Lato", "Montserrat", "Nunito", "Manrope",
+           "Source Sans 3", "IBM Plex Sans", "JetBrains Mono")
+# Police utilisée si celle choisie n'est pas installée : la première présente.
+POLICES_SECOURS = ("Inter", "Segoe UI", "Roboto", "Cantarell", "DejaVu Sans")
+
+LONGUEUR_MIN, LONGUEUR_MAX = 8, 64
+OPTIONS_GENERATEUR = ("majuscules", "chiffres", "symboles", "sans_ambigus")
+
+DEFAUT = {"theme": "Graphite", "accent": "Neutre", "police": "Inter", "taille": "Normale",
+          "animations": True,
+          "longueur": 20, "majuscules": True, "chiffres": True, "symboles": True,
+          "sans_ambigus": False}
 
 
 def _luminance(couleur: str) -> float:
@@ -128,12 +142,22 @@ def charger(chemin: Path) -> dict:
         return reglages
     if not isinstance(lus, dict):
         return reglages
-    for cle, permis in (("theme", THEMES), ("accent", ACCENTS), ("taille", TAILLES)):
+    for cle, permis in (("theme", THEMES), ("accent", ACCENTS), ("police", POLICES),
+                         ("taille", TAILLES)):
         if lus.get(cle) in permis:
             reglages[cle] = lus[cle]
-    if isinstance(lus.get("animations"), bool):
-        reglages["animations"] = lus["animations"]
+    for cle in ("animations",) + OPTIONS_GENERATEUR:
+        if isinstance(lus.get(cle), bool):
+            reglages[cle] = lus[cle]
+    longueur = lus.get("longueur")
+    if type(longueur) is int and LONGUEUR_MIN <= longueur <= LONGUEUR_MAX:
+        reglages["longueur"] = longueur
     return reglages
+
+
+def options_generateur(reglages: dict) -> dict:
+    """Arguments de generer_mot_de_passe() pour ces réglages."""
+    return {cle: reglages[cle] for cle in ("longueur",) + OPTIONS_GENERATEUR}
 
 
 def enregistrer(chemin: Path, reglages: dict) -> None:

@@ -165,14 +165,28 @@ def evaluer_force(mot_de_passe: str) -> int:
     return 4
 
 
-def generer_mot_de_passe(longueur: int = 20) -> str:
-    """Mot de passe aléatoire cryptographiquement sûr, avec chaque type de caractère."""
-    speciaux = "!@#$%&*-_=+?"
-    alphabet = string.ascii_letters + string.digits + speciaux
+SYMBOLES = "!@#$%&*-_=+?"
+AMBIGUS = "Il1O0o"  # se confondent à l'œil
+
+
+def generer_mot_de_passe(longueur: int = 20, majuscules: bool = True, chiffres: bool = True,
+                         symboles: bool = True, sans_ambigus: bool = False) -> str:
+    """Mot de passe aléatoire cryptographiquement sûr : des minuscules, plus chaque type
+    de caractère demandé, présent au moins une fois."""
+    familles = [string.ascii_lowercase]
+    if majuscules:
+        familles.append(string.ascii_uppercase)
+    if chiffres:
+        familles.append(string.digits)
+    if symboles:
+        familles.append(SYMBOLES)
+    if sans_ambigus:
+        familles = ["".join(c for c in f if c not in AMBIGUS) for f in familles]
+    longueur = max(longueur, len(familles))
+    alphabet = "".join(familles)
     while True:
         mdp = "".join(secrets.choice(alphabet) for _ in range(longueur))
-        if (any(c.islower() for c in mdp) and any(c.isupper() for c in mdp)
-                and any(c.isdigit() for c in mdp) and any(c in speciaux for c in mdp)):
+        if all(any(c in f for c in mdp) for f in familles):
             return mdp
 
 

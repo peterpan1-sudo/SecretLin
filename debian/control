@@ -25,6 +25,16 @@ Depends: ${misc:Depends},
          python3-pil,
          python3-pil.imagetk,
          python3-tk
+Recommends: fonts-inter,
+            fonts-roboto,
+            fonts-open-sans,
+            fonts-lato,
+            fonts-montserrat,
+            fonts-nunito,
+            fonts-manrope,
+            fonts-adobe-sourcesans3,
+            fonts-ibm-plex,
+            fonts-jetbrains-mono
 Description: encrypted password manager with a graphical interface
  SecretLin stores logins (site, user name, password) in a local vault
  protected by a master password.
@@ -32,4 +42,4 @@ Description: encrypted password manager with a graphical interface
  The vault is encrypted with AES-256-GCM and the key is derived from the
  master password with Argon2id. Any change to the vault file is detected,
  the application locks itself after a short inactivity and the clipboard
- is cleared 20 seconds after a password is copied.
+ is cleared 3 minutes after a password is copied.

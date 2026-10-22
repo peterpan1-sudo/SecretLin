@@ -48,7 +48,7 @@ Sous Windows, remplacer `.venv/bin/` par `.venv\Scripts\`.
 - Toute modification du fichier du coffre est détectée.
 - Après 3 mauvais essais, attente de 1 min, puis 3, 5, 10, 15, 30 min et 1 h ; conservée même si on ferme et relance SecretLin.
 - Verrouillage automatique : 5 min sans bouger la souris sur la fenêtre, ou 2 min avec la souris en dehors.
-- Presse-papier vidé 20 secondes après la copie d'un mot de passe.
+- Presse-papier vidé 3 minutes après la copie d'un mot de passe.
 
 Le coffre est stocké dans `~/.local/share/GestionnaireMDP/coffre.vault`
 (Windows : `%APPDATA%\GestionnaireMDP\coffre.vault`).

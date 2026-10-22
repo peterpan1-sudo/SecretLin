@@ -14,14 +14,15 @@ def test_reglages_absents_ou_illisibles(tmp_path):
 
 def test_valeurs_inconnues_remplacees(tmp_path):
     chemin = tmp_path / "reglages.json"
-    chemin.write_text('{"theme": "Arc-en-ciel", "accent": "Bleu", "taille": 3, '
+    chemin.write_text('{"theme": "Arc-en-ciel", "accent": "Bleu", "taille": 3, "police": "Moderne", '
                       '"animations": "oui"}', encoding="utf-8")
     assert apparence.charger(chemin) == dict(apparence.DEFAUT, accent="Bleu")
 
 
 def test_enregistrer_puis_relire(tmp_path):
     chemin = apparence.chemin_reglages(tmp_path / "coffre.vault")
-    choix = {"theme": "Clair", "accent": "Rose", "taille": "Grande", "animations": False}
+    choix = dict(apparence.DEFAUT, theme="Clair", accent="Rose", police="JetBrains Mono", taille="Grande",
+                 animations=False, longueur=40, sans_ambigus=True)
     apparence.enregistrer(chemin, choix)
     assert chemin.name == "reglages.json"
     assert apparence.charger(chemin) == choix
@@ -50,3 +51,14 @@ def test_texte_lisible_sur_l_accent():
     assert clair["ACCENT_TEXTE"] == "#ffffff"  # accent neutre presque noir
     bleu = apparence.couleurs(dict(apparence.DEFAUT, accent="Bleu"))
     assert bleu["ACCENT_TEXTE"] == "#ffffff"
+
+
+def test_options_du_generateur(tmp_path):
+    chemin = tmp_path / "reglages.json"
+    chemin.write_text('{"longueur": 32, "symboles": false, "chiffres": "non"}', encoding="utf-8")
+    r = apparence.charger(chemin)
+    assert apparence.options_generateur(r) == {"longueur": 32, "majuscules": True,
+                                               "chiffres": True, "symboles": False,
+                                               "sans_ambigus": False}
+    chemin.write_text('{"longueur": 500}', encoding="utf-8")
+    assert apparence.charger(chemin)["longueur"] == 20
