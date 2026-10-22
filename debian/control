@@ -34,7 +34,9 @@ Recommends: fonts-inter,
             fonts-manrope,
             fonts-adobe-sourcesans3,
             fonts-ibm-plex,
-            fonts-jetbrains-mono
+            fonts-jetbrains-mono,
+            fonts-droid-fallback,
+            fonts-nanum
 Description: encrypted password manager with a graphical interface
  SecretLin stores logins (site, user name, password) in a local vault
  protected by a master password.

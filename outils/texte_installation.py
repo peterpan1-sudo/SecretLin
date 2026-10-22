@@ -32,6 +32,9 @@ sudo apt install ./python3-darkdetect_0.8.0-1_all.deb ./python3-customtkinter_6.
 ```
 
 Le coffre existant (`~/.local/share/GestionnaireMDP/coffre.vault`) est conservé.
+
+**English** — Update from a previous version: copy the first command above into a terminal. It downloads the package and installs it, whatever folder you are in.
+First install: download the 3 `.deb` files below, open a terminal in their folder (often `cd ~/Downloads`), then run the second command above. Your existing vault is kept.
 """
 
 

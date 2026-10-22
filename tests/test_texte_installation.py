@@ -22,6 +22,7 @@ def test_ajoute_la_section_si_absente():
     resultat = texte_installation.reecrire("Corrections diverses.", "v2.0.0")
     assert resultat.startswith("Corrections diverses.\n\n### Installation\n")
     assert "./secretlin_2.0.0_all.deb" in resultat
+    assert "**English**" in resultat
 
 
 def test_notes_vides():
