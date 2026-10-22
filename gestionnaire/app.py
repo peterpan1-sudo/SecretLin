@@ -13,7 +13,10 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
-from gestionnaire import apparence, effets, fuites, import_externe, langue, sante, totp
+from gestionnaire import (
+    acces_rapide, apparence, effets, fuites, guichet, import_externe, langue, porte, raccourci,
+    sante, totp,
+)
 from gestionnaire.coffre import (
     AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, FichierCleRequis, MotDePasseIncorrect, attente_apres,
     evaluer_force,
@@ -390,6 +393,14 @@ class Application(ctk.CTk):
         # gardé en mémoire jusqu'au verrouillage seulement.
         self.fuites = {}
         self.etat_fuites = ""
+        # Accès rapide (code PIN) et porte locale pour le remplissage rapide et l'extension.
+        self.acces = acces_rapide.Session()
+        self.guichet = guichet.Guichet(self.coffre, self.acces, _InterfaceGuichet(self))
+        self.porte = porte.Porte(self._requete_porte)
+        try:
+            self.porte.ouvrir()
+        except OSError:
+            pass  # sans porte, SecretLin marche normalement (pas de remplissage rapide)
 
         for evt in ("<Any-KeyPress>", "<Any-ButtonPress>"):
             self.bind_all(evt, self._activite, add="+")
@@ -465,14 +476,46 @@ class Application(ctk.CTk):
         except OSError:
             pass  # un disque plein ne doit pas bloquer l'écran de déverrouillage
 
-    def verrouiller(self):
+    def deverrouille(self):
+        """Le coffre vient d'être ouvert avec le mot de passe maître."""
+        self.acces.demarrer()
+
+    def acces_rapide_actif(self) -> bool:
+        return bool(self.reglages.get("pin")) and self.coffre._cle is not None \
+            and not self.acces.expiree()
+
+    def verrouiller(self, partiel=False):
+        """Verrouille l'écran. Complet : la clé du coffre est effacée. Partiel (verrouillage
+        automatique, fenêtre fermée) avec un code PIN défini : l'écran demande le mot de
+        passe maître, mais le coffre reste ouvert en mémoire pour l'accès rapide."""
         for fenetre in self.winfo_children():
             if isinstance(fenetre, ctk.CTkToplevel):
                 fenetre.destroy()
-        self.coffre.verrouiller()
-        self.fuites, self.etat_fuites = {}, ""
+        if not (partiel and self.acces_rapide_actif()):
+            self.coffre.verrouiller()
+            self.acces.arreter()
+            self.fuites, self.etat_fuites = {}, ""
         self.vider_presse_papier()
         self.afficher_connexion()
+
+    def montrer(self):
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+
+    def _requete_porte(self, requete):
+        """Appelé par la porte (autre fil d'exécution) : la réponse est préparée dans le
+        fil de l'interface, seul à toucher au coffre."""
+        fini, reponse = threading.Event(), {}
+
+        def traiter():
+            try:
+                reponse.update(self.guichet.traiter(requete))
+            finally:
+                fini.set()
+
+        self.after(0, traiter)
+        return reponse if fini.wait(20) else {"erreur": "occupe"}
 
     # --- Sécurité ---------------------------------------------------------
 
@@ -508,9 +551,11 @@ class Application(ctk.CTk):
                 depuis = self.derniere_activite
             restant = total - (maintenant - depuis)
             if restant <= 0:
-                self.verrouiller()
+                self.verrouiller(partiel=True)
             else:
                 self.ecran.maj_minuterie(restant, total, raison)
+        elif self.coffre._cle is not None and self.acces.expiree():
+            self.verrouiller()  # accès rapide terminé : la clé est effacée
         self.after(200, self._surveiller_inactivite)
 
     def copier(self, texte):
@@ -531,9 +576,44 @@ class Application(ctk.CTk):
             self._jeton_presse_papier = None
 
     def _fermer(self):
+        """Croix de la fenêtre : avec l'accès rapide, SecretLin continue en arrière-plan
+        (écran verrouillé) ; sinon il se ferme."""
+        if self.acces_rapide_actif():
+            self.verrouiller(partiel=True)
+            self.withdraw()
+        else:
+            self.quitter()
+
+    def quitter(self):
         self.vider_presse_papier()
         self.coffre.verrouiller()
+        self.acces.arreter()
+        self.porte.fermer()
         self.destroy()
+
+
+class _InterfaceGuichet:
+    """Ce dont le guichet a besoin de l'application (voir guichet.Guichet)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    def ecran_ouvert(self):
+        return isinstance(self.app.ecran, EcranPrincipal) and self.app.state() != "withdrawn"
+
+    def pin(self):
+        return self.app.reglages.get("pin")
+
+    def copier(self, texte, champ):
+        self.app.copier(texte)
+        if self.ecran_ouvert():
+            self.app.ecran.notifier(t("Copié par le remplissage rapide"))
+
+    def verrouiller(self):
+        self.app.verrouiller()
+
+    def montrer(self):
+        self.app.montrer()
 
 
 # --- Écrans de connexion ----------------------------------------------------
@@ -649,6 +729,7 @@ class EcranCreation(EcranCentre):
                 self.app.after(0, lambda: self._refuse(probleme))
                 return
             self.app.coffre.creer(mdp)
+            self.app.after(0, self.app.deverrouille)
             self.app.after(0, lambda: self.logo.ouvrir(self.app.afficher_principal))
 
         threading.Thread(target=travail, daemon=True).start()
@@ -680,6 +761,12 @@ class EcranDeverrouillage(EcranCentre):
         self.bouton.pack()
         self.mdp.bind("<Return>", lambda _e: self._ouvrir())
         self.mdp.focus_set()
+        if app.acces_rapide_actif():
+            ctk.CTkLabel(self.interieur, text=t("Le remplissage rapide reste disponible avec le "
+                                                "code PIN."), font=police(11),
+                         text_color=TEXTE_DOUX).pack(pady=(14, 0))
+            BoutonAnime(self.interieur, t("Quitter SecretLin"), app.quitter, width=160,
+                        height=32, taille_police=12).pack(pady=(6, 0))
         self._decompte()
 
     def _afficher_fichier(self):
@@ -753,6 +840,7 @@ class EcranDeverrouillage(EcranCentre):
             self.app.noter_echecs(0)
             self.afficher_message(t("Déverrouillé"), SUCCES)
             # Sur la fenêtre principale : afficher_principal() détruit cet écran.
+            self.app.deverrouille()
             self.logo.ouvrir(lambda: self.app.after(150, self.app.afficher_principal))
             return
         self.bouton.activer(True, t("Déverrouiller"))
@@ -1929,6 +2017,9 @@ class PageReglages(Page):
         for titre, description, classe in self.rubriques:
             CarteMenu(self, titre, description,
                       lambda c=classe: ecran.ouvrir_page(c)).pack(fill="x", pady=4)
+        CarteMenu(self, t("Quitter SecretLin"),
+                  t("Ferme complètement l'application, même en arrière-plan."),
+                  lambda: ecran.app.after(50, ecran.app.quitter)).pack(fill="x", pady=(16, 4))
 
     def affichee(self):
         # Une fois la page à l'écran : la rubrique quittée est reconstruite pour la prochaine fois.
@@ -1945,6 +2036,7 @@ class PageSecurite(Page):
         defilement.pack(fill="both", expand=True)
         self.section = SectionMotDePasse(defilement, ecran)
         self.section.pack(fill="x", pady=4)
+        SectionAccesRapide(defilement, ecran).pack(fill="x", pady=4)
         SectionFichierCle(defilement, ecran).pack(fill="x", pady=4)
 
     def affichee(self):
@@ -2441,6 +2533,127 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.jauge.maj("")
         self.ecran.notifier(t("Mot de passe maître changé"))
 
+class SectionAccesRapide(ctk.CTkFrame):
+    """Code PIN à 4 chiffres pour le remplissage rapide et l'extension de navigateur."""
+
+    def __init__(self, parent, ecran: EcranPrincipal):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE)
+        self.ecran = ecran
+        app = ecran.app
+        self.defini = bool(app.reglages.get("pin"))
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(anchor="w", padx=20, pady=18)
+        ctk.CTkLabel(corps, text=t("Accès rapide (code PIN)"), font=police(15, gras=True),
+                     text_color=TEXTE, anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text=t("Un code à 4 chiffres pour copier un identifiant avec le "
+                                   "remplissage rapide ou l'extension de navigateur, sans "
+                                   "redonner le mot de passe maître."),
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=440).pack(fill="x", pady=(4, 2))
+        ctk.CTkLabel(corps, text=t("Il ne marche que si SecretLin a été déverrouillé avec le mot "
+                                   "de passe maître depuis moins de 8 heures et n'a pas été "
+                                   "quitté. Après 3 codes faux, le mot de passe maître est "
+                                   "redemandé. Avec un code, la croix de la fenêtre laisse "
+                                   "SecretLin ouvert en arrière-plan."),
+                     font=police(11), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=440).pack(fill="x", pady=(0, 10))
+        if self.defini:
+            ctk.CTkLabel(corps, text="✓  " + t("Code PIN défini."), font=police(12, gras=True),
+                         text_color=SUCCES, anchor="w").pack(fill="x", pady=(0, 8))
+        ligne = ctk.CTkFrame(corps, fg_color="transparent")
+        ligne.pack(anchor="w")
+        self.pin = champ(ligne, t("Nouveau code (4 chiffres)"), masque=True, width=166)
+        self.pin.pack(side="left", padx=(0, 8))
+        self.confirmation = champ(ligne, t("Confirmer le code"), masque=True, width=166)
+        self.confirmation.pack(side="left")
+        self.maitre = champ(corps, t("Mot de passe maître actuel"), masque=True, width=340)
+        self.maitre.pack(anchor="w", pady=(10, 0))
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=440)
+        self.message.pack(pady=(6, 0))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(anchor="w", pady=(4, 0))
+        self.boutons = [BoutonAnime(boutons, t("Changer le code") if self.defini
+                                    else t("Définir le code"), self._definir,
+                                    style="principal", width=160)]
+        if self.defini:
+            self.boutons.append(BoutonAnime(boutons, t("Retirer le code"), self._retirer,
+                                            style="danger", width=150))
+        for b in self.boutons:
+            b.pack(side="left", padx=(0, 8))
+
+        ctk.CTkLabel(corps, text=t("Raccourci clavier du remplissage rapide : Ctrl+Alt+P"),
+                     font=police(13, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x", pady=(18, 2))
+        ctk.CTkLabel(corps, text=t("Sur un autre bureau, créez un raccourci qui lance : {cmd}",
+                                   cmd=raccourci.commande()),
+                     font=police(11), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=440).pack(fill="x")
+        self.message_raccourci = ctk.CTkLabel(corps, text="", font=police(12),
+                                              text_color=SUCCES, wraplength=440)
+        BoutonAnime(corps, t("Installer le raccourci"), self._raccourci,
+                    width=180).pack(anchor="w", pady=(8, 0))
+        self.message_raccourci.pack(anchor="w", pady=(6, 0))
+
+    def _raccourci(self):
+        if raccourci.installer():
+            self.message_raccourci.configure(text="✓  " + t("Raccourci installé : Ctrl+Alt+P."),
+                                             text_color=SUCCES)
+        else:
+            self.message_raccourci.configure(
+                text=t("Bureau non reconnu : créez le raccourci vous-même dans les réglages "
+                       "du clavier."), text_color=DANGER)
+
+    def _definir(self):
+        code, confirmation = self.pin.get(), self.confirmation.get()
+        if not acces_rapide.pin_valide(code):
+            self.message.configure(text=t("Le code doit faire exactement 4 chiffres."))
+            return
+        if code != confirmation:
+            self.message.configure(text=t("Les deux codes ne correspondent pas."))
+            return
+        self._lancer(acces_rapide.nouveau_pin(code))
+
+    def _retirer(self):
+        self._lancer(None)
+
+    def _lancer(self, nouveau):
+        maitre = self.maitre.get()
+        if not maitre:
+            self.message.configure(text=t("Entrez votre mot de passe actuel."))
+            return
+        app = self.ecran.app
+        for b in self.boutons:
+            b.activer(False)
+        self.message.configure(text=t("Patientez…"), text_color=TEXTE_DOUX)
+
+        def fond():
+            juste = app.coffre.verifier_mot_de_passe(maitre)
+            app.after(0, lambda: self._resultat(juste, nouveau))
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _resultat(self, juste, nouveau):
+        app = self.ecran.app
+        if app.ecran is not self.ecran or not self.winfo_exists():
+            return
+        if not juste:
+            for b in self.boutons:
+                b.activer(True)
+            self.maitre.delete(0, "end")
+            self.message.configure(text=t("Mot de passe actuel incorrect."), text_color=DANGER)
+            return
+        app.enregistrer_reglages(pin=nouveau)
+        app.acces.demarrer()
+        ancienne = self.ecran._pages_pretes.pop(PageSecurite, None)
+        if ancienne is not None:
+            ancienne.destroy()
+        self.ecran.notifier(t("Code PIN enregistré") if nouveau else t("Code PIN retiré"))
+        self.ecran.page_precedente()
+        self.ecran.ouvrir_page(PageSecurite)
+
+
 class SectionFichierCle(ctk.CTkFrame):
     """Fichier-clé : un deuxième facteur pour ouvrir le coffre, en plus du mot de passe."""
 
@@ -2563,6 +2776,14 @@ class SectionFichierCle(ctk.CTkFrame):
 
 
 def main():
+    import sys
+    if "--remplissage" in sys.argv[1:]:
+        from gestionnaire import remplissage
+        remplissage.main()
+        return
+    # Déjà ouvert (peut-être caché en arrière-plan) : on montre la fenêtre existante.
+    if porte.demander({"action": "montrer"}, delai=2) is not None:
+        return
     Application().mainloop()
 
 

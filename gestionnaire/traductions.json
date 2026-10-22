@@ -1165,6 +1165,39 @@
   "ja": "マスターパスワードを変更しました",
   "ko": "마스터 비밀번호 변경됨"
  },
+ "Nouveau code (4 chiffres)": {
+  "en": "New code (4 digits)",
+  "es": "Nuevo código (4 cifras)",
+  "de": "Neuer Code (4 Ziffern)",
+  "pt": "Novo código (4 dígitos)",
+  "it": "Nuovo codice (4 cifre)",
+  "ru": "Новый код (4 цифры)",
+  "zh": "新代码（4 位数字）",
+  "ja": "新しいコード（4 桁）",
+  "ko": "새 코드 (4자리)"
+ },
+ "Confirmer le code": {
+  "en": "Confirm the code",
+  "es": "Confirmar el código",
+  "de": "Code bestätigen",
+  "pt": "Confirmar o código",
+  "it": "Conferma il codice",
+  "ru": "Подтвердите код",
+  "zh": "确认代码",
+  "ja": "コードを確認",
+  "ko": "코드 확인"
+ },
+ "Mot de passe maître actuel": {
+  "en": "Current master password",
+  "es": "Contraseña maestra actual",
+  "de": "Aktuelles Master-Passwort",
+  "pt": "Senha mestra atual",
+  "it": "Password principale attuale",
+  "ru": "Текущий мастер-пароль",
+  "zh": "当前主密码",
+  "ja": "現在のマスターパスワード",
+  "ko": "현재 마스터 비밀번호"
+ },
  "Activé : le coffre s'ouvre avec le mot de passe maître et le fichier « {nom} ».": {
   "en": "On: the vault opens with the master password and the file “{nom}”.",
   "es": "Activado: la caja fuerte se abre con la contraseña maestra y el archivo «{nom}».",
@@ -1187,16 +1220,16 @@
   "ja": "マスターパスワードに加えて、このファイル（USB メモリーに保存するなど）がないと金庫は開きません。",
   "ko": "마스터 비밀번호에 더해 이 파일(예: USB 메모리에 보관)이 있어야만 금고가 열립니다."
  },
- "Mot de passe maître actuel": {
-  "en": "Current master password",
-  "es": "Contraseña maestra actual",
-  "de": "Aktuelles Master-Passwort",
-  "pt": "Senha mestra atual",
-  "it": "Password principale attuale",
-  "ru": "Текущий мастер-пароль",
-  "zh": "当前主密码",
-  "ja": "現在のマスターパスワード",
-  "ko": "현재 마스터 비밀번호"
+ "Copié par le remplissage rapide": {
+  "en": "Copied by quick fill",
+  "es": "Copiado por el relleno rápido",
+  "de": "Per Schnellausfüllen kopiert",
+  "pt": "Copiado pelo preenchimento rápido",
+  "it": "Copiato dal riempimento rapido",
+  "ru": "Скопировано быстрым заполнением",
+  "zh": "已通过快速填充复制",
+  "ja": "クイック入力でコピーしました",
+  "ko": "빠른 채우기로 복사됨"
  },
  "Il manque : {liste}.": {
   "en": "Missing: {liste}.",
@@ -1726,6 +1759,28 @@
   "ja": "古い",
   "ko": "오래됨"
  },
+ "Code PIN enregistré": {
+  "en": "PIN saved",
+  "es": "PIN guardado",
+  "de": "PIN gespeichert",
+  "pt": "PIN salvo",
+  "it": "PIN salvato",
+  "ru": "PIN-код сохранён",
+  "zh": "PIN 码已保存",
+  "ja": "PIN を保存しました",
+  "ko": "PIN 저장됨"
+ },
+ "Code PIN retiré": {
+  "en": "PIN removed",
+  "es": "PIN quitado",
+  "de": "PIN entfernt",
+  "pt": "PIN removido",
+  "it": "PIN rimosso",
+  "ru": "PIN-код удалён",
+  "zh": "PIN 码已移除",
+  "ja": "PIN を削除しました",
+  "ko": "PIN 제거됨"
+ },
  "Enregistrer le fichier-clé": {
   "en": "Save the key file",
   "es": "Guardar el archivo de clave",
@@ -1979,6 +2034,28 @@
   "ja": "パスワードを入力してください。",
   "ko": "비밀번호를 입력하세요."
  },
+ "Quitter SecretLin": {
+  "en": "Quit SecretLin",
+  "es": "Salir de SecretLin",
+  "de": "SecretLin beenden",
+  "pt": "Sair do SecretLin",
+  "it": "Esci da SecretLin",
+  "ru": "Выйти из SecretLin",
+  "zh": "退出 SecretLin",
+  "ja": "SecretLin を終了",
+  "ko": "SecretLin 종료"
+ },
+ "Ferme complètement l'application, même en arrière-plan.": {
+  "en": "Closes the app completely, even in the background.",
+  "es": "Cierra la aplicación por completo, incluso en segundo plano.",
+  "de": "Beendet die App vollständig, auch im Hintergrund.",
+  "pt": "Fecha o aplicativo por completo, mesmo em segundo plano.",
+  "it": "Chiude completamente l'app, anche in background.",
+  "ru": "Полностью закрывает приложение, даже в фоне.",
+  "zh": "彻底关闭应用，包括后台运行。",
+  "ja": "バックグラウンドも含めてアプリを完全に終了します。",
+  "ko": "백그라운드에서도 앱을 완전히 종료합니다."
+ },
  "Régénérer": {
   "en": "Regenerate",
   "es": "Regenerar",
@@ -2132,6 +2209,83 @@
   "zh": "无法更改：{erreur}",
   "ja": "変更できません：{erreur}",
   "ko": "변경할 수 없습니다: {erreur}"
+ },
+ "Changer le code": {
+  "en": "Change the code",
+  "es": "Cambiar el código",
+  "de": "Code ändern",
+  "pt": "Alterar o código",
+  "it": "Cambia il codice",
+  "ru": "Сменить код",
+  "zh": "更改代码",
+  "ja": "コードを変更",
+  "ko": "코드 변경"
+ },
+ "Définir le code": {
+  "en": "Set the code",
+  "es": "Definir el código",
+  "de": "Code festlegen",
+  "pt": "Definir o código",
+  "it": "Imposta il codice",
+  "ru": "Задать код",
+  "zh": "设置代码",
+  "ja": "コードを設定",
+  "ko": "코드 설정"
+ },
+ "Retirer le code": {
+  "en": "Remove the code",
+  "es": "Quitar el código",
+  "de": "Code entfernen",
+  "pt": "Remover o código",
+  "it": "Rimuovi il codice",
+  "ru": "Удалить код",
+  "zh": "移除代码",
+  "ja": "コードを削除",
+  "ko": "코드 제거"
+ },
+ "Installer le raccourci": {
+  "en": "Install the shortcut",
+  "es": "Instalar el atajo",
+  "de": "Tastenkürzel einrichten",
+  "pt": "Instalar o atalho",
+  "it": "Installa la scorciatoia",
+  "ru": "Установить сочетание клавиш",
+  "zh": "安装快捷键",
+  "ja": "ショートカットを設定",
+  "ko": "단축키 설치"
+ },
+ "Bureau non reconnu : créez le raccourci vous-même dans les réglages du clavier.": {
+  "en": "Desktop not recognised: create the shortcut yourself in the keyboard settings.",
+  "es": "Escritorio no reconocido: crea el atajo tú mismo en los ajustes del teclado.",
+  "de": "Desktop nicht erkannt: Lege das Tastenkürzel selbst in den Tastatureinstellungen an.",
+  "pt": "Ambiente não reconhecido: crie o atalho nas configurações do teclado.",
+  "it": "Desktop non riconosciuto: crea la scorciatoia nelle impostazioni della tastiera.",
+  "ru": "Рабочий стол не распознан: создайте сочетание клавиш в настройках клавиатуры.",
+  "zh": "无法识别桌面环境：请在键盘设置中自行创建快捷键。",
+  "ja": "デスクトップを認識できません。キーボード設定でショートカットを作成してください。",
+  "ko": "데스크톱을 인식하지 못했습니다. 키보드 설정에서 직접 단축키를 만드세요."
+ },
+ "Le code doit faire exactement 4 chiffres.": {
+  "en": "The code must be exactly 4 digits.",
+  "es": "El código debe tener exactamente 4 cifras.",
+  "de": "Der Code muss genau 4 Ziffern haben.",
+  "pt": "O código deve ter exatamente 4 dígitos.",
+  "it": "Il codice deve avere esattamente 4 cifre.",
+  "ru": "Код должен состоять ровно из 4 цифр.",
+  "zh": "代码必须正好是 4 位数字。",
+  "ja": "コードはちょうど 4 桁の数字にしてください。",
+  "ko": "코드는 정확히 4자리 숫자여야 합니다."
+ },
+ "Les deux codes ne correspondent pas.": {
+  "en": "The two codes do not match.",
+  "es": "Los dos códigos no coinciden.",
+  "de": "Die beiden Codes stimmen nicht überein.",
+  "pt": "Os dois códigos não coincidem.",
+  "it": "I due codici non coincidono.",
+  "ru": "Коды не совпадают.",
+  "zh": "两次输入的代码不一致。",
+  "ja": "2 つのコードが一致しません。",
+  "ko": "두 코드가 일치하지 않습니다."
  },
  "Retirer le fichier-clé": {
   "en": "Remove the key file",
@@ -2474,6 +2628,72 @@
   "ja": "金庫と自動コピーは再暗号化され、古いパスワードでは何も開けなくなります。エクスポートしたファイルは独自のエクスポート用パスワードのままです。",
   "ko": "금고와 자동 사본이 다시 암호화되어 이전 비밀번호로는 더 이상 열 수 없습니다. 내보낸 파일은 자체 내보내기 비밀번호를 그대로 유지합니다."
  },
+ "Accès rapide (code PIN)": {
+  "en": "Quick access (PIN)",
+  "es": "Acceso rápido (PIN)",
+  "de": "Schnellzugriff (PIN)",
+  "pt": "Acesso rápido (PIN)",
+  "it": "Accesso rapido (PIN)",
+  "ru": "Быстрый доступ (PIN-код)",
+  "zh": "快速访问（PIN 码）",
+  "ja": "クイックアクセス（PIN）",
+  "ko": "빠른 접근 (PIN)"
+ },
+ "Un code à 4 chiffres pour copier un identifiant avec le remplissage rapide ou l'extension de navigateur, sans redonner le mot de passe maître.": {
+  "en": "A 4-digit code to copy a login with quick fill or the browser extension, without typing the master password again.",
+  "es": "Un código de 4 cifras para copiar una cuenta con el relleno rápido o la extensión del navegador, sin volver a escribir la contraseña maestra.",
+  "de": "Ein 4-stelliger Code, um einen Zugang per Schnellausfüllen oder Browser-Erweiterung zu kopieren, ohne das Master-Passwort erneut einzugeben.",
+  "pt": "Um código de 4 dígitos para copiar um login com o preenchimento rápido ou a extensão do navegador, sem digitar de novo a senha mestra.",
+  "it": "Un codice di 4 cifre per copiare un account con il riempimento rapido o l'estensione del browser, senza ridigitare la password principale.",
+  "ru": "4-значный код, чтобы копировать записи быстрым заполнением или расширением браузера, не вводя снова мастер-пароль.",
+  "zh": "用 4 位代码通过快速填充或浏览器扩展复制账号，无需再次输入主密码。",
+  "ja": "4 桁のコードで、マスターパスワードを入力し直さずにクイック入力やブラウザー拡張からログイン情報をコピーできます。",
+  "ko": "4자리 코드로 마스터 비밀번호를 다시 입력하지 않고 빠른 채우기나 브라우저 확장에서 로그인 정보를 복사합니다."
+ },
+ "Il ne marche que si SecretLin a été déverrouillé avec le mot de passe maître depuis moins de 8 heures et n'a pas été quitté. Après 3 codes faux, le mot de passe maître est redemandé. Avec un code, la croix de la fenêtre laisse SecretLin ouvert en arrière-plan.": {
+  "en": "It only works if SecretLin was unlocked with the master password less than 8 hours ago and has not been quit. After 3 wrong codes, the master password is required again. With a code, the window's close button keeps SecretLin running in the background.",
+  "es": "Solo funciona si SecretLin se desbloqueó con la contraseña maestra hace menos de 8 horas y no se ha cerrado. Tras 3 códigos erróneos, se vuelve a pedir la contraseña maestra. Con un código, la cruz de la ventana deja SecretLin abierto en segundo plano.",
+  "de": "Funktioniert nur, wenn SecretLin vor weniger als 8 Stunden mit dem Master-Passwort entsperrt und nicht beendet wurde. Nach 3 falschen Codes wird das Master-Passwort wieder verlangt. Mit Code lässt das Schließen-Kreuz SecretLin im Hintergrund laufen.",
+  "pt": "Só funciona se o SecretLin foi desbloqueado com a senha mestra há menos de 8 horas e não foi encerrado. Após 3 códigos errados, a senha mestra é pedida de novo. Com um código, o X da janela mantém o SecretLin aberto em segundo plano.",
+  "it": "Funziona solo se SecretLin è stato sbloccato con la password principale da meno di 8 ore e non è stato chiuso. Dopo 3 codici errati, la password principale viene richiesta di nuovo. Con un codice, la X della finestra lascia SecretLin aperto in background.",
+  "ru": "Работает, только если SecretLin разблокирован мастер-паролем менее 8 часов назад и не был закрыт. После 3 неверных кодов снова потребуется мастер-пароль. С кодом крестик окна оставляет SecretLin работать в фоне.",
+  "zh": "仅当 SecretLin 在 8 小时内用主密码解锁且未退出时有效。输错 3 次后需要重新输入主密码。设置代码后，点窗口的关闭按钮会让 SecretLin 在后台继续运行。",
+  "ja": "SecretLin を 8 時間以内にマスターパスワードでロック解除し、終了していない場合のみ使えます。3 回間違えるとマスターパスワードが再び必要になります。コードを設定すると、ウィンドウの × ボタンで SecretLin はバックグラウンドで動き続けます。",
+  "ko": "SecretLin을 8시간 이내에 마스터 비밀번호로 잠금 해제했고 종료하지 않았을 때만 작동합니다. 코드를 3번 틀리면 마스터 비밀번호를 다시 입력해야 합니다. 코드를 설정하면 창의 X 버튼을 눌러도 SecretLin이 백그라운드에서 계속 실행됩니다."
+ },
+ "Raccourci clavier du remplissage rapide : Ctrl+Alt+P": {
+  "en": "Quick fill keyboard shortcut: Ctrl+Alt+P",
+  "es": "Atajo de teclado del relleno rápido: Ctrl+Alt+P",
+  "de": "Tastenkürzel für Schnellausfüllen: Strg+Alt+P",
+  "pt": "Atalho do preenchimento rápido: Ctrl+Alt+P",
+  "it": "Scorciatoia del riempimento rapido: Ctrl+Alt+P",
+  "ru": "Сочетание клавиш быстрого заполнения: Ctrl+Alt+P",
+  "zh": "快速填充快捷键：Ctrl+Alt+P",
+  "ja": "クイック入力のショートカット：Ctrl+Alt+P",
+  "ko": "빠른 채우기 단축키: Ctrl+Alt+P"
+ },
+ "Sur un autre bureau, créez un raccourci qui lance : {cmd}": {
+  "en": "On another desktop, create a shortcut that runs: {cmd}",
+  "es": "En otro escritorio, crea un atajo que ejecute: {cmd}",
+  "de": "Auf einem anderen Desktop ein Tastenkürzel anlegen, das ausführt: {cmd}",
+  "pt": "Em outro ambiente, crie um atalho que execute: {cmd}",
+  "it": "Su un altro desktop, crea una scorciatoia che esegua: {cmd}",
+  "ru": "В другой среде создайте сочетание клавиш, запускающее: {cmd}",
+  "zh": "在其他桌面环境中，创建一个运行以下命令的快捷键：{cmd}",
+  "ja": "他のデスクトップでは、次を実行するショートカットを作成してください：{cmd}",
+  "ko": "다른 데스크톱에서는 다음을 실행하는 단축키를 만드세요: {cmd}"
+ },
+ "Raccourci installé : Ctrl+Alt+P.": {
+  "en": "Shortcut installed: Ctrl+Alt+P.",
+  "es": "Atajo instalado: Ctrl+Alt+P.",
+  "de": "Tastenkürzel eingerichtet: Strg+Alt+P.",
+  "pt": "Atalho instalado: Ctrl+Alt+P.",
+  "it": "Scorciatoia installata: Ctrl+Alt+P.",
+  "ru": "Сочетание установлено: Ctrl+Alt+P.",
+  "zh": "快捷键已安装：Ctrl+Alt+P。",
+  "ja": "ショートカットを設定しました：Ctrl+Alt+P。",
+  "ko": "단축키 설치됨: Ctrl+Alt+P."
+ },
  "Fichier-clé (deuxième facteur)": {
   "en": "Key file (second factor)",
   "es": "Archivo de clave (segundo factor)",
@@ -2506,6 +2726,17 @@
   "zh": "数据仅保存在这台电脑上",
   "ja": "データはこのコンピューターにのみ保存されます",
   "ko": "데이터는 이 컴퓨터에만 저장됩니다"
+ },
+ "Le remplissage rapide reste disponible avec le code PIN.": {
+  "en": "Quick fill is still available with the PIN.",
+  "es": "El relleno rápido sigue disponible con el PIN.",
+  "de": "Schnellausfüllen bleibt mit dem PIN verfügbar.",
+  "pt": "O preenchimento rápido continua disponível com o PIN.",
+  "it": "Il riempimento rapido resta disponibile con il PIN.",
+  "ru": "Быстрое заполнение по-прежнему доступно с PIN-кодом.",
+  "zh": "仍可使用 PIN 码进行快速填充。",
+  "ja": "クイック入力は PIN で引き続き使えます。",
+  "ko": "빠른 채우기는 PIN으로 계속 사용할 수 있습니다."
  },
  "Chiffré de bout en bout": {
   "en": "End-to-end encrypted",
@@ -2605,6 +2836,17 @@
   "zh": "避免外形相似的字符",
   "ja": "似ている文字を避ける",
   "ko": "비슷하게 생긴 문자 피하기"
+ },
+ "Code PIN défini.": {
+  "en": "PIN set.",
+  "es": "PIN definido.",
+  "de": "PIN festgelegt.",
+  "pt": "PIN definido.",
+  "it": "PIN impostato.",
+  "ru": "PIN-код задан.",
+  "zh": "已设置 PIN 码。",
+  "ja": "PIN を設定済みです。",
+  "ko": "PIN이 설정되었습니다."
  },
  "au moins {n} caractères": {
   "en": "at least {n} characters",
@@ -2715,6 +2957,204 @@
   "zh": "未命名",
   "ja": "名前なし",
   "ko": "이름 없음"
+ },
+ "Code faux : encore {n} essai.": {
+  "en": "Wrong code: {n} try left.",
+  "es": "Código incorrecto: queda {n} intento.",
+  "de": "Falscher Code: noch {n} Versuch.",
+  "pt": "Código errado: resta {n} tentativa.",
+  "it": "Codice errato: resta {n} tentativo.",
+  "ru": "Неверный код: осталось попыток: {n}.",
+  "zh": "代码错误：还剩 {n} 次机会。",
+  "ja": "コードが違います。残り {n} 回。",
+  "ko": "코드가 틀렸습니다. {n}번 남음."
+ },
+ "Code faux : encore {n} essais.": {
+  "en": "Wrong code: {n} tries left.",
+  "es": "Código incorrecto: quedan {n} intentos.",
+  "de": "Falscher Code: noch {n} Versuche.",
+  "pt": "Código errado: restam {n} tentativas.",
+  "it": "Codice errato: restano {n} tentativi.",
+  "ru": "Неверный код: осталось попыток: {n}.",
+  "zh": "代码错误：还剩 {n} 次机会。",
+  "ja": "コードが違います。残り {n} 回。",
+  "ko": "코드가 틀렸습니다. {n}번 남음."
+ },
+ "SecretLin — remplissage rapide": {
+  "en": "SecretLin — quick fill",
+  "es": "SecretLin — relleno rápido",
+  "de": "SecretLin — Schnellausfüllen",
+  "pt": "SecretLin — preenchimento rápido",
+  "it": "SecretLin — riempimento rapido",
+  "ru": "SecretLin — быстрое заполнение",
+  "zh": "SecretLin — 快速填充",
+  "ja": "SecretLin — クイック入力",
+  "ko": "SecretLin — 빠른 채우기"
+ },
+ "Remplissage rapide": {
+  "en": "Quick fill",
+  "es": "Relleno rápido",
+  "de": "Schnellausfüllen",
+  "pt": "Preenchimento rápido",
+  "it": "Riempimento rapido",
+  "ru": "Быстрое заполнение",
+  "zh": "快速填充",
+  "ja": "クイック入力",
+  "ko": "빠른 채우기"
+ },
+ "Tapez le nom du site, puis Entrée.": {
+  "en": "Type the website name, then Enter.",
+  "es": "Escribe el nombre del sitio y pulsa Intro.",
+  "de": "Gib den Namen der Website ein, dann Enter.",
+  "pt": "Digite o nome do site e pressione Enter.",
+  "it": "Digita il nome del sito, poi Invio.",
+  "ru": "Введите название сайта и нажмите Enter.",
+  "zh": "输入网站名称，然后按回车。",
+  "ja": "サイト名を入力して Enter を押します。",
+  "ko": "사이트 이름을 입력하고 Enter를 누르세요."
+ },
+ "Code PIN": {
+  "en": "PIN",
+  "es": "PIN",
+  "de": "PIN",
+  "pt": "PIN",
+  "it": "PIN",
+  "ru": "PIN-код",
+  "zh": "PIN 码",
+  "ja": "PIN",
+  "ko": "PIN"
+ },
+ "Entrez votre code à 4 chiffres pour « {site} ».": {
+  "en": "Enter your 4-digit code for “{site}”.",
+  "es": "Introduce tu código de 4 cifras para «{site}».",
+  "de": "Gib deinen 4-stelligen Code für „{site}“ ein.",
+  "pt": "Digite seu código de 4 dígitos para “{site}”.",
+  "it": "Inserisci il tuo codice di 4 cifre per «{site}».",
+  "ru": "Введите 4-значный код для «{site}».",
+  "zh": "输入“{site}”的 4 位代码。",
+  "ja": "「{site}」用の 4 桁のコードを入力してください。",
+  "ko": "‘{site}’의 4자리 코드를 입력하세요."
+ },
+ "Entrée copie l'identifiant, puis le mot de passe.": {
+  "en": "Enter copies the login, then the password.",
+  "es": "Intro copia el usuario y luego la contraseña.",
+  "de": "Enter kopiert erst den Benutzernamen, dann das Passwort.",
+  "pt": "Enter copia o login e depois a senha.",
+  "it": "Invio copia l'utente, poi la password.",
+  "ru": "Enter копирует логин, затем пароль.",
+  "zh": "按回车先复制账号，再复制密码。",
+  "ja": "Enter でユーザー名、続けてパスワードをコピーします。",
+  "ko": "Enter를 누르면 아이디, 그다음 비밀번호가 복사됩니다."
+ },
+ "SecretLin n'est pas ouvert": {
+  "en": "SecretLin is not open",
+  "es": "SecretLin no está abierto",
+  "de": "SecretLin ist nicht geöffnet",
+  "pt": "O SecretLin não está aberto",
+  "it": "SecretLin non è aperto",
+  "ru": "SecretLin не открыт",
+  "zh": "SecretLin 未打开",
+  "ja": "SecretLin が開いていません",
+  "ko": "SecretLin이 열려 있지 않습니다"
+ },
+ "Ouvrez SecretLin et déverrouillez-le avec votre mot de passe maître, puis relancez le remplissage rapide.": {
+  "en": "Open SecretLin and unlock it with your master password, then start quick fill again.",
+  "es": "Abre SecretLin y desbloquéalo con tu contraseña maestra; luego vuelve a abrir el relleno rápido.",
+  "de": "Öffne SecretLin, entsperre es mit deinem Master-Passwort und starte das Schnellausfüllen erneut.",
+  "pt": "Abra o SecretLin e desbloqueie com sua senha mestra; depois abra o preenchimento rápido de novo.",
+  "it": "Apri SecretLin e sbloccalo con la password principale, poi riavvia il riempimento rapido.",
+  "ru": "Откройте SecretLin, разблокируйте мастер-паролем и снова запустите быстрое заполнение.",
+  "zh": "打开 SecretLin 并用主密码解锁，然后重新启动快速填充。",
+  "ja": "SecretLin を開いてマスターパスワードでロック解除し、もう一度クイック入力を起動してください。",
+  "ko": "SecretLin을 열고 마스터 비밀번호로 잠금 해제한 뒤 빠른 채우기를 다시 실행하세요."
+ },
+ "SecretLin est verrouillé": {
+  "en": "SecretLin is locked",
+  "es": "SecretLin está bloqueado",
+  "de": "SecretLin ist gesperrt",
+  "pt": "O SecretLin está bloqueado",
+  "it": "SecretLin è bloccato",
+  "ru": "SecretLin заблокирован",
+  "zh": "SecretLin 已锁定",
+  "ja": "SecretLin はロックされています",
+  "ko": "SecretLin이 잠겨 있습니다"
+ },
+ "Déverrouillez-le avec votre mot de passe maître : le code PIN ne sert que tant que SecretLin reste ouvert.": {
+  "en": "Unlock it with your master password: the PIN only works while SecretLin stays open.",
+  "es": "Desbloquéalo con tu contraseña maestra: el PIN solo sirve mientras SecretLin sigue abierto.",
+  "de": "Entsperre es mit deinem Master-Passwort: Der PIN funktioniert nur, solange SecretLin geöffnet bleibt.",
+  "pt": "Desbloqueie com sua senha mestra: o PIN só funciona enquanto o SecretLin está aberto.",
+  "it": "Sbloccalo con la password principale: il PIN funziona solo finché SecretLin resta aperto.",
+  "ru": "Разблокируйте мастер-паролем: PIN-код работает, только пока SecretLin открыт.",
+  "zh": "请用主密码解锁：PIN 码只在 SecretLin 保持打开时有效。",
+  "ja": "マスターパスワードでロック解除してください。PIN は SecretLin が開いている間だけ使えます。",
+  "ko": "마스터 비밀번호로 잠금 해제하세요. PIN은 SecretLin이 열려 있는 동안에만 작동합니다."
+ },
+ "Copier le mot de passe": {
+  "en": "Copy password",
+  "es": "Copiar contraseña",
+  "de": "Passwort kopieren",
+  "pt": "Copiar senha",
+  "it": "Copia password",
+  "ru": "Копировать пароль",
+  "zh": "复制密码",
+  "ja": "パスワードをコピー",
+  "ko": "비밀번호 복사"
+ },
+ "Ouvrir SecretLin": {
+  "en": "Open SecretLin",
+  "es": "Abrir SecretLin",
+  "de": "SecretLin öffnen",
+  "pt": "Abrir o SecretLin",
+  "it": "Apri SecretLin",
+  "ru": "Открыть SecretLin",
+  "zh": "打开 SecretLin",
+  "ja": "SecretLin を開く",
+  "ko": "SecretLin 열기"
+ },
+ "Copier le nom d'utilisateur": {
+  "en": "Copy username",
+  "es": "Copiar usuario",
+  "de": "Benutzernamen kopieren",
+  "pt": "Copiar usuário",
+  "it": "Copia nome utente",
+  "ru": "Копировать логин",
+  "zh": "复制用户名",
+  "ja": "ユーザー名をコピー",
+  "ko": "사용자 이름 복사"
+ },
+ "Copier l'e-mail": {
+  "en": "Copy email",
+  "es": "Copiar correo",
+  "de": "E-Mail kopieren",
+  "pt": "Copiar e-mail",
+  "it": "Copia e-mail",
+  "ru": "Копировать почту",
+  "zh": "复制邮箱",
+  "ja": "メールをコピー",
+  "ko": "이메일 복사"
+ },
+ "Copier le code 2FA": {
+  "en": "Copy 2FA code",
+  "es": "Copiar código 2FA",
+  "de": "2FA-Code kopieren",
+  "pt": "Copiar código 2FA",
+  "it": "Copia codice 2FA",
+  "ru": "Копировать код 2FA",
+  "zh": "复制 2FA 验证码",
+  "ja": "2FA コードをコピー",
+  "ko": "2FA 코드 복사"
+ },
+ "Trop d'erreurs : SecretLin s'est verrouillé.": {
+  "en": "Too many errors: SecretLin has locked itself.",
+  "es": "Demasiados errores: SecretLin se ha bloqueado.",
+  "de": "Zu viele Fehler: SecretLin hat sich gesperrt.",
+  "pt": "Erros demais: o SecretLin foi bloqueado.",
+  "it": "Troppi errori: SecretLin si è bloccato.",
+  "ru": "Слишком много ошибок: SecretLin заблокировался.",
+  "zh": "错误次数过多：SecretLin 已锁定。",
+  "ja": "エラーが多すぎるため、SecretLin はロックされました。",
+  "ko": "오류가 너무 많아 SecretLin이 잠겼습니다."
  },
  "Graphite": {
   "en": "Graphite",
