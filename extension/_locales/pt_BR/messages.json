@@ -1,0 +1,41 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "Preenche seus logins a partir do SecretLin, o gerenciador de senhas criptografado."
+  },
+  "verrouille": {
+    "message": "O SecretLin está bloqueado: abra-o com sua senha mestra."
+  },
+  "ouvrir": {
+    "message": "Abrir o SecretLin"
+  },
+  "codePin": {
+    "message": "PIN para “$1”"
+  },
+  "codeFaux": {
+    "message": "Código errado: resta(m) $1 tentativa(s)."
+  },
+  "tropErreurs": {
+    "message": "Erros demais: o SecretLin foi bloqueado."
+  },
+  "pasLance": {
+    "message": "O SecretLin não está aberto ou a conexão com o navegador não está instalada (SecretLin → Configurações → Navegadores)."
+  },
+  "aucun": {
+    "message": "Nenhuma conta do SecretLin para este site."
+  },
+  "pourCeSite": {
+    "message": "Contas deste site"
+  },
+  "pageSansConnexion": {
+    "message": "Esta página não é um site."
+  },
+  "rechercher": {
+    "message": "Pesquisar uma conta"
+  },
+  "autreSite": {
+    "message": "“$1” não está associada a este site. Preencher mesmo assim? Verifique o endereço: um site falso pode imitar o verdadeiro."
+  }
+}

@@ -18,6 +18,15 @@ override_dh_auto_install:
 	install -D -m 644 lancer.py $(APP)/lancer.py
 	install -d $(APP)/gestionnaire
 	install -m 644 gestionnaire/*.py gestionnaire/logos.zip gestionnaire/traductions.json $(APP)/gestionnaire/
+	install -m 644 navigateur.py $(APP)/navigateur.py
+	install -m 755 debian/secretlin-navigateur.sh $(APP)/secretlin-navigateur
+	cp -r extension $(APP)/extension
+	find $(APP)/extension -type d -exec chmod 755 {} +
+	find $(APP)/extension -type f -exec chmod 644 {} +
+	install -D -m 644 debian/hote-firefox.json debian/secretlin/usr/lib/mozilla/native-messaging-hosts/fr.secretlin.navigateur.json
+	install -D -m 644 debian/hote-chromium.json debian/secretlin/etc/chromium/native-messaging-hosts/fr.secretlin.navigateur.json
+	install -D -m 644 debian/hote-chromium.json debian/secretlin/etc/opt/chrome/native-messaging-hosts/fr.secretlin.navigateur.json
+	install -D -m 644 debian/hote-chromium.json debian/secretlin/etc/opt/edge/native-messaging-hosts/fr.secretlin.navigateur.json
 	install -D -m 755 debian/secretlin.sh debian/secretlin/usr/bin/secretlin
 	install -D -m 644 debian/secretlin.desktop debian/secretlin/usr/share/applications/secretlin.desktop
 	install -D -m 644 debian/secretlin-256.png debian/secretlin/usr/share/icons/hicolor/256x256/apps/secretlin.png

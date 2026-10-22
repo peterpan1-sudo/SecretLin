@@ -1000,6 +1000,127 @@
   "ja": "ボタンのズームと光彩、検索の煙、画面の切り替え。",
   "ko": "버튼 확대와 빛, 검색 연기 효과, 전환 효과."
  },
+ "Navigateurs": {
+  "en": "Browsers",
+  "es": "Navegadores",
+  "de": "Browser",
+  "pt": "Navegadores",
+  "it": "Browser",
+  "ru": "Браузеры",
+  "zh": "浏览器",
+  "ja": "ブラウザー",
+  "ko": "브라우저"
+ },
+ "Remplir vos identifiants directement sur les sites web.": {
+  "en": "Fill in your logins directly on websites.",
+  "es": "Rellena tus cuentas directamente en los sitios web.",
+  "de": "Zugänge direkt auf Websites ausfüllen.",
+  "pt": "Preencha seus logins diretamente nos sites.",
+  "it": "Compila i tuoi account direttamente sui siti web.",
+  "ru": "Заполняйте логины прямо на сайтах.",
+  "zh": "直接在网站上填写你的账号。",
+  "ja": "ウェブサイトでログイン情報を直接入力します。",
+  "ko": "웹사이트에서 로그인 정보를 바로 채웁니다."
+ },
+ "1. Connecter SecretLin aux navigateurs": {
+  "en": "1. Connect SecretLin to your browsers",
+  "es": "1. Conectar SecretLin con los navegadores",
+  "de": "1. SecretLin mit den Browsern verbinden",
+  "pt": "1. Conectar o SecretLin aos navegadores",
+  "it": "1. Collega SecretLin ai browser",
+  "ru": "1. Подключить SecretLin к браузерам",
+  "zh": "1. 将 SecretLin 连接到浏览器",
+  "ja": "1. SecretLin をブラウザーに接続",
+  "ko": "1. SecretLin을 브라우저에 연결"
+ },
+ "Navigateurs trouvés : {liste}": {
+  "en": "Browsers found: {liste}",
+  "es": "Navegadores encontrados: {liste}",
+  "de": "Gefundene Browser: {liste}",
+  "pt": "Navegadores encontrados: {liste}",
+  "it": "Browser trovati: {liste}",
+  "ru": "Найдены браузеры: {liste}",
+  "zh": "找到的浏览器：{liste}",
+  "ja": "見つかったブラウザー：{liste}",
+  "ko": "찾은 브라우저: {liste}"
+ },
+ "2. Ajouter l'extension : Chrome, Chromium, Brave, Edge, Vivaldi, Opera": {
+  "en": "2. Add the extension: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "es": "2. Añadir la extensión: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "de": "2. Erweiterung hinzufügen: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "pt": "2. Adicionar a extensão: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "it": "2. Aggiungi l'estensione: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "ru": "2. Добавить расширение: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "zh": "2. 添加扩展：Chrome、Chromium、Brave、Edge、Vivaldi、Opera",
+  "ja": "2. 拡張機能を追加：Chrome、Chromium、Brave、Edge、Vivaldi、Opera",
+  "ko": "2. 확장 프로그램 추가: Chrome, Chromium, Brave, Edge, Vivaldi, Opera"
+ },
+ "Ouvrez la page des extensions (chrome://extensions, brave://extensions, edge://extensions…), activez le « mode développeur », cliquez sur « Charger l'extension non empaquetée » et choisissez ce dossier :": {
+  "en": "Open the extensions page (chrome://extensions, brave://extensions, edge://extensions…), turn on “Developer mode”, click “Load unpacked” and choose this folder:",
+  "es": "Abre la página de extensiones (chrome://extensions, brave://extensions, edge://extensions…), activa el «modo de desarrollador», haz clic en «Cargar descomprimida» y elige esta carpeta:",
+  "de": "Öffne die Erweiterungsseite (chrome://extensions, brave://extensions, edge://extensions…), aktiviere den „Entwicklermodus“, klicke auf „Entpackte Erweiterung laden“ und wähle diesen Ordner:",
+  "pt": "Abra a página de extensões (chrome://extensions, brave://extensions, edge://extensions…), ative o “modo do desenvolvedor”, clique em “Carregar sem compactação” e escolha esta pasta:",
+  "it": "Apri la pagina delle estensioni (chrome://extensions, brave://extensions, edge://extensions…), attiva la «modalità sviluppatore», fai clic su «Carica estensione non pacchettizzata» e scegli questa cartella:",
+  "ru": "Откройте страницу расширений (chrome://extensions, brave://extensions, edge://extensions…), включите «Режим разработчика», нажмите «Загрузить распакованное расширение» и выберите эту папку:",
+  "zh": "打开扩展程序页面（chrome://extensions、brave://extensions、edge://extensions…），开启“开发者模式”，点击“加载已解压的扩展程序”，然后选择此文件夹：",
+  "ja": "拡張機能のページ（chrome://extensions、brave://extensions、edge://extensions…）を開き、「デベロッパー モード」をオンにして「パッケージ化されていない拡張機能を読み込む」をクリックし、このフォルダーを選んでください：",
+  "ko": "확장 프로그램 페이지(chrome://extensions, brave://extensions, edge://extensions…)를 열고 ‘개발자 모드’를 켠 뒤 ‘압축해제된 확장 프로그램을 로드합니다’를 눌러 이 폴더를 선택하세요:"
+ },
+ "2. Ajouter l'extension : Firefox": {
+  "en": "2. Add the extension: Firefox",
+  "es": "2. Añadir la extensión: Firefox",
+  "de": "2. Erweiterung hinzufügen: Firefox",
+  "pt": "2. Adicionar a extensão: Firefox",
+  "it": "2. Aggiungi l'estensione: Firefox",
+  "ru": "2. Добавить расширение: Firefox",
+  "zh": "2. 添加扩展：Firefox",
+  "ja": "2. 拡張機能を追加：Firefox",
+  "ko": "2. 확장 프로그램 추가: Firefox"
+ },
+ "Firefox ESR (celui de Kali) : ouvrez about:config et mettez xpinstall.signatures.required à false. Puis ouvrez about:addons, roue dentée → « Installer un module depuis un fichier », et choisissez le fichier préparé ci-dessous.": {
+  "en": "Firefox ESR (the one in Kali): open about:config and set xpinstall.signatures.required to false. Then open about:addons, gear icon → “Install Add-on From File”, and choose the file prepared below.",
+  "es": "Firefox ESR (el de Kali): abre about:config y pon xpinstall.signatures.required en false. Luego abre about:addons, rueda dentada → «Instalar complemento desde archivo» y elige el archivo preparado abajo.",
+  "de": "Firefox ESR (das von Kali): Öffne about:config und setze xpinstall.signatures.required auf false. Öffne dann about:addons, Zahnrad → „Add-on aus Datei installieren“ und wähle die unten vorbereitete Datei.",
+  "pt": "Firefox ESR (o do Kali): abra about:config e defina xpinstall.signatures.required como false. Depois abra about:addons, engrenagem → “Instalar extensão a partir de arquivo” e escolha o arquivo preparado abaixo.",
+  "it": "Firefox ESR (quello di Kali): apri about:config e imposta xpinstall.signatures.required su false. Poi apri about:addons, rotella → «Installa componente aggiuntivo da file» e scegli il file preparato qui sotto.",
+  "ru": "Firefox ESR (из Kali): откройте about:config и установите xpinstall.signatures.required в false. Затем откройте about:addons, шестерёнка → «Установить дополнение из файла» и выберите файл, подготовленный ниже.",
+  "zh": "Firefox ESR（Kali 自带）：打开 about:config，把 xpinstall.signatures.required 设为 false。然后打开 about:addons，齿轮 → “从文件安装附加组件”，选择下面准备好的文件。",
+  "ja": "Firefox ESR（Kali 付属）：about:config を開き、xpinstall.signatures.required を false にします。次に about:addons を開き、歯車 → 「ファイルからアドオンをインストール」で下に用意したファイルを選んでください。",
+  "ko": "Firefox ESR(Kali 기본): about:config를 열고 xpinstall.signatures.required를 false로 설정하세요. 그런 다음 about:addons를 열고 톱니바퀴 → ‘파일에서 부가 기능 설치’를 눌러 아래에서 준비한 파일을 선택하세요."
+ },
+ "3. Utiliser": {
+  "en": "3. Use it",
+  "es": "3. Usar",
+  "de": "3. Verwenden",
+  "pt": "3. Usar",
+  "it": "3. Usare",
+  "ru": "3. Использование",
+  "zh": "3. 使用",
+  "ja": "3. 使い方",
+  "ko": "3. 사용하기"
+ },
+ "Sur une page de connexion, cliquez dans le champ identifiant ou mot de passe : vos comptes SecretLin pour ce site s'affichent dessous. SecretLin doit être ouvert ; s'il est verrouillé, le code PIN (Réglages → Sécurité) suffit.": {
+  "en": "On a login page, click the username or password field: your SecretLin accounts for that site appear below it. SecretLin must be open; if it is locked, the PIN (Settings → Security) is enough.",
+  "es": "En una página de inicio de sesión, haz clic en el campo de usuario o contraseña: tus cuentas de SecretLin para ese sitio aparecen debajo. SecretLin debe estar abierto; si está bloqueado, basta con el PIN (Ajustes → Seguridad).",
+  "de": "Klicke auf einer Anmeldeseite in das Feld für Benutzername oder Passwort: Deine SecretLin-Konten für diese Website erscheinen darunter. SecretLin muss geöffnet sein; ist es gesperrt, genügt der PIN (Einstellungen → Sicherheit).",
+  "pt": "Em uma página de login, clique no campo de usuário ou senha: suas contas do SecretLin para esse site aparecem abaixo. O SecretLin deve estar aberto; se estiver bloqueado, o PIN (Configurações → Segurança) basta.",
+  "it": "In una pagina di accesso, fai clic nel campo utente o password: i tuoi account SecretLin per quel sito compaiono sotto. SecretLin deve essere aperto; se è bloccato, basta il PIN (Impostazioni → Sicurezza).",
+  "ru": "На странице входа нажмите на поле логина или пароля: ваши записи SecretLin для этого сайта появятся под ним. SecretLin должен быть открыт; если он заблокирован, достаточно PIN-кода (Настройки → Безопасность).",
+  "zh": "在登录页面点击用户名或密码输入框，该网站的 SecretLin 账号会显示在下方。SecretLin 必须处于打开状态；如果已锁定，输入 PIN 码（设置 → 安全）即可。",
+  "ja": "ログインページでユーザー名またはパスワードの欄をクリックすると、そのサイトの SecretLin アカウントが下に表示されます。SecretLin を開いておく必要があります。ロック中は PIN（設定 → セキュリティ）で使えます。",
+  "ko": "로그인 페이지에서 아이디나 비밀번호 칸을 클릭하면 그 사이트의 SecretLin 계정이 아래에 표시됩니다. SecretLin이 열려 있어야 하며, 잠겨 있으면 PIN(설정 → 보안)으로 충분합니다."
+ },
+ "Chemin copié": {
+  "en": "Path copied",
+  "es": "Ruta copiada",
+  "de": "Pfad kopiert",
+  "pt": "Caminho copiado",
+  "it": "Percorso copiato",
+  "ru": "Путь скопирован",
+  "zh": "路径已复制",
+  "ja": "パスをコピーしました",
+  "ko": "경로 복사됨"
+ },
  "Langue": {
   "en": "Language",
   "es": "Idioma",
@@ -2089,6 +2210,50 @@
   "ja": "未インストール",
   "ko": "설치 안 됨"
  },
+ "Installer la connexion": {
+  "en": "Install the connection",
+  "es": "Instalar la conexión",
+  "de": "Verbindung einrichten",
+  "pt": "Instalar a conexão",
+  "it": "Installa la connessione",
+  "ru": "Установить связь",
+  "zh": "安装连接",
+  "ja": "接続を設定",
+  "ko": "연결 설치"
+ },
+ "Préparer le fichier pour Firefox": {
+  "en": "Prepare the file for Firefox",
+  "es": "Preparar el archivo para Firefox",
+  "de": "Datei für Firefox vorbereiten",
+  "pt": "Preparar o arquivo para o Firefox",
+  "it": "Prepara il file per Firefox",
+  "ru": "Подготовить файл для Firefox",
+  "zh": "为 Firefox 准备文件",
+  "ja": "Firefox 用のファイルを準備",
+  "ko": "Firefox용 파일 준비"
+ },
+ "Ouvrir le dossier": {
+  "en": "Open folder",
+  "es": "Abrir carpeta",
+  "de": "Ordner öffnen",
+  "pt": "Abrir pasta",
+  "it": "Apri cartella",
+  "ru": "Открыть папку",
+  "zh": "打开文件夹",
+  "ja": "フォルダーを開く",
+  "ko": "폴더 열기"
+ },
+ "Aucun navigateur trouvé dans votre dossier personnel. Ouvrez votre navigateur une fois, puis réessayez.": {
+  "en": "No browser found in your home folder. Open your browser once, then try again.",
+  "es": "No se encontró ningún navegador en tu carpeta personal. Abre tu navegador una vez y vuelve a intentarlo.",
+  "de": "Kein Browser in deinem persönlichen Ordner gefunden. Öffne deinen Browser einmal und versuche es erneut.",
+  "pt": "Nenhum navegador encontrado na sua pasta pessoal. Abra o navegador uma vez e tente de novo.",
+  "it": "Nessun browser trovato nella tua cartella personale. Apri il browser una volta, poi riprova.",
+  "ru": "В домашней папке не найден ни один браузер. Откройте браузер один раз и попробуйте снова.",
+  "zh": "在你的主文件夹中未找到浏览器。请先打开一次浏览器，然后重试。",
+  "ja": "ホームフォルダーにブラウザーが見つかりません。一度ブラウザーを開いてから、もう一度お試しください。",
+  "ko": "홈 폴더에서 브라우저를 찾지 못했습니다. 브라우저를 한 번 연 뒤 다시 시도하세요."
+ },
  "Vu {n} fois dans des fuites": {
   "en": "Seen {n} times in breaches",
   "es": "Visto {n} veces en filtraciones",
@@ -2583,6 +2748,28 @@
   "zh": "此文件无法读取，或不是 SecretLin 导出文件。",
   "ja": "このファイルは読み取れないか、SecretLin のエクスポートではありません。",
   "ko": "이 파일을 읽을 수 없거나 SecretLin 내보내기 파일이 아닙니다."
+ },
+ "aucun": {
+  "en": "none",
+  "es": "ninguno",
+  "de": "keiner",
+  "pt": "nenhum",
+  "it": "nessuno",
+  "ru": "нет",
+  "zh": "无",
+  "ja": "なし",
+  "ko": "없음"
+ },
+ "Connexion installée pour : {liste}": {
+  "en": "Connection installed for: {liste}",
+  "es": "Conexión instalada para: {liste}",
+  "de": "Verbindung eingerichtet für: {liste}",
+  "pt": "Conexão instalada para: {liste}",
+  "it": "Connessione installata per: {liste}",
+  "ru": "Связь установлена для: {liste}",
+  "zh": "已为以下浏览器安装连接：{liste}",
+  "ja": "接続を設定しました：{liste}",
+  "ko": "연결 설치됨: {liste}"
  },
  "Vérification impossible : pas de connexion Internet ?": {
   "en": "Could not check: no Internet connection?",

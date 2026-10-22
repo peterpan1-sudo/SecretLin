@@ -24,6 +24,7 @@ retenir** : le mot de passe maître. Rien n'est envoyé sur Internet.
 - [Fonctionnalités](#-fonctionnalités)
 - [Installation](#-installation)
 - [Premiers pas](#-premiers-pas)
+- [Extension de navigateur et remplissage rapide](#-extension-de-navigateur-et-remplissage-rapide)
 - [Captures d'écran](#-captures-décran)
 - [Sécurité](#-sécurité)
 - [Sauvegardes](#-sauvegardes)
@@ -42,6 +43,8 @@ retenir** : le mot de passe maître. Rien n'est envoyé sur Internet.
 | 🔑 **Codes 2FA** | Les codes de double authentification à 6 chiffres, comme Google Authenticator. |
 | ⭐ **Favoris et catégories** | Comptes favoris en tête de liste, catégories (Jeux, Banque…) et filtre. |
 | 🕘 **Historique** | Les 10 derniers mots de passe de chaque compte restent consultables. |
+| 🌐 **Extension de navigateur** | Firefox, Chrome, Chromium, Brave, Edge, Vivaldi, Opera : vos comptes proposés sous les champs de connexion. |
+| ⚡ **Remplissage rapide** | `Ctrl+Alt+P` partout (même dans une appli comme Discord) : recherche, code PIN, copie. |
 | 📦 **Import** | Depuis Firefox, Chrome, Bitwarden, KeePass, 1Password ou LastPass (fichier CSV). |
 | 🔎 **Recherche et index A–Z** | Retrouvez un compte en quelques lettres. Logos des sites connus (Discord, Netflix, Steam…). |
 | ⏱️ **Verrouillage automatique** | Après 5 min sans bouger la souris sur la fenêtre, ou 2 min avec la souris en dehors. |
@@ -89,6 +92,29 @@ Votre coffre et vos réglages sont conservés.
 5. L'engrenage **⚙** ouvre les réglages : sécurité, générateur, apparence et langue.
 
 **Raccourcis clavier :** `Ctrl+N` ajouter · `Ctrl+F` rechercher · `Ctrl+L` verrouiller.
+
+## 🌐 Extension de navigateur et remplissage rapide
+
+**Code PIN.** Dans ⚙ Réglages → Sécurité, choisissez un code à 4 chiffres. Tant que
+SecretLin a été déverrouillé avec le mot de passe maître (depuis moins de 8 heures) et
+n'a pas été quitté, ce code suffit pour copier ou remplir un identifiant. Trois codes
+faux, et le mot de passe maître est redemandé. Avec un code, la croix de la fenêtre laisse
+SecretLin en arrière-plan ; « Quitter SecretLin » le ferme vraiment.
+
+**Remplissage rapide.** ⚙ Réglages → Sécurité → « Installer le raccourci » (GNOME et Xfce).
+Ensuite, `Ctrl+Alt+P` ouvre une petite fenêtre : tapez le nom du site, Entrée, le code PIN,
+puis Entrée copie l'identifiant et encore Entrée le mot de passe.
+
+**Extension.** ⚙ Réglages → Navigateurs guide l'installation :
+1. « Installer la connexion » (déjà faite pour Firefox, Chromium, Chrome et Edge par le paquet) ;
+2. Chrome, Chromium, Brave, Edge, Vivaldi, Opera : page des extensions → mode développeur →
+   « Charger l'extension non empaquetée » → dossier `/usr/share/secretlin/extension` ;
+3. Firefox ESR : `about:config` → `xpinstall.signatures.required` à `false`, puis
+   « Installer un module depuis un fichier » avec le fichier préparé par SecretLin.
+
+Sur une page de connexion, cliquez dans le champ : les comptes de ce site s'affichent dessous.
+Par sécurité, un compte n'est proposé que sur un site au nom identique (pas sur
+« amaz.com » pour Amazon), et l'extension ne parle qu'à SecretLin, sur votre ordinateur.
 
 ## 📸 Captures d'écran
 

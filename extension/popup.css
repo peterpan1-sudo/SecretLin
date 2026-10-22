@@ -1,0 +1,21 @@
+body { margin: 0; width: 320px; background: #0b0b0d; color: #ececef;
+  font: 13px/1.4 system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  background: #141417; border-bottom: 1px solid #2a2a30; font-weight: 700; font-size: 15px; }
+header img { width: 22px; height: 22px; }
+main { padding: 10px; }
+.texte { color: #8e8e98; padding: 4px 4px 8px; }
+.erreur { color: #e5484d; }
+.attention { color: #f0883e; }
+.titre { font-weight: 600; padding: 6px 4px 4px; color: #8e8e98; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .04em; }
+input { width: 100%; box-sizing: border-box; padding: 9px 10px; margin: 4px 0 8px;
+  background: #141417; color: #ececef; border: 1px solid #2a2a30; border-radius: 9px; font: inherit; }
+input.pin { font: 20px monospace; letter-spacing: .5em; text-align: center; }
+.compte { display: block; width: 100%; text-align: left; border: 0; background: #1a1a1e; color: inherit;
+  padding: 9px 10px; margin: 4px 0; border-radius: 9px; cursor: pointer; font: inherit; }
+.compte:hover { background: #26262b; }
+.site { font-weight: 600; }
+.detail { color: #8e8e98; font-size: 12px; }
+.bouton { border: 0; background: #e4e4e7; color: #0b0b0d; font: 600 12px system-ui;
+  padding: 8px 14px; border-radius: 9px; cursor: pointer; }

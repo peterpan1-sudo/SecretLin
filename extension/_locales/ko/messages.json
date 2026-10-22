@@ -1,0 +1,41 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "암호화된 비밀번호 관리자 SecretLin에서 로그인 정보를 채웁니다."
+  },
+  "verrouille": {
+    "message": "SecretLin이 잠겨 있습니다. 마스터 비밀번호로 여세요."
+  },
+  "ouvrir": {
+    "message": "SecretLin 열기"
+  },
+  "codePin": {
+    "message": "‘$1’의 PIN"
+  },
+  "codeFaux": {
+    "message": "코드가 틀렸습니다. $1번 남음."
+  },
+  "tropErreurs": {
+    "message": "오류가 너무 많아 SecretLin이 잠겼습니다."
+  },
+  "pasLance": {
+    "message": "SecretLin이 열려 있지 않거나 브라우저 연결이 설치되지 않았습니다 (SecretLin → 설정 → 브라우저)."
+  },
+  "aucun": {
+    "message": "이 사이트에 대한 SecretLin 계정이 없습니다."
+  },
+  "pourCeSite": {
+    "message": "이 사이트의 계정"
+  },
+  "pageSansConnexion": {
+    "message": "이 페이지는 웹사이트가 아닙니다."
+  },
+  "rechercher": {
+    "message": "계정 검색"
+  },
+  "autreSite": {
+    "message": "‘$1’은(는) 이 사이트와 연결되어 있지 않습니다. 그래도 채울까요? 주소를 확인하세요. 가짜 사이트가 진짜를 흉내 낼 수 있습니다."
+  }
+}

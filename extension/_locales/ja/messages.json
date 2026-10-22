@@ -1,0 +1,41 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "暗号化パスワードマネージャー SecretLin からログイン情報を入力します。"
+  },
+  "verrouille": {
+    "message": "SecretLin はロックされています。マスターパスワードで開いてください。"
+  },
+  "ouvrir": {
+    "message": "SecretLin を開く"
+  },
+  "codePin": {
+    "message": "「$1」の PIN"
+  },
+  "codeFaux": {
+    "message": "コードが違います。残り $1 回。"
+  },
+  "tropErreurs": {
+    "message": "エラーが多すぎるため、SecretLin はロックされました。"
+  },
+  "pasLance": {
+    "message": "SecretLin が開いていないか、ブラウザーとの接続が設定されていません（SecretLin → 設定 → ブラウザー）。"
+  },
+  "aucun": {
+    "message": "このサイトの SecretLin アカウントはありません。"
+  },
+  "pourCeSite": {
+    "message": "このサイトのアカウント"
+  },
+  "pageSansConnexion": {
+    "message": "このページはウェブサイトではありません。"
+  },
+  "rechercher": {
+    "message": "アカウントを検索"
+  },
+  "autreSite": {
+    "message": "「$1」はこのサイトと関連付けられていません。それでも入力しますか？アドレスを確認してください。偽サイトは本物をまねることがあります。"
+  }
+}

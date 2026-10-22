@@ -1,0 +1,9 @@
+{
+  "name": "fr.secretlin.navigateur",
+  "description": "SecretLin",
+  "path": "/usr/share/secretlin/secretlin-navigateur",
+  "type": "stdio",
+  "allowed_extensions": [
+    "secretlin@peterpan1-sudo.github.io"
+  ]
+}

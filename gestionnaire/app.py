@@ -2,6 +2,7 @@
 
 import datetime
 import math
+import subprocess
 import threading
 import time
 import tkinter
@@ -14,8 +15,8 @@ import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
 from gestionnaire import (
-    acces_rapide, apparence, effets, fuites, guichet, import_externe, langue, porte, raccourci,
-    sante, totp,
+    acces_rapide, apparence, effets, fuites, guichet, import_externe, langue, navigateurs, porte,
+    raccourci, sante, totp,
 )
 from gestionnaire.coffre import (
     AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, FichierCleRequis, MotDePasseIncorrect, attente_apres,
@@ -29,6 +30,41 @@ from gestionnaire.effets import (
     adoucir, animer, definir, lineaire, melanger, rebond, survol, transition, valeur,
 )
 from gestionnaire.voile import Voile
+
+
+
+def _minuteurs_sur_la_racine():
+    """Tkinter range la commande Tcl d'un minuteur (after) dans le widget qui l'a lancé
+    et la supprime quand ce widget est détruit, mais le minuteur, lui, reste prévu. Son nom
+    (fait de l'adresse mémoire de la fonction) peut alors être repris par une nouvelle
+    commande, par exemple un clic : le minuteur orphelin déclencherait ce clic. Rangés dans
+    la fenêtre principale, qui vit jusqu'à la fin, les minuteurs ne deviennent jamais
+    orphelins ; et celui d'un widget détruit entre-temps ne fait plus rien."""
+    lancer, annuler = tkinter.Misc.after, tkinter.Misc.after_cancel
+
+    def after(self, ms, func=None, *args):
+        racine = self._root()
+        if func is None or self is racine:
+            return lancer(racine, ms, func, *args)
+
+        def appel(*valeurs):
+            try:
+                existe = bool(self.winfo_exists())
+            except tkinter.TclError:
+                existe = False
+            if existe:
+                func(*valeurs)
+
+        appel.__name__ = getattr(func, "__name__", "appel")
+        return lancer(racine, ms, appel, *args)
+
+    def after_cancel(self, ident):
+        return annuler(self._root(), ident)
+
+    tkinter.Misc.after, tkinter.Misc.after_cancel = after, after_cancel
+
+
+_minuteurs_sur_la_racine()
 
 DANGER = apparence.DANGER
 SUCCES = apparence.SUCCES
@@ -2013,6 +2049,7 @@ class PageReglages(Page):
             (t("Générateur"), "", PageGenerateur),
             (t("Apparence"), "", PageApparence),
             (t("Langue"), "", PageLangue),
+            (t("Navigateurs"), "", PageNavigateurs),
         ]
         for titre, description, classe in self.rubriques:
             CarteMenu(self, titre, description,
@@ -2243,6 +2280,106 @@ class PageApparence(Page):
             survol(bloc, lambda: rond.configure(image=survole),
                    lambda: rond.configure(image=normal))
         return bloc
+
+def ouvrir_dossier(chemin):
+    try:
+        subprocess.Popen(["xdg-open", str(chemin)], stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        pass
+
+
+class PageNavigateurs(Page):
+    """Extension de navigateur : connexion avec SecretLin, puis ajout de l'extension."""
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, t("Navigateurs"), t("Remplir vos identifiants directement sur les "
+                                                    "sites web."), retour=t("Réglages"))
+        self.app = ecran.app
+        defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                            scrollbar_button_color=BORDURE,
+                                            scrollbar_button_hover_color=BORDURE_ECLAT)
+        defilement.pack(fill="both", expand=True)
+        presents = navigateurs.navigateurs_presents()
+
+        etape1 = self._section(defilement, t("1. Connecter SecretLin aux navigateurs"),
+                               t("Navigateurs trouvés : {liste}",
+                                 liste=", ".join(presents) or t("aucun")))
+        self.resultat = ctk.CTkLabel(etape1, text="", font=police(12), text_color=SUCCES,
+                                     anchor="w", justify="left", wraplength=620)
+        BoutonAnime(etape1, t("Installer la connexion"), self._installer, style="principal",
+                    width=200).pack(anchor="w")
+        self.resultat.pack(fill="x", pady=(6, 0))
+
+        dossier = navigateurs.dossier_extension()
+        etape2 = self._section(defilement, t("2. Ajouter l'extension : Chrome, Chromium, Brave, "
+                                             "Edge, Vivaldi, Opera"),
+                               t("Ouvrez la page des extensions (chrome://extensions, "
+                                 "brave://extensions, edge://extensions…), activez le « mode "
+                                 "développeur », cliquez sur « Charger l'extension non "
+                                 "empaquetée » et choisissez ce dossier :"))
+        self._chemin(etape2, dossier)
+
+        etape3 = self._section(defilement, t("2. Ajouter l'extension : Firefox"),
+                               t("Firefox ESR (celui de Kali) : ouvrez about:config et mettez "
+                                 "xpinstall.signatures.required à false. Puis ouvrez about:addons, "
+                                 "roue dentée → « Installer un module depuis un fichier », et "
+                                 "choisissez le fichier préparé ci-dessous."))
+        self.ligne_xpi = ctk.CTkFrame(etape3, fg_color="transparent")
+        BoutonAnime(etape3, t("Préparer le fichier pour Firefox"), self._preparer_firefox,
+                    width=240).pack(anchor="w")
+        self.ligne_xpi.pack(fill="x", pady=(6, 0))
+
+        self._section(defilement, t("3. Utiliser"),
+                      t("Sur une page de connexion, cliquez dans le champ identifiant ou mot de "
+                        "passe : vos comptes SecretLin pour ce site s'affichent dessous. "
+                        "SecretLin doit être ouvert ; s'il est verrouillé, le code PIN "
+                        "(Réglages → Sécurité) suffit."))
+
+    def _chemin(self, parent, chemin):
+        ligne = ctk.CTkFrame(parent, fg_color="transparent")
+        ligne.pack(fill="x")
+        ctk.CTkLabel(ligne, text=str(chemin), font=police(12, gras=True), text_color=TEXTE,
+                     anchor="w", justify="left", wraplength=420).pack(side="left", fill="x",
+                                                                      expand=True)
+        BoutonAnime(ligne, t("Ouvrir le dossier"), lambda: ouvrir_dossier(chemin.parent
+                    if chemin.is_file() else chemin), width=150, height=32,
+                    taille_police=12).pack(side="right")
+        BoutonAnime(ligne, t("Copier"), lambda: self._copier(str(chemin)), width=84, height=32,
+                    taille_police=12).pack(side="right", padx=(0, 6))
+
+    def _copier(self, texte):
+        self.app.clipboard_clear()
+        self.app.clipboard_append(texte)
+        self.ecran.notifier(t("Chemin copié"))
+
+    def _installer(self):
+        try:
+            installes = navigateurs.installer()
+        except OSError as e:
+            self.resultat.configure(text=t("Opération impossible : {erreur}", erreur=e),
+                                    text_color=DANGER)
+            return
+        if installes:
+            self.resultat.configure(text="✓  " + t("Connexion installée pour : {liste}",
+                                                   liste=", ".join(installes)),
+                                    text_color=SUCCES)
+        else:
+            self.resultat.configure(text=t("Aucun navigateur trouvé dans votre dossier "
+                                           "personnel. Ouvrez votre navigateur une fois, puis "
+                                           "réessayez."), text_color=DANGER)
+
+    def _preparer_firefox(self):
+        try:
+            xpi = navigateurs.paquet_firefox()
+        except OSError as e:
+            ctk.CTkLabel(self.ligne_xpi, text=t("Opération impossible : {erreur}", erreur=e),
+                         font=police(12), text_color=DANGER).pack(anchor="w")
+            return
+        for enfant in self.ligne_xpi.winfo_children():
+            enfant.destroy()
+        self._chemin(self.ligne_xpi, xpi)
+
 
 class PageLangue(Page):
     """Langue de l'interface : automatique (celle du système) ou l'une des langues proposées."""
