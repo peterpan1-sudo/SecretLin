@@ -13,8 +13,9 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
+from gestionnaire import apparence, effets
 from gestionnaire.coffre import (
-    Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
+    AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
 )
 from gestionnaire.logo import dessiner as dessiner_logo
@@ -24,38 +25,29 @@ from gestionnaire.effets import (
 )
 from gestionnaire.voile import Voile
 
-# Palette sobre gris / noir
-FOND = "#0b0b0d"
-PANNEAU = "#141417"
-CARTE = "#1a1a1e"
-CARTE_SURVOL = "#26262b"
-BORDURE = "#2a2a30"
-BORDURE_ECLAT = "#70707a"
-TEXTE = "#ececef"
-TEXTE_DOUX = "#8e8e98"
-TEXTE_ETEINT = "#3a3a42"
-ACCENT = "#e4e4e7"
-BLANC = "#ffffff"
-DANGER = "#e5484d"
-SUCCES = "#46a758"
+DANGER = apparence.DANGER
+SUCCES = apparence.SUCCES
 BLEU = "#2f6fed"
-COULEURS_FORCE = [BORDURE, "#e5484d", "#f0883e", "#d4c34a", "#46a758"]
 LIBELLES_FORCE = ["", "Faible", "Moyen", "Fort", "Très fort"]
 
-STYLES = {
-    "principal": dict(fond=ACCENT, fond_survol=BLANC, texte=FOND, bord=ACCENT,
-                      bord_survol=BLANC, halo="#4a4a53", eclat=BLANC),
-    "secondaire": dict(fond="#202025", fond_survol="#2c2c32", texte=TEXTE, bord=BORDURE,
-                       bord_survol="#5c5c66", halo="#303037", eclat="#55555f"),
-    "danger": dict(fond="#1d1315", fond_survol="#3a1a1d", texte=DANGER, bord="#5a2a2d",
-                   bord_survol=DANGER, halo="#3a1c1f", eclat="#7a2a2e"),
-}
+
+def appliquer_apparence(reglages):
+    """Met en place les couleurs (FOND, TEXTE, STYLES…), la taille du texte et les
+    animations choisies. Les widgets créés ensuite les utilisent."""
+    global ECHELLE_TEXTE, STYLE_POLICE, _famille
+    globals().update(apparence.couleurs(reglages))
+    ECHELLE_TEXTE = apparence.TAILLES[reglages["taille"]]
+    STYLE_POLICE = reglages["police"]
+    _famille = None  # recherchée de nouveau au prochain appel de police()
+    effets.ANIMATIONS = reglages["animations"]
+
+
+appliquer_apparence(apparence.DEFAUT)
 
 DELAI_SOURIS_IMMOBILE_S = 300  # souris sur la fenêtre mais sans bouger
 DELAI_SOURIS_DEHORS_S = 120  # souris hors de la fenêtre
-EFFACEMENT_PRESSE_PAPIER_S = 20
-
-_famille = None
+EFFACEMENT_PRESSE_PAPIER_S = 180
+MDP_COPIE = f"Mot de passe copié — effacé dans {EFFACEMENT_PRESSE_PAPIER_S // 60} min"
 
 
 def duree_lisible(secondes) -> str:
@@ -74,9 +66,10 @@ def police(taille=13, gras=False):
     global _famille
     if _famille is None:
         dispo = set(tkinter.font.families())
-        _famille = next((f for f in ("Inter", "Segoe UI", "Roboto", "Cantarell", "DejaVu Sans")
+        _famille = next((f for f in (STYLE_POLICE,) + apparence.POLICES_SECOURS
                          if f in dispo), "TkDefaultFont")
-    return ctk.CTkFont(family=_famille, size=taille, weight="bold" if gras else "normal")
+    return ctk.CTkFont(family=_famille, size=round(taille * ECHELLE_TEXTE),
+                       weight="bold" if gras else "normal")
 
 
 def couleur_fond(widget) -> str:
@@ -112,6 +105,41 @@ def _image_bouton(largeur, hauteur, bouton_l, bouton_h, fond_parent, halo, fond,
     return im.resize((largeur, hauteur), Image.LANCZOS)
 
 
+@lru_cache(maxsize=16)
+def _engrenage(taille, couleur):
+    """Icône d'engrenage (8 dents, trou central), dessinée en 4× puis réduite."""
+    k = 4
+    s = taille * k
+    c = s / 2
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    r_dent, r_corps = s * 0.49, s * 0.36
+    points = []
+    for i in range(8):
+        a = 2 * math.pi * i / 8
+        for r, da in ((r_corps, -0.36), (r_dent, -0.2), (r_dent, 0.2), (r_corps, 0.36)):
+            points.append((c + r * math.cos(a + da), c + r * math.sin(a + da)))
+    d.polygon(points, fill=couleur)
+    d.ellipse((c - r_corps, c - r_corps, c + r_corps, c + r_corps), fill=couleur)
+    r_trou = s * 0.15
+    d.ellipse((c - r_trou, c - r_trou, c + r_trou, c + r_trou), fill=(0, 0, 0, 0))
+    return im.resize((taille, taille), Image.LANCZOS)
+
+
+@lru_cache(maxsize=32)
+def _pastille(taille, couleur, bord, anneau):
+    """Rond de couleur entouré d'un anneau (ou sans, si anneau est None), dessiné en 4×
+    puis réduit : bords lisses, sans pixels en escalier. Mesures sur une base de 38 px."""
+    s = taille * 4
+    u = s / 38
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    if anneau:
+        d.ellipse((2 * u, 2 * u, s - 2 * u, s - 2 * u), outline=anneau, width=round(2 * u))
+    d.ellipse((7 * u, 7 * u, s - 7 * u, s - 7 * u), fill=couleur, outline=bord, width=round(u))
+    return im.resize((taille, taille), Image.LANCZOS)
+
+
 class BoutonAnime(tkinter.Canvas):
     """Bouton qui grossit au survol, s'entoure d'un halo et lance un éclat au clic.
 
@@ -121,9 +149,12 @@ class BoutonAnime(tkinter.Canvas):
     MARGE = 7
 
     def __init__(self, parent, texte, commande, style="secondaire", width=120, height=38,
-                 taille_police=13):
+                 taille_police=13, icone=False):
         self.s = STYLES[style]
         self.fond_parent = couleur_fond(parent)
+        fonte = police(taille_police, gras=style == "principal")
+        # Avec un texte agrandi (réglage Apparence), le bouton s'élargit pour le contenir.
+        width = max(width, fonte.measure(texte) + (taille_police + 10 if icone else 0) + 26)
         m = self.MARGE
         self.l, self.h = width + 2 * m, height + 2 * m
         super().__init__(parent, width=self.l, height=self.h, bg=self.fond_parent,
@@ -137,7 +168,15 @@ class BoutonAnime(tkinter.Canvas):
 
         self._fond_dessin = self.create_image(0, 0, anchor="nw")
         self._texte = self.create_text(self.l / 2, self.h / 2, text=texte, fill=self.s["texte"],
-                                       font=police(taille_police, gras=style == "principal"))
+                                       font=fonte)
+        if icone:
+            # Engrenage seul au centre, ou à gauche du texte avec l'ensemble centré.
+            taille = taille_police + 3 if texte else 18
+            self._icone = ImageTk.PhotoImage(_engrenage(taille, self.s["texte"]))
+            debut = (self.l - (taille + (7 + fonte.measure(texte) if texte else 0))) / 2
+            self.create_image(debut + taille / 2, self.h / 2, image=self._icone)
+            self.coords(self._texte, debut + taille + 7, self.h / 2)
+            self.itemconfigure(self._texte, anchor="w")
         definir(self, "fond", self.s["fond"])
         definir(self, "bord", self.s["bord"])
         definir(self, "halo", self.fond_parent)
@@ -191,12 +230,14 @@ class BoutonAnime(tkinter.Canvas):
         self._dernier_clic = maintenant
         # Éclat : le bouton et son halo s'illuminent puis reviennent doucement.
         definir(self, "fond", self.s["eclat"])
-        definir(self, "bord", BLANC)
-        definir(self, "halo", BLANC)
+        definir(self, "bord", ECLAT)
+        definir(self, "halo", ECLAT)
         self._dessiner()
         self._vers(self.survole, duree=0.5)
         if self.commande:
-            self.after(70, self.commande)
+            # Programmé sur la fenêtre principale, pas sur le bouton : la commande peut
+            # détruire la page qui contient ce bouton (« ← Retour », changement de thème…).
+            self._root().after(70, self.commande)
 
     def changer_texte(self, texte):
         self.itemconfigure(self._texte, text=texte)
@@ -224,7 +265,7 @@ def champ(parent, placeholder="", masque=False, **kw):
     etat = {"focus": False, "survol": False}
 
     def maj():
-        cible = BORDURE_ECLAT if etat["focus"] else "#44444d" if etat["survol"] else BORDURE
+        cible = BORDURE_ECLAT if etat["focus"] else CHAMP_SURVOL if etat["survol"] else BORDURE
         transition(e, "bord", cible, 0.22, lambda c: e.configure(border_color=c))
 
     def regler(cle, v):
@@ -238,8 +279,8 @@ def champ(parent, placeholder="", masque=False, **kw):
 
 
 def eclat_champ(e):
-    definir(e, "bord", BLANC)
-    e.configure(border_color=BLANC)
+    definir(e, "bord", ECLAT)
+    e.configure(border_color=ECLAT)
     transition(e, "bord", BORDURE_ECLAT, 0.6, lambda c: e.configure(border_color=c))
 
 
@@ -312,7 +353,10 @@ class JaugeForce(ctk.CTkFrame):
 class Application(ctk.CTk):
     def __init__(self):
         super().__init__(className="SecretLin")
-        ctk.set_appearance_mode("dark")
+        self.coffre = Coffre()
+        self.reglages = apparence.charger(apparence.chemin_reglages(self.coffre.chemin))
+        appliquer_apparence(self.reglages)
+        ctk.set_appearance_mode(MODE)
         self.title("SecretLin")
         self._icone = ImageTk.PhotoImage(dessiner_logo(128))
         self.iconphoto(True, self._icone)
@@ -320,7 +364,6 @@ class Application(ctk.CTk):
         self.minsize(800, 640)
         self.configure(fg_color=FOND)
 
-        self.coffre = Coffre()
         self.ecran = None
         self.derniere_activite = time.monotonic()
         self.dehors_depuis = None
@@ -357,15 +400,18 @@ class Application(ctk.CTk):
         elif action == "ajouter":
             FenetreEntree(self.ecran)
         else:
+            self.ecran.afficher_liste()
             self.ecran.recherche.focus_set()
 
     # --- Navigation -------------------------------------------------------
 
     def _changer_ecran(self, ecran):
-        if self.ecran is not None:
-            self.ecran.destroy()
-        self.ecran = ecran
+        # Le nouvel écran est en place avant la destruction de l'ancien : une erreur pendant
+        # celle-ci ne laisse pas l'application pointer sur un écran à moitié détruit.
+        ancien, self.ecran = self.ecran, ecran
         ecran.pack(fill="both", expand=True)
+        if ancien is not None:
+            ancien.destroy()
 
     def afficher_connexion(self):
         if self.coffre.existe():
@@ -376,6 +422,24 @@ class Application(ctk.CTk):
     def afficher_principal(self):
         self._activite()
         self._changer_ecran(EcranPrincipal(self))
+
+    def enregistrer_reglages(self, **choix):
+        self.reglages.update(choix)
+        try:
+            apparence.enregistrer(apparence.chemin_reglages(self.coffre.chemin), self.reglages)
+        except OSError:
+            pass  # disque plein ou en lecture seule : le choix vaut au moins pour cette session
+
+    def changer_apparence(self, **choix):
+        """Applique et enregistre un réglage d'apparence, puis redessine l'écran principal
+        en revenant sur la page Apparence."""
+        self.enregistrer_reglages(**choix)
+        appliquer_apparence(self.reglages)
+        ctk.set_appearance_mode(MODE)
+        self.configure(fg_color=FOND)
+        self.afficher_principal()
+        self.ecran.ouvrir_page(PageReglages)
+        self.ecran.ouvrir_page(PageApparence)
 
     def noter_echecs(self, delai):
         """Enregistre le compteur d'échecs et l'attente en cours (« delai » secondes)."""
@@ -594,7 +658,8 @@ class EcranDeverrouillage(EcranCentre):
             self.app.echecs = 0
             self.app.noter_echecs(0)
             self.afficher_message("Déverrouillé", SUCCES)
-            self.logo.ouvrir(lambda: self.after(150, self.app.afficher_principal))
+            # Sur la fenêtre principale : afficher_principal() détruit cet écran.
+            self.logo.ouvrir(lambda: self.app.after(150, self.app.afficher_principal))
             return
         self.bouton.activer(True, "Déverrouiller")
         self.mdp.delete(0, "end")
@@ -656,10 +721,11 @@ class IndexAlphabet(ctk.CTkFrame):
         if lettre not in self.presentes:
             return
         lab, f = self.lettres[lettre]
-        transition(lab, "couleur", BLANC if dedans else self._couleur_repos(lettre), 0.18,
+        transition(lab, "couleur", ECLAT if dedans else self._couleur_repos(lettre), 0.18,
                    lambda c: lab.configure(text_color=c))
         transition(lab, "taille", 15.0 if dedans else 11.0, 0.22,
-                   lambda v: f.configure(size=round(v)), courbe=rebond if dedans else adoucir)
+                   lambda v: f.configure(size=round(v * ECHELLE_TEXTE)),
+                   courbe=rebond if dedans else adoucir)
 
     def _clic(self, lettre):
         if lettre in self.presentes:
@@ -681,7 +747,8 @@ class Pastille(ctk.CTkLabel):
         self.changer_site(site)
 
     def changer_site(self, site):
-        self.style = style_pastille(site, CARTE_SURVOL, ACCENT, TEXTE, FOND)
+        self.style = style_pastille(site, CARTE_SURVOL, ACCENT, TEXTE, ACCENT_TEXTE,
+                                    fond_clair=MODE == "light")
         st = self.style
         fond = st["fond_survol"] if self.survole else st["fond"]
         texte = st["texte_survol"] if self.survole else st["texte"]
@@ -739,7 +806,7 @@ class CarteIdentifiant(ctk.CTkFrame):
         BoutonAnime(actions, "Modifier", lambda: FenetreEntree(ecran, e),
                     width=88, height=32, taille_police=12).pack(side="right", padx=(10, 0))
         for texte, cle, largeur, message in (
-            ("Mot de passe", "mot_de_passe", 112, "Mot de passe copié — effacé dans 20 s"),
+            ("Mot de passe", "mot_de_passe", 112, MDP_COPIE),
             ("E-mail", "email", 76, "E-mail copié"),
             ("Utilisateur", "utilisateur", 98, "Nom d'utilisateur copié"),
         ):
@@ -788,14 +855,16 @@ class EcranPrincipal(ctk.CTkFrame):
         ctk.CTkLabel(titres, text="Chiffré de bout en bout  ·  AES-256", font=police(11),
                      text_color=TEXTE_DOUX, anchor="w").pack(fill="x")
 
-        BoutonAnime(entete, "Verrouiller", app.verrouiller, width=112).pack(side="right", padx=(0, 16))
+        BoutonAnime(entete, "", self.afficher_reglages, width=38, icone=True).pack(
+            side="right", padx=(0, 16))
+        BoutonAnime(entete, "Verrouiller", app.verrouiller, width=112).pack(side="right")
         BoutonAnime(entete, "+  Ajouter", lambda: FenetreEntree(self), style="principal",
                     width=124).pack(side="right")
 
         statut = ctk.CTkFrame(entete, fg_color="transparent")
         statut.pack(side="right", padx=18)
         ctk.CTkLabel(statut, text="●  Déverrouillé", font=police(11, gras=True), text_color=SUCCES,
-                     fg_color="#122016", corner_radius=11, height=24).pack(anchor="e", ipadx=8)
+                     fg_color=SUCCES_FOND, corner_radius=11, height=24).pack(anchor="e", ipadx=8)
         self.minuterie = ctk.CTkLabel(statut, text="", font=police(10), text_color=TEXTE_DOUX,
                                       anchor="e", width=230)
         self.minuterie.pack(anchor="e", pady=(2, 1))
@@ -806,6 +875,12 @@ class EcranPrincipal(ctk.CTkFrame):
 
         corps = ctk.CTkFrame(self, fg_color="transparent")
         corps.pack(fill="both", expand=True, padx=(18, 18), pady=18)
+        self.corps = corps
+        # Pages ouvertes par-dessus la liste (Réglages, puis Sécurité…), la dernière visible.
+        self.pages = []
+        # Rubriques des réglages construites d'avance, cachées : au clic elles s'affichent
+        # aussitôt, qu'elles soient légères (Sécurité) ou chargées (Apparence).
+        self._pages_pretes = {}
 
         self.index = IndexAlphabet(corps, self.aller_a)
         self.index.pack(side="left", fill="y", padx=(0, 14))
@@ -831,7 +906,7 @@ class EcranPrincipal(ctk.CTkFrame):
 
         # Notification qui glisse depuis le bas
         self.toast = ctk.CTkFrame(self, fg_color=ACCENT, corner_radius=12)
-        self.toast_texte = ctk.CTkLabel(self.toast, text="", text_color=FOND, font=police(12, gras=True))
+        self.toast_texte = ctk.CTkLabel(self.toast, text="", text_color=ACCENT_TEXTE, font=police(12, gras=True))
         self.toast_texte.pack(padx=18, pady=9)
         definir(self.toast, "y", 1.12)
         self._jeton_toast = None
@@ -860,6 +935,43 @@ class EcranPrincipal(ctk.CTkFrame):
         self.app.copier(texte)
         self.notifier(message)
 
+    def ouvrir_page(self, classe):
+        """Affiche une page à la place de la liste (ou de la page précédente). L'en-tête
+        reste visible : le verrouillage automatique continue de tourner."""
+        page = self._pages_pretes.pop(classe, None) or classe(self)
+        (self.pages[-1] if self.pages else self.corps).pack_forget()
+        page.pack(fill="both", expand=True, padx=18, pady=18)
+        self.pages.append(page)
+        page.affichee()
+
+    def preparer_pages(self, classes):
+        """Construit ces pages en arrière-plan, une à la fois pour ne pas figer l'écran."""
+        if not classes or not self.winfo_exists():
+            return
+        if classes[0] not in self._pages_pretes:
+            self._pages_pretes[classes[0]] = classes[0](self)
+        self.after(30, lambda: self.preparer_pages(classes[1:]))
+
+    def page_precedente(self):
+        self.pages.pop().destroy()
+        if self.pages:
+            self.pages[-1].pack(fill="both", expand=True, padx=18, pady=18)
+            self.pages[-1].affichee()
+        else:
+            self.corps.pack(fill="both", expand=True, padx=(18, 18), pady=18)
+            for page in self._pages_pretes.values():
+                page.destroy()
+            self._pages_pretes.clear()
+
+    def afficher_liste(self):
+        while self.pages:
+            self.page_precedente()
+
+    def afficher_reglages(self):
+        if not (self.pages and isinstance(self.pages[-1], PageReglages)):
+            self.afficher_liste()
+            self.ouvrir_page(PageReglages)
+
     def notifier(self, texte):
         self.toast_texte.configure(text=f"✓   {texte}")
         self.toast.place(relx=0.5, rely=1.12, anchor="s")
@@ -887,8 +999,8 @@ class EcranPrincipal(ctk.CTkFrame):
         animer(canvas, "defilement", 0.45, lambda t: canvas.yview_moveto(debut + (cible - debut) * t))
         # La lettre de section clignote pour montrer où l'on est arrivé.
         lab = cible_widget.lettre
-        definir(lab, "couleur", BLANC)
-        lab.configure(text_color=BLANC)
+        definir(lab, "couleur", ECLAT)
+        lab.configure(text_color=ECLAT)
         transition(lab, "couleur", TEXTE_DOUX, 1.2, lambda c: lab.configure(text_color=c))
 
     def _recherche_modifiee(self):
@@ -989,7 +1101,7 @@ class EcranPrincipal(ctk.CTkFrame):
             visible != bool(case.winfo_manager()) for case, visible in plan)
         if not change:
             appliquer()  # rien ne bouge dans la liste : seuls le compteur et l'index changent
-        elif anime:
+        elif anime and effets.ANIMATIONS:
             self.voile.changer(appliquer)
         else:
             self.voile.terminer()
@@ -1100,7 +1212,7 @@ class FenetreEntree(Dialogue):
         self.bouton_voir.pack(side="left")
         BoutonAnime(ligne, "Générer", self._generer, width=84, height=42,
                     taille_police=12).pack(side="left")
-        BoutonAnime(ligne, "Copier", lambda: self._copier(self.mdp.get(), "Mot de passe copié — effacé dans 20 s"),
+        BoutonAnime(ligne, "Copier", lambda: self._copier(self.mdp.get(), MDP_COPIE),
                     width=84, height=42, taille_police=12).pack(side="left")
         self.jauge = JaugeForce(corps)
         self.jauge.pack(fill="x", pady=(4, 0))
@@ -1146,7 +1258,7 @@ class FenetreEntree(Dialogue):
         self.bouton_voir.changer_texte("Afficher" if visible else "Masquer")
 
     def _generer(self):
-        mdp = generer_mot_de_passe()
+        mdp = generer_mot_de_passe(**apparence.options_generateur(self.ecran.app.reglages))
         if self.mdp.cget("show") != "":
             self._basculer()
 
@@ -1403,6 +1515,387 @@ class DialogueMotDePasse(Dialogue):
         self.destroy()
         self.succes(resultat)
 
+
+# --- Réglages ---------------------------------------------------------------
+
+def sur_clic(widgets, action):
+    """Appelle action() quand on clique sur l'un des widgets. Un widget CTk se dessine
+    dans un canevas intérieur : c'est son propre bind() qui y relaie le clic."""
+    for w in widgets:
+        w.bind("<Button-1>", lambda _e: action(), add="+")
+
+
+class Page(ctk.CTkFrame):
+    """Page affichée à la place de la liste : bouton de retour, titre et sous-titre."""
+
+    def __init__(self, ecran: EcranPrincipal, titre, sous_titre, retour="Retour"):
+        super().__init__(ecran, fg_color="transparent")
+        self.ecran = ecran
+        haut = ctk.CTkFrame(self, fg_color="transparent")
+        haut.pack(fill="x")
+        BoutonAnime(haut, "←  " + retour, ecran.page_precedente, width=112).pack(side="left")
+        ctk.CTkLabel(haut, text=titre, font=police(22, gras=True), text_color=TEXTE).pack(
+            side="left", padx=(12, 0))
+        ctk.CTkLabel(self, text=sous_titre, font=police(12), text_color=TEXTE_DOUX,
+                     anchor="w").pack(fill="x", padx=(8, 0), pady=(6, 16))
+
+    def affichee(self):
+        """Appelée chaque fois que la page devient visible."""
+
+    def _section(self, parent, titre, texte):
+        carte = ctk.CTkFrame(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                             border_color=BORDURE)
+        carte.pack(fill="x", pady=4)
+        ctk.CTkLabel(carte, text=titre, font=police(15, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x", padx=20, pady=(16, 0))
+        ctk.CTkLabel(carte, text=texte, font=police(12), text_color=TEXTE_DOUX,
+                     anchor="w").pack(fill="x", padx=20, pady=(2, 10))
+        contenu = ctk.CTkFrame(carte, fg_color="transparent")
+        contenu.pack(fill="x", padx=20, pady=(0, 16))
+        return contenu
+
+
+class CarteMenu(ctk.CTkFrame):
+    """Rubrique cliquable des réglages : titre, description facultative et flèche."""
+
+    def __init__(self, parent, titre, description, action):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE, cursor="hand2")
+        definir(self, "bord", BORDURE)
+        textes = ctk.CTkFrame(self, fg_color="transparent")
+        textes.pack(side="left", fill="x", expand=True, padx=18, pady=14)
+        widgets = [self, textes]
+        lignes = [(titre, 15, True, TEXTE)]
+        if description:
+            lignes.append((description, 12, False, TEXTE_DOUX))
+        for texte, taille, gras, couleur in lignes:
+            l = ctk.CTkLabel(textes, text=texte, font=police(taille, gras=gras),
+                             text_color=couleur, anchor="w")
+            l.pack(fill="x")
+            widgets.append(l)
+        fleche = ctk.CTkLabel(self, text="›", font=police(24), text_color=TEXTE_DOUX)
+        fleche.pack(side="right", padx=18)
+        widgets.append(fleche)
+        sur_clic(widgets, action)
+        survol(self, lambda: self._etat(True), lambda: self._etat(False))
+
+    def _etat(self, survole):
+        transition(self, "bord", BORDURE_ECLAT if survole else BORDURE, 0.25,
+                   lambda c: self.configure(border_color=c))
+
+
+class PageReglages(Page):
+    """Liste des rubriques de réglages. Pour en ajouter une : une ligne dans « rubriques »."""
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, "Réglages", "Choisissez une rubrique.")
+        self.rubriques = [
+            ("Sécurité", "", PageSecurite),
+            ("Générateur", "", PageGenerateur),
+            ("Apparence", "", PageApparence),
+        ]
+        for titre, description, classe in self.rubriques:
+            CarteMenu(self, titre, description,
+                      lambda c=classe: ecran.ouvrir_page(c)).pack(fill="x", pady=4)
+
+    def affichee(self):
+        # Une fois la page à l'écran : la rubrique quittée est reconstruite pour la prochaine fois.
+        self.after(150, lambda: self.ecran.preparer_pages([c for _, _, c in self.rubriques]))
+
+
+class PageSecurite(Page):
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, "Sécurité", "Tout ce qui protège l'accès à votre coffre.",
+                         retour="Réglages")
+        self.section = SectionMotDePasse(self, ecran)
+        self.section.pack(fill="x", pady=4)
+
+    def affichee(self):
+        self.after(80, self.section.actuel.focus_set)
+
+
+class PageGenerateur(Page):
+    """Options du bouton « Générer » : longueur et types de caractères, avec un aperçu."""
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, "Générateur", "Ce que produit le bouton « Générer » quand vous "
+                         "ajoutez ou modifiez un identifiant.", retour="Réglages")
+        self.app = ecran.app
+        r = self.app.reglages
+        self._jeton = None
+        defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                            scrollbar_button_color=BORDURE,
+                                            scrollbar_button_hover_color=BORDURE_ECLAT)
+        defilement.pack(fill="both", expand=True)
+        apercu = self._section(defilement, "Aperçu", "Un exemple avec les réglages ci-dessous.")
+        ligne = ctk.CTkFrame(apercu, fg_color="transparent")
+        ligne.pack(fill="x")
+        familles = set(tkinter.font.families())
+        mono = next((f for f in ("JetBrains Mono", "DejaVu Sans Mono", "Consolas", "Courier New")
+                     if f in familles), "TkFixedFont")
+        self.exemple = ctk.CTkLabel(ligne, text="", font=ctk.CTkFont(
+            family=mono, size=round(15 * ECHELLE_TEXTE)), text_color=TEXTE, anchor="w")
+        self.exemple.pack(side="left", fill="x", expand=True)
+        BoutonAnime(ligne, "Régénérer", self._apercu, width=110).pack(side="right")
+        self.jauge = JaugeForce(apercu)
+        self.jauge.pack(fill="x", pady=(6, 0))
+
+        longueur = self._section(defilement, "Longueur", "Plus c'est long, plus c'est solide.")
+        self.valeur = ctk.CTkLabel(longueur, text="", font=police(13, gras=True),
+                                   text_color=TEXTE, width=120, anchor="w")
+        self.valeur.pack(side="left")
+        mini, maxi = apparence.LONGUEUR_MIN, apparence.LONGUEUR_MAX
+        self.curseur = ctk.CTkSlider(longueur, from_=mini, to=maxi, number_of_steps=maxi - mini,
+                                     command=lambda _v: self._modifie(), fg_color=BORDURE,
+                                     progress_color=ACCENT, button_color=ACCENT,
+                                     button_hover_color=STYLES["principal"]["fond_survol"])
+        self.curseur.set(r["longueur"])
+        self.curseur.pack(side="left", fill="x", expand=True, padx=(8, 0))
+
+        caracteres = self._section(defilement, "Caractères",
+                             "Les minuscules (a–z) sont toujours incluses.")
+        self.interrupteurs = {}
+        for cle, texte in (("majuscules", "Majuscules (A–Z)"), ("chiffres", "Chiffres (0–9)"),
+                           ("symboles", "Symboles (" + SYMBOLES + ")"),
+                           ("sans_ambigus", "Éviter les caractères qui se ressemblent "
+                                            "(" + " ".join(AMBIGUS) + ")")):
+            inter = ctk.CTkSwitch(caracteres, text=texte, font=police(13), text_color=TEXTE,
+                                  command=self._modifie, fg_color=BORDURE, progress_color=ACCENT,
+                                  button_color=TEXTE_DOUX, button_hover_color=TEXTE)
+            if r[cle]:
+                inter.select()
+            inter.pack(anchor="w", pady=4)
+            self.interrupteurs[cle] = inter
+        self._modifie(enregistrer=False)
+
+    def _reglages_choisis(self):
+        options = {cle: bool(i.get()) for cle, i in self.interrupteurs.items()}
+        return dict(options, longueur=round(self.curseur.get()))
+
+    def _apercu(self):
+        mdp = generer_mot_de_passe(**self._reglages_choisis())
+        self.exemple.configure(text=mdp)
+        self.jauge.maj(mdp)
+
+    def _modifie(self, enregistrer=True):
+        options = self._reglages_choisis()
+        self.valeur.configure(text=f"{options['longueur']} caractères")
+        self._apercu()
+        if enregistrer:
+            # Le curseur appelle ceci à chaque cran : on n'écrit le fichier qu'une fois arrêté.
+            # Sur la fenêtre principale : l'enregistrement a lieu même si l'on quitte la page.
+            if self._jeton:
+                self.app.after_cancel(self._jeton)
+            options = self._reglages_choisis()
+            self._jeton = self.app.after(400, lambda: self.app.enregistrer_reglages(**options))
+
+
+class PageApparence(Page):
+    """Thème, couleur d'accent, police, taille du texte et animations : chaque choix s'applique
+    tout de suite et reste enregistré."""
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, "Apparence", "Chaque choix s'applique tout de suite et reste "
+                         "enregistré.", retour="Réglages")
+        self.app = ecran.app
+        r = self.app.reglages
+        defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                            scrollbar_button_color=BORDURE,
+                                            scrollbar_button_hover_color=BORDURE_ECLAT)
+        defilement.pack(fill="both", expand=True)
+
+        themes = self._section(defilement, "Thème", "L'ambiance de toute l'application.")
+        for nom, t in apparence.THEMES.items():
+            self._apercu_theme(themes, nom, t, nom == r["theme"]).pack(side="left", padx=(0, 10))
+
+        accents = self._section(defilement, "Couleur d'accent",
+                                "Les boutons principaux, comme « Ajouter », et les notifications.")
+        for nom, couleur in apparence.ACCENTS.items():
+            couleur = couleur or apparence.THEMES[r["theme"]]["neutre"]
+            self._pastille_accent(accents, nom, couleur, nom == r["accent"]).pack(
+                side="left", padx=(0, 14))
+
+        polices = self._section(defilement, "Police", "Le style des lettres dans toute "
+                                "l'application.")
+        installees = set(tkinter.font.families())
+        for i, nom in enumerate(apparence.POLICES):
+            self._apercu_police(polices, nom, nom == r["police"], nom in installees).grid(
+                row=i // 5, column=i % 5, padx=(0, 10), pady=(0, 10))
+
+        tailles = self._section(defilement, "Taille du texte", "Pour tout le texte de l'application.")
+        self._choix(tailles, list(apparence.TAILLES), r["taille"],
+                    lambda v: self._changer(taille=v))
+
+        anim = self._section(defilement, "Animations",
+                             "Zoom et halo des boutons, fumée de la recherche, transitions.")
+        self._choix(anim, ["Activées", "Désactivées"],
+                    "Activées" if r["animations"] else "Désactivées",
+                    lambda v: self._changer(animations=v == "Activées"))
+
+        BoutonAnime(defilement, "Revenir à l'apparence d'origine",
+                    lambda: self._changer(**apparence.DEFAUT), width=240).pack(anchor="w", pady=(6, 4))
+
+    def _changer(self, **choix):
+        # Après la fin du clic : l'écran entier (et ce bouton) va être recréé.
+        self.app.after(80, lambda: self.app.changer_apparence(**choix))
+
+    def _choix(self, parent, options, actuel, action):
+        """Rangée de boutons dont un seul est choisi (mis en avant)."""
+        for option in options:
+            BoutonAnime(parent, option, lambda o=option: action(o),
+                        style="principal" if option == actuel else "secondaire",
+                        width=110).pack(side="left")
+
+    def _apercu_theme(self, parent, nom, t, choisi):
+        """Vignette qui montre le thème en miniature : fond, carte, texte et accent."""
+        cadre = ctk.CTkFrame(parent, fg_color=t["fond"], corner_radius=10, width=132, height=86,
+                             border_width=2, border_color=ACCENT if choisi else t["bordure"],
+                             cursor="hand2")
+        cadre.pack_propagate(False)
+        carte = ctk.CTkFrame(cadre, fg_color=t["carte"], corner_radius=6, height=30,
+                             border_width=1, border_color=t["bordure"])
+        carte.pack(fill="x", padx=10, pady=(10, 6))
+        carte.pack_propagate(False)
+        ligne = ctk.CTkFrame(carte, fg_color=t["texte_doux"], corner_radius=2, width=46, height=4)
+        ligne.place(x=8, rely=0.5, anchor="w")
+        bouton = ctk.CTkFrame(carte, fg_color=t["neutre"], corner_radius=4, width=22, height=12)
+        bouton.place(relx=1.0, x=-8, rely=0.5, anchor="e")
+        libelle = ctk.CTkLabel(cadre, text=("✓  " if choisi else "") + nom,
+                               font=police(12, gras=True), text_color=t["texte"],
+                               fg_color="transparent")
+        libelle.pack(anchor="w", padx=10)
+        sur_clic((cadre, carte, ligne, bouton, libelle), lambda: self._changer(theme=nom))
+        if not choisi:
+            survol(cadre, lambda: cadre.configure(border_color=BORDURE_ECLAT),
+                   lambda: cadre.configure(border_color=t["bordure"]))
+        return cadre
+
+    def _apercu_police(self, parent, nom, choisie, installee):
+        """Vignette écrite dans la police elle-même ; grisée si elle n'est pas installée."""
+        cadre = ctk.CTkFrame(parent, fg_color=PANNEAU, corner_radius=10, width=132, height=86,
+                             border_width=2, border_color=ACCENT if choisie else BORDURE,
+                             cursor="hand2" if installee else "")
+        cadre.pack_propagate(False)
+        famille = nom if installee else "TkDefaultFont"
+        exemple = ctk.CTkLabel(cadre, text="Aa 123" if installee else nom, text_color=TEXTE if installee else TEXTE_ETEINT,
+                               font=ctk.CTkFont(family=famille,
+                                                size=round((22 if installee else 14) * ECHELLE_TEXTE)))
+        exemple.pack(anchor="w", padx=10, pady=(8, 0))
+        libelle = ctk.CTkLabel(cadre, text=("✓  " if choisie else "") + nom
+                               if installee else "Non installée",
+                               text_color=TEXTE_DOUX if installee else TEXTE_ETEINT,
+                               font=ctk.CTkFont(family=famille, size=round(12 * ECHELLE_TEXTE),
+                                                weight="bold" if choisie else "normal"))
+        libelle.pack(anchor="w", padx=10)
+        if installee:
+            sur_clic((cadre, exemple, libelle), lambda: self._changer(police=nom))
+            if not choisie:
+                survol(cadre, lambda: cadre.configure(border_color=BORDURE_ECLAT),
+                       lambda: cadre.configure(border_color=BORDURE))
+        return cadre
+
+    def _pastille_accent(self, parent, nom, couleur, choisie):
+        """Rond de couleur cliquable, entouré quand c'est l'accent choisi."""
+        bloc = ctk.CTkFrame(parent, fg_color="transparent", cursor="hand2")
+
+        def image(anneau):
+            return ctk.CTkImage(_pastille(76, couleur, BORDURE, anneau), size=(38, 38))
+
+        rond = ctk.CTkLabel(bloc, text="", image=image(TEXTE if choisie else None), cursor="hand2")
+        rond.pack()
+        libelle = ctk.CTkLabel(bloc, text=nom, font=police(11, gras=choisie),
+                               text_color=TEXTE if choisie else TEXTE_DOUX)
+        libelle.pack(pady=(2, 0))
+        sur_clic((bloc, rond, libelle), lambda: self._changer(accent=nom))
+        if not choisie:
+            normal, survole = image(None), image(BORDURE_ECLAT)
+            survol(bloc, lambda: rond.configure(image=survole),
+                   lambda: rond.configure(image=normal))
+        return bloc
+
+class SectionMotDePasse(ctk.CTkFrame):
+    """Changer le mot de passe maître : l'actuel est redemandé, pour qu'une personne
+    devant l'ordinateur resté ouvert ne puisse pas le remplacer."""
+
+    def __init__(self, parent, ecran: EcranPrincipal):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE)
+        self.ecran = ecran
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(anchor="w", padx=20, pady=18)
+        ctk.CTkLabel(corps, text="Mot de passe maître", font=police(15, gras=True),
+                     text_color=TEXTE, anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text="Le coffre et ses copies automatiques seront rechiffrés : "
+                     "l'ancien mot de passe n'ouvrira plus rien. Les fichiers exportés "
+                     "gardent leur propre mot de passe d'export.",
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w", justify="left",
+                     wraplength=340).pack(fill="x", pady=(4, 14))
+        self.actuel = champ(corps, "Mot de passe actuel", masque=True, width=340)
+        self.actuel.pack(pady=(0, 12))
+        self.nouveau = champ(corps, "Nouveau mot de passe", masque=True, width=340)
+        self.nouveau.pack()
+        self.jauge = JaugeForce(corps)
+        self.jauge.pack(fill="x", pady=(4, 8))
+        self.nouveau.bind("<KeyRelease>", lambda _e: self.jauge.maj(self.nouveau.get()))
+        self.confirmation = champ(corps, "Confirmer le nouveau mot de passe", masque=True, width=340)
+        self.confirmation.pack()
+        self.confirmation.bind("<Return>", lambda _e: self._valider())
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=340)
+        self.message.pack(pady=(6, 0))
+        self.bouton = BoutonAnime(corps, "Changer le mot de passe", self._valider,
+                                  style="principal", width=200)
+        self.bouton.pack(anchor="e", pady=(4, 0))
+
+    def _valider(self):
+        actuel, nouveau = self.actuel.get(), self.nouveau.get()
+        if not actuel:
+            self.message.configure(text="Entrez votre mot de passe actuel.")
+            return
+        problemes = verifier_force(nouveau)
+        if problemes:
+            self.message.configure(text="Il manque : " + ", ".join(problemes) + ".")
+            return
+        if nouveau != self.confirmation.get():
+            self.message.configure(text="Les deux nouveaux mots de passe ne correspondent pas.")
+            return
+        if nouveau == actuel:
+            self.message.configure(text="Le nouveau mot de passe doit être différent de l'actuel.")
+            return
+        self.bouton.activer(False, "Patientez…")
+        self.message.configure(text="")
+        app = self.ecran.app
+
+        def fond():
+            try:
+                app.coffre.changer_mot_de_passe(nouveau, actuel=actuel)
+                erreur = None
+            except MotDePasseIncorrect:
+                erreur = "Mot de passe actuel incorrect."
+            except (OSError, RuntimeError) as e:
+                erreur = f"Changement impossible : {e}"
+            app.after(0, lambda: self._resultat(erreur))
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _resultat(self, erreur):
+        app = self.ecran.app
+        # Le coffre a pu être verrouillé pendant l'opération : on ne le laisse pas ouvert.
+        if app.ecran is not self.ecran:
+            app.coffre.verrouiller()
+            return
+        if not self.winfo_exists():
+            return
+        self.bouton.activer(True, "Changer le mot de passe")
+        self.actuel.delete(0, "end")
+        if erreur:
+            self.message.configure(text=erreur)
+            self.actuel.focus_set()
+            return
+        self.nouveau.delete(0, "end")
+        self.confirmation.delete(0, "end")
+        self.jauge.maj("")
+        self.ecran.notifier("Mot de passe maître changé")
 
 def main():
     Application().mainloop()

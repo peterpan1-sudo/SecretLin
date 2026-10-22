@@ -6,6 +6,7 @@ Dérivation de clé : Argon2id (résistant aux attaques par force brute sur GPU)
 
 import base64
 import datetime
+import hmac
 import json
 import math
 import os
@@ -164,14 +165,28 @@ def evaluer_force(mot_de_passe: str) -> int:
     return 4
 
 
-def generer_mot_de_passe(longueur: int = 20) -> str:
-    """Mot de passe aléatoire cryptographiquement sûr, avec chaque type de caractère."""
-    speciaux = "!@#$%&*-_=+?"
-    alphabet = string.ascii_letters + string.digits + speciaux
+SYMBOLES = "!@#$%&*-_=+?"
+AMBIGUS = "Il1O0o"  # se confondent à l'œil
+
+
+def generer_mot_de_passe(longueur: int = 20, majuscules: bool = True, chiffres: bool = True,
+                         symboles: bool = True, sans_ambigus: bool = False) -> str:
+    """Mot de passe aléatoire cryptographiquement sûr : des minuscules, plus chaque type
+    de caractère demandé, présent au moins une fois."""
+    familles = [string.ascii_lowercase]
+    if majuscules:
+        familles.append(string.ascii_uppercase)
+    if chiffres:
+        familles.append(string.digits)
+    if symboles:
+        familles.append(SYMBOLES)
+    if sans_ambigus:
+        familles = ["".join(c for c in f if c not in AMBIGUS) for f in familles]
+    longueur = max(longueur, len(familles))
+    alphabet = "".join(familles)
     while True:
         mdp = "".join(secrets.choice(alphabet) for _ in range(longueur))
-        if (any(c.islower() for c in mdp) and any(c.isupper() for c in mdp)
-                and any(c.isdigit() for c in mdp) and any(c in speciaux for c in mdp)):
+        if all(any(c in f for c in mdp) for f in familles):
             return mdp
 
 
@@ -425,7 +440,21 @@ class Coffre:
             self.sauvegarder()
         return ajoutees
 
-    def changer_mot_de_passe(self, nouveau: str) -> None:
+    def verifier_mot_de_passe(self, mot_de_passe: str) -> bool:
+        """Vrai si « mot_de_passe » est le mot de passe maître du coffre ouvert."""
+        if self._cle is None:
+            raise RuntimeError("Coffre verrouillé")
+        e = self._entete
+        cle = _deriver_cle(mot_de_passe, _deb64(e["sel"]), e["memoire"], e["iterations"], e["voies"])
+        return hmac.compare_digest(cle, self._cle)
+
+    def changer_mot_de_passe(self, nouveau: str, actuel: str | None = None) -> None:
+        """Rechiffre le coffre avec « nouveau ». Si « actuel » est donné, il doit être
+        le mot de passe maître en place, sinon MotDePasseIncorrect est levée."""
+        if self._cle is None:
+            raise RuntimeError("Coffre verrouillé")
+        if actuel is not None and not self.verifier_mot_de_passe(actuel):
+            raise MotDePasseIncorrect()
         # Les entrées restent intactes : on régénère la clé puis on sauvegarde
         # une seule fois (jamais de coffre vide écrit entre-temps).
         ancienne_cle, ancien_entete = self._cle, self._entete

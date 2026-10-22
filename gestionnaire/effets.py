@@ -5,6 +5,7 @@ import tkinter
 import weakref
 
 IMAGE_MS = 16
+ANIMATIONS = True  # False : chaque animation saute directement à son état final
 
 
 def _rgb(couleur: str) -> tuple[int, int, int]:
@@ -74,6 +75,8 @@ def animer(widget, cle, duree, etape, fin=None, courbe=adoucir):
             racine.after_cancel(ancienne)
         except tkinter.TclError:
             pass
+    if not ANIMATIONS:
+        duree = 0
     horloge = {"debut": time.perf_counter(), "vu": time.perf_counter()}
 
     def tick():
