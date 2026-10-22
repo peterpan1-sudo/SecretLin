@@ -13,7 +13,7 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 
-from gestionnaire import apparence, effets
+from gestionnaire import apparence, effets, sante
 from gestionnaire.coffre import (
     AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
     generer_mot_de_passe, verifier_force,
@@ -896,6 +896,8 @@ class EcranPrincipal(ctk.CTkFrame):
         self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
         BoutonAnime(barre, "Sauvegarde", lambda: FenetreSauvegarde(self), width=112).pack(side="right")
+        BoutonAnime(barre, "Bilan de santé", lambda: self.ouvrir_page(PageSante),
+                    width=132).pack(side="right", padx=(0, 8))
         self.compteur.pack(side="right", padx=(14, 0))
 
         self.liste = ctk.CTkScrollableFrame(contenu, fg_color="transparent",
@@ -1041,6 +1043,9 @@ class EcranPrincipal(ctk.CTkFrame):
             self._sections[-1][2].append((e, case))
             cartes.append(carte)
         self._afficher(self.recherche.get().strip().casefold(), anime=False)
+
+        for page in self.pages:
+            page.coffre_modifie()
 
         if animer_entree:
             for i, carte in enumerate(cartes[:25]):
@@ -1542,6 +1547,9 @@ class Page(ctk.CTkFrame):
     def affichee(self):
         """Appelée chaque fois que la page devient visible."""
 
+    def coffre_modifie(self):
+        """Appelée après un ajout, une modification ou une suppression d'identifiant."""
+
     def _section(self, parent, titre, texte):
         carte = ctk.CTkFrame(parent, fg_color=CARTE, corner_radius=12, border_width=1,
                              border_color=BORDURE)
@@ -1812,6 +1820,100 @@ class PageApparence(Page):
             survol(bloc, lambda: rond.configure(image=survole),
                    lambda: rond.configure(image=normal))
         return bloc
+
+def duree_depuis(jours: int) -> str:
+    """« 14 mois », « 2 ans »…"""
+    if jours >= 730:
+        return f"{jours // 365} ans"
+    return f"{jours // 30} mois"
+
+
+class PageSante(Page):
+    """Bilan de santé : les mots de passe faibles, réutilisés ou trop anciens, chacun avec
+    un bouton pour le changer."""
+
+    def __init__(self, ecran: EcranPrincipal):
+        super().__init__(ecran, "Bilan de santé", "Les mots de passe à changer en priorité. "
+                         "Rien ne quitte votre ordinateur : tout est analysé ici.")
+        self.defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                                 scrollbar_button_color=BORDURE,
+                                                 scrollbar_button_hover_color=BORDURE_ECLAT)
+        self.defilement.pack(fill="both", expand=True)
+        self._remplir()
+
+    def coffre_modifie(self):
+        for enfant in self.defilement.winfo_children():
+            enfant.destroy()
+        self._remplir()
+
+    def _remplir(self):
+        entrees = self.ecran.app.coffre.entrees
+        b = sante.bilan(entrees)
+        self._resume(b, len(entrees))
+        categories = (
+            ("faibles", "Mots de passe faibles",
+             "Trop courts ou trop simples : faciles à deviner pour un programme.",
+             lambda e: "Force : " + LIBELLES_FORCE[evaluer_force(e["mot_de_passe"])]),
+            ("reutilises", "Mots de passe réutilisés",
+             "Si l'un de ces sites se fait pirater, les autres comptes sont exposés aussi.",
+             lambda e: f"Utilisé sur {b['usages'][e['mot_de_passe']]} comptes"),
+            ("anciens", "Mots de passe anciens",
+             "Pas changés depuis plus d'un an.",
+             lambda e: "Pas changé depuis " + duree_depuis(sante.age_jours(e))),
+        )
+        for cle, titre, texte, raison in categories:
+            if b[cle]:
+                section = self._section(self.defilement, f"{titre}  ({len(b[cle])})", texte)
+                for e in b[cle]:
+                    self._ligne(section, e, raison(e))
+
+    def _resume(self, b, total):
+        carte = ctk.CTkFrame(self.defilement, fg_color=CARTE, corner_radius=12, border_width=1,
+                             border_color=BORDURE)
+        carte.pack(fill="x", pady=4)
+        note = b["note"]
+        couleur = SUCCES if note == 100 else "#f0883e" if note >= 60 else DANGER
+        ctk.CTkLabel(carte, text=f"{note} %", font=police(40, gras=True),
+                     text_color=couleur).pack(side="left", padx=(24, 18), pady=18)
+        textes = ctk.CTkFrame(carte, fg_color="transparent")
+        textes.pack(side="left", fill="x", expand=True)
+        if not total:
+            titre, detail = "Aucun identifiant", "Ajoutez un compte pour voir son bilan."
+        elif not b["a_probleme"]:
+            titre, detail = "Tout est en ordre", "Aucun mot de passe faible, réutilisé ou ancien."
+        else:
+            n = b["a_probleme"]
+            titre = f"{n} compte{'s' if n > 1 else ''} sur {total} à améliorer"
+            detail = "Cliquez sur « Changer », puis sur « Générer » pour un mot de passe solide."
+        ctk.CTkLabel(textes, text=titre, font=police(16, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x")
+        ctk.CTkLabel(textes, text=detail, font=police(12), text_color=TEXTE_DOUX,
+                     anchor="w").pack(fill="x", pady=(2, 0))
+        compteurs = ctk.CTkFrame(carte, fg_color="transparent")
+        compteurs.pack(side="right", padx=20)
+        for cle, nom in (("faibles", "Faibles"), ("reutilises", "Réutilisés"),
+                         ("anciens", "Anciens")):
+            bloc = ctk.CTkFrame(compteurs, fg_color="transparent")
+            bloc.pack(side="left", padx=10)
+            n = len(b[cle])
+            ctk.CTkLabel(bloc, text=str(n), font=police(22, gras=True),
+                         text_color=DANGER if n else TEXTE_DOUX).pack()
+            ctk.CTkLabel(bloc, text=nom, font=police(11), text_color=TEXTE_DOUX).pack()
+
+    def _ligne(self, parent, e, raison):
+        ligne = ctk.CTkFrame(parent, fg_color="transparent")
+        ligne.pack(fill="x", pady=3)
+        Pastille(ligne, e["site"]).pack(side="left", padx=(0, 12))
+        textes = ctk.CTkFrame(ligne, fg_color="transparent")
+        textes.pack(side="left", fill="x", expand=True)
+        ctk.CTkLabel(textes, text=e["site"], font=police(14, gras=True), text_color=TEXTE,
+                     anchor="w").pack(fill="x")
+        details = "  ·  ".join(v for v in (e["utilisateur"], raison) if v)
+        ctk.CTkLabel(textes, text=details, font=police(12), text_color=TEXTE_DOUX,
+                     anchor="w").pack(fill="x")
+        BoutonAnime(ligne, "Changer", lambda: FenetreEntree(self.ecran, e), width=96, height=32,
+                    taille_police=12).pack(side="right")
+
 
 class SectionMotDePasse(ctk.CTkFrame):
     """Changer le mot de passe maître : l'actuel est redemandé, pour qu'une personne
