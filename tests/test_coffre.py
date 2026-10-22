@@ -458,3 +458,31 @@ def test_generateur_respecte_les_options():
 def test_generateur_trop_court_pour_tous_les_types():
     # Chaque type demandé doit être présent : la longueur est relevée si besoin.
     assert len(generer_mot_de_passe(longueur=2)) == 4
+
+
+def test_favori_categorie_et_historique(tmp_path):
+    c = Coffre(tmp_path / "coffre.vault")
+    c.creer("Maitre-Tres-Solide-42!")
+    c.ajouter("Steam", "joueur", "premier", categorie=" Jeux ")
+    e = c.entrees[0]
+    assert (e["favori"], e["categorie"], e["historique"]) == (False, "Jeux", [])
+    c.basculer_favori(e["id"])
+    assert e["favori"] is True
+    for mdp in ["deuxieme", "deuxieme"] + [f"mdp-{i}" for i in range(12)]:
+        c.modifier(e["id"], mot_de_passe=mdp)
+    assert len(e["historique"]) == module.HISTORIQUE_MAX
+    assert e["historique"][0]["mot_de_passe"] == "mdp-10"
+    assert e["historique"][-1]["mot_de_passe"] == "mdp-1"
+    c.ajouter("Banque", "moi", "x", categorie="Banque")
+    assert c.categories() == ["Banque", "Jeux"]
+    c.verrouiller()
+    c.ouvrir("Maitre-Tres-Solide-42!")
+    steam = next(x for x in c.entrees if x["site"] == "Steam")
+    assert steam["favori"] and len(steam["historique"]) == module.HISTORIQUE_MAX
+
+
+def test_anciens_comptes_sans_les_nouveaux_champs():
+    entrees = module._verifier_entrees([{"site": "a", "utilisateur": "", "mot_de_passe": "x",
+                                         "favori": "oui", "historique": [{"x": 1}, 3]}])
+    assert (entrees[0]["favori"], entrees[0]["categorie"], entrees[0]["historique"]) == \
+        (False, "", [])

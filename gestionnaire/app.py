@@ -30,6 +30,13 @@ DANGER = apparence.DANGER
 SUCCES = apparence.SUCCES
 BLEU = "#2f6fed"
 LIBELLES_FORCE = ["", "Faible", "Moyen", "Fort", "Très fort"]  # traduits à l'affichage
+FAVORI = "#f5b83d"  # étoile des favoris
+
+
+def categories_proposees() -> list[str]:
+    """Catégories proposées dans la fiche d'un compte, en plus de celles déjà utilisées."""
+    return [t("Réseaux sociaux"), t("E-mail"), t("Banque"), t("Achats"), t("Jeux"),
+            t("Divertissement"), t("Travail"), t("Études")]
 
 
 def appliquer_apparence(reglages):
@@ -691,7 +698,7 @@ class EcranDeverrouillage(EcranCentre):
 class IndexAlphabet(ctk.CTkFrame):
     """Colonne A–Z : un clic fait défiler la liste jusqu'à la lettre."""
 
-    LETTRES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
+    LETTRES = "★ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
 
     def __init__(self, parent, aller_a):
         super().__init__(parent, fg_color=PANNEAU, corner_radius=14, border_width=1,
@@ -797,14 +804,23 @@ class CarteIdentifiant(ctk.CTkFrame):
         definir(self, "marge", float(depart))
         definir(self, "bord", BORDURE)
 
+        etoile = ctk.CTkLabel(self, text="★" if e.get("favori") else "☆", width=22,
+                              font=police(17), cursor="hand2",
+                              text_color=FAVORI if e.get("favori") else TEXTE_ETEINT)
+        etoile.pack(side="left", padx=(12, 0))
+        etoile.bind("<Button-1>", lambda _e: ecran.basculer_favori(e))
+        if not e.get("favori"):
+            survol(etoile, lambda: etoile.configure(text_color=TEXTE_DOUX),
+                   lambda: etoile.configure(text_color=TEXTE_ETEINT))
         self.pastille = Pastille(self, e["site"])
-        self.pastille.pack(side="left", padx=(14, 14), pady=12)
+        self.pastille.pack(side="left", padx=(8, 14), pady=12)
 
         textes = ctk.CTkFrame(self, fg_color="transparent")
         textes.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(textes, text=e["site"], font=police(15, gras=True), text_color=TEXTE,
                      anchor="w").pack(fill="x")
-        details = "  ·  ".join(v for v in (e["utilisateur"], e.get("email", "")) if v) or "—"
+        details = "  ·  ".join(v for v in (e["utilisateur"], e.get("email", ""),
+                                           e.get("categorie", "")) if v) or "—"
         ctk.CTkLabel(textes, text=details, font=police(12), text_color=TEXTE_DOUX,
                      anchor="w").pack(fill="x")
 
@@ -902,6 +918,14 @@ class EcranPrincipal(ctk.CTkFrame):
         self.recherche.bind("<KeyRelease>", lambda _e: self._recherche_modifiee())
         self._jeton_recherche = None
         self.compteur = ctk.CTkLabel(barre, text="", font=police(12), text_color=TEXTE_DOUX)
+        self.categorie = None  # catégorie affichée (None : toutes)
+        self.filtre_categorie = ctk.CTkOptionMenu(
+            barre, values=[t("Toutes les catégories")], width=170, height=40, corner_radius=9,
+            fg_color=CARTE, button_color=CARTE, button_hover_color=CARTE_SURVOL,
+            text_color=TEXTE, font=police(12), dropdown_font=police(12),
+            dropdown_fg_color=PANNEAU, dropdown_hover_color=CARTE_SURVOL,
+            dropdown_text_color=TEXTE, command=self._categorie_choisie)
+        self.filtre_categorie.pack(side="left", padx=(8, 0))
         BoutonAnime(barre, t("Sauvegarde"), lambda: FenetreSauvegarde(self), width=112).pack(side="right")
         BoutonAnime(barre, t("Bilan de santé"), lambda: self.ouvrir_page(PageSante),
                     width=132).pack(side="right", padx=(0, 8))
@@ -943,6 +967,11 @@ class EcranPrincipal(ctk.CTkFrame):
     def copier(self, texte, message):
         self.app.copier(texte)
         self.notifier(message)
+
+    def basculer_favori(self, e):
+        self.app.coffre.basculer_favori(e["id"])
+        self.notifier(t("Ajouté aux favoris") if e["favori"] else t("Retiré des favoris"))
+        self.rafraichir()
 
     def ouvrir_page(self, classe):
         """Affiche une page à la place de la liste (ou de la page précédente). L'en-tête
@@ -1012,6 +1041,21 @@ class EcranPrincipal(ctk.CTkFrame):
         lab.configure(text_color=ECLAT)
         transition(lab, "couleur", TEXTE_DOUX, 1.2, lambda c: lab.configure(text_color=c))
 
+    def _categorie_choisie(self, choix):
+        self.categorie = None if choix == t("Toutes les catégories") else choix
+        self._afficher(self.recherche.get().strip().casefold(), anime=True)
+
+    def _maj_filtre_categorie(self):
+        categories = self.app.coffre.categories()
+        if self.categorie not in categories:
+            self.categorie = None
+        self.filtre_categorie.configure(values=[t("Toutes les catégories")] + categories)
+        self.filtre_categorie.set(self.categorie or t("Toutes les catégories"))
+        if categories:
+            self.filtre_categorie.pack(side="left", padx=(8, 0), after=self.recherche)
+        else:
+            self.filtre_categorie.pack_forget()
+
     def _recherche_modifiee(self):
         """Attend une courte pause dans la frappe avant de refiltrer la liste."""
         if self._jeton_recherche is not None:
@@ -1038,9 +1082,14 @@ class EcranPrincipal(ctk.CTkFrame):
         self._sections = []  # [(lettre, case de l'en-tête, [(entrée, case de la carte), …]), …]
         cartes = []
         lettre_courante = None
-        for e in self.app.coffre.entrees:
+        entrees = self.app.coffre.entrees
+        # Favoris d'abord (section ★), puis les autres par ordre alphabétique.
+        for e in [e for e in entrees if e.get("favori")] + [e for e in entrees if not e.get("favori")]:
             initiale = e["site"][:1].upper()
-            lettre = initiale if initiale.isalpha() and initiale in IndexAlphabet.LETTRES else "#"
+            if e.get("favori"):
+                lettre = "★"
+            else:
+                lettre = initiale if initiale.isalpha() and initiale in IndexAlphabet.LETTRES else "#"
             if lettre != lettre_courante:
                 lettre_courante = lettre
                 self._sections.append((lettre, self._entete_section(lettre), []))
@@ -1049,6 +1098,7 @@ class EcranPrincipal(ctk.CTkFrame):
             carte = CarteIdentifiant(self, case, e, marge_depart=70 if anime else None)
             self._sections[-1][2].append((e, case))
             cartes.append(carte)
+        self._maj_filtre_categorie()
         self._afficher(self.recherche.get().strip().casefold(), anime=False)
 
         for page in self.pages:
@@ -1066,7 +1116,9 @@ class EcranPrincipal(ctk.CTkFrame):
         plan = []  # (case, visible) dans l'ordre de la liste
         nombre = 0
         for lettre, entete, cartes in self._sections:
-            visibles = [any(filtre in e.get(k, "").casefold() for k in ("site", "utilisateur", "email"))
+            visibles = [any(filtre in e.get(k, "").casefold()
+                            for k in ("site", "utilisateur", "email", "categorie"))
+                        and (self.categorie is None or e.get("categorie") == self.categorie)
                         for e, _case in cartes]
             plan.append((entete, any(visibles)))
             plan.extend((case, visible) for (_e, case), visible in zip(cartes, visibles))
@@ -1074,8 +1126,9 @@ class EcranPrincipal(ctk.CTkFrame):
                 entetes[lettre] = entete
             nombre += sum(visibles)
         total = len(self.app.coffre.entrees)
+        filtre_actif = filtre or self.categorie is not None
         texte_vide = None if nombre else (
-            t("Aucun résultat.") if filtre else
+            t("Aucun résultat.") if filtre_actif else
             t("Votre coffre est vide.\nCliquez sur « + Ajouter » pour enregistrer un premier compte."))
 
         def appliquer():
@@ -1100,12 +1153,12 @@ class EcranPrincipal(ctk.CTkFrame):
             if texte_vide is not None and self._vide is None:
                 self._vide = ctk.CTkFrame(self.liste, fg_color="transparent")
                 self._vide.pack(pady=70)
-                if not filtre:
+                if not filtre_actif:
                     LogoAnime(self._vide, FOND).pack()
                 ctk.CTkLabel(self._vide, text=texte_vide, font=police(14), text_color=TEXTE_DOUX,
                              justify="center").pack(pady=(12, 0))
             self._texte_vide = texte_vide
-            self.compteur.configure(text=f"{nombre} / {total}" if filtre else
+            self.compteur.configure(text=f"{nombre} / {total}" if filtre_actif else
                                     tn("{n} identifiant", "{n} identifiants", total))
             self.index.maj(set(entetes))
 
@@ -1127,8 +1180,8 @@ class EcranPrincipal(ctk.CTkFrame):
         case = self._case()
         ligne = ctk.CTkFrame(case, fg_color="transparent")
         ligne.pack(fill="x", padx=14, pady=(16, 4))
-        lab = ctk.CTkLabel(ligne, text=lettre, font=police(14, gras=True), text_color=TEXTE_DOUX,
-                           width=20, anchor="w")
+        lab = ctk.CTkLabel(ligne, text="★  " + t("Favoris") if lettre == "★" else lettre,
+                           font=police(14, gras=True), text_color=TEXTE_DOUX, width=20, anchor="w")
         lab.pack(side="left")
         definir(lab, "couleur", TEXTE_DOUX)
         ctk.CTkFrame(ligne, fg_color=BORDURE, height=1, corner_radius=0).pack(
@@ -1230,6 +1283,26 @@ class FenetreEntree(Dialogue):
         self.jauge.pack(fill="x", pady=(4, 0))
         self.mdp.bind("<KeyRelease>", lambda _e: self.jauge.maj(self.mdp.get()))
 
+        etiquette(t("Catégorie (facultatif)"))
+        ligne = ctk.CTkFrame(corps, fg_color="transparent")
+        ligne.pack(fill="x")
+        utilisees = ecran.app.coffre.categories()
+        self.categorie = ctk.CTkComboBox(
+            ligne, values=utilisees + [c for c in categories_proposees() if c not in utilisees],
+            height=42, corner_radius=9, fg_color=FOND, border_color=BORDURE, border_width=1,
+            button_color=CARTE, button_hover_color=CARTE_SURVOL, text_color=TEXTE,
+            font=police(13), dropdown_font=police(12), dropdown_fg_color=PANNEAU,
+            dropdown_hover_color=CARTE_SURVOL, dropdown_text_color=TEXTE)
+        self.categorie.set(entree.get("categorie", "") if entree else "")
+        self.categorie.pack(side="left", fill="x", expand=True)
+        self.favori = ctk.CTkCheckBox(ligne, text="★  " + t("Favori"), font=police(13),
+                                      text_color=TEXTE, fg_color=ACCENT,
+                                      hover_color=STYLES["principal"]["fond_survol"],
+                                      border_color=BORDURE_ECLAT, checkmark_color=ACCENT_TEXTE)
+        if entree and entree.get("favori"):
+            self.favori.select()
+        self.favori.pack(side="left", padx=(14, 0))
+
         etiquette(t("Notes (facultatif)"))
         self.notes = ctk.CTkTextbox(corps, width=520, height=60, fg_color=FOND, border_color=BORDURE,
                                     border_width=1, corner_radius=9, text_color=TEXTE, font=police(13))
@@ -1246,6 +1319,9 @@ class FenetreEntree(Dialogue):
         if entree:
             BoutonAnime(boutons, t("Supprimer"), self._supprimer, style="danger",
                         width=104).pack(side="left")
+            if entree.get("historique"):
+                BoutonAnime(boutons, t("Historique"), lambda: DialogueHistorique(self, entree),
+                            width=110).pack(side="left", padx=(8, 0))
             self.site.insert(0, entree["site"])
             self.utilisateur.insert(0, entree["utilisateur"])
             self.email.insert(0, entree.get("email", ""))
@@ -1302,7 +1378,8 @@ class FenetreEntree(Dialogue):
                                    text_color=DANGER)
             return
         champs = dict(site=site, utilisateur=self.utilisateur.get(), email=email, mot_de_passe=mdp,
-                      notes=self.notes.get("1.0", "end"))
+                      notes=self.notes.get("1.0", "end"), categorie=self.categorie.get(),
+                      favori=bool(self.favori.get()))
         coffre = self.ecran.app.coffre
         if self.entree:
             coffre.modifier(self.entree["id"], **champs)
@@ -1321,6 +1398,55 @@ class FenetreEntree(Dialogue):
         self.ecran.notifier(t("Identifiant supprimé"))
         self.ecran.rafraichir()
         self.destroy()
+
+
+class DialogueHistorique(Dialogue):
+    """Anciens mots de passe d'un compte, du plus récent au plus ancien."""
+
+    def __init__(self, parent, entree):
+        super().__init__(parent, t("Historique"))
+        app = parent.winfo_toplevel()
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=30, pady=26)
+        ctk.CTkLabel(corps, text=t("Anciens mots de passe de « {nom} »", nom=entree["site"]),
+                     font=police(17, gras=True), text_color=TEXTE, anchor="w").pack(fill="x")
+        ctk.CTkLabel(corps, text=t("Utile si le changement sur le site n'a pas abouti."),
+                     font=police(12), text_color=TEXTE_DOUX, anchor="w").pack(fill="x",
+                                                                            pady=(2, 12))
+        familles = set(tkinter.font.families())
+        mono = next((f for f in ("JetBrains Mono", "DejaVu Sans Mono") if f in familles),
+                    "TkFixedFont")
+        for ancien in entree["historique"]:
+            ligne = ctk.CTkFrame(corps, fg_color=CARTE, corner_radius=10)
+            ligne.pack(fill="x", pady=3)
+            try:
+                date = datetime.date.fromisoformat(ancien["remplace_le"]).strftime("%d/%m/%Y")
+            except ValueError:
+                date = ancien["remplace_le"]
+            ctk.CTkLabel(ligne, text=t("Remplacé le {date}", date=date), font=police(11),
+                         text_color=TEXTE_DOUX, width=130, anchor="w").pack(side="left",
+                                                                           padx=(14, 6), pady=8)
+            texte = ctk.CTkLabel(ligne, text="•" * 12, text_color=TEXTE, anchor="w", width=220,
+                                 font=ctk.CTkFont(family=mono, size=round(13 * ECHELLE_TEXTE)))
+            texte.pack(side="left", fill="x", expand=True)
+            mdp = ancien["mot_de_passe"]
+            BoutonAnime(ligne, t("Copier"), lambda m=mdp: self._copier(app, m), width=80, height=30,
+                        taille_police=12).pack(side="right", padx=(0, 8))
+            voir = BoutonAnime(ligne, t("Afficher"), None, width=84, height=30, taille_police=12)
+            voir.commande = lambda w=texte, m=mdp, b=voir: self._basculer(w, m, b)
+            voir.pack(side="right", padx=(0, 6))
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=SUCCES)
+        self.message.pack(pady=(6, 0))
+        BoutonAnime(corps, t("Fermer"), self.destroy, width=100).pack(anchor="e", pady=(4, 0))
+
+    def _basculer(self, libelle, mdp, bouton):
+        visible = libelle.cget("text") == mdp
+        libelle.configure(text="•" * 12 if visible else mdp)
+        bouton.changer_texte(t("Afficher") if visible else t("Masquer"))
+
+    def _copier(self, app, mdp):
+        app.copier(mdp)
+        self.message.configure(text="✓  " + mdp_copie())
 
 
 class ConfirmationSuppression(Dialogue):

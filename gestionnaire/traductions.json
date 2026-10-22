@@ -21,6 +21,94 @@
   "ja": "{n} か月",
   "ko": "{n}개월"
  },
+ "Réseaux sociaux": {
+  "en": "Social media",
+  "es": "Redes sociales",
+  "de": "Soziale Netzwerke",
+  "pt": "Redes sociais",
+  "it": "Social network",
+  "ru": "Соцсети",
+  "zh": "社交网络",
+  "ja": "SNS",
+  "ko": "소셜 미디어"
+ },
+ "E-mail": {
+  "en": "Email",
+  "es": "Correo",
+  "de": "E-Mail",
+  "pt": "E-mail",
+  "it": "E-mail",
+  "ru": "Почта",
+  "zh": "邮箱",
+  "ja": "メール",
+  "ko": "이메일"
+ },
+ "Banque": {
+  "en": "Banking",
+  "es": "Banco",
+  "de": "Bank",
+  "pt": "Banco",
+  "it": "Banca",
+  "ru": "Банк",
+  "zh": "银行",
+  "ja": "銀行",
+  "ko": "은행"
+ },
+ "Achats": {
+  "en": "Shopping",
+  "es": "Compras",
+  "de": "Einkaufen",
+  "pt": "Compras",
+  "it": "Acquisti",
+  "ru": "Покупки",
+  "zh": "购物",
+  "ja": "ショッピング",
+  "ko": "쇼핑"
+ },
+ "Jeux": {
+  "en": "Games",
+  "es": "Juegos",
+  "de": "Spiele",
+  "pt": "Jogos",
+  "it": "Giochi",
+  "ru": "Игры",
+  "zh": "游戏",
+  "ja": "ゲーム",
+  "ko": "게임"
+ },
+ "Divertissement": {
+  "en": "Entertainment",
+  "es": "Entretenimiento",
+  "de": "Unterhaltung",
+  "pt": "Entretenimento",
+  "it": "Intrattenimento",
+  "ru": "Развлечения",
+  "zh": "娱乐",
+  "ja": "エンタメ",
+  "ko": "엔터테인먼트"
+ },
+ "Travail": {
+  "en": "Work",
+  "es": "Trabajo",
+  "de": "Arbeit",
+  "pt": "Trabalho",
+  "it": "Lavoro",
+  "ru": "Работа",
+  "zh": "工作",
+  "ja": "仕事",
+  "ko": "업무"
+ },
+ "Études": {
+  "en": "School",
+  "es": "Estudios",
+  "de": "Studium",
+  "pt": "Estudos",
+  "it": "Studio",
+  "ru": "Учёба",
+  "zh": "学习",
+  "ja": "学校",
+  "ko": "학업"
+ },
  "{raison} · verrouillage {duree}": {
   "en": "{raison} · locking in {duree}",
   "es": "{raison} · bloqueo en {duree}",
@@ -296,6 +384,17 @@
   "ja": "表示",
   "ko": "보기"
  },
+ "Catégorie (facultatif)": {
+  "en": "Category (optional)",
+  "es": "Categoría (opcional)",
+  "de": "Kategorie (optional)",
+  "pt": "Categoria (opcional)",
+  "it": "Categoria (facoltativa)",
+  "ru": "Категория (необязательно)",
+  "zh": "类别（可选）",
+  "ja": "カテゴリ（任意）",
+  "ko": "카테고리 (선택)"
+ },
  "Notes (facultatif)": {
   "en": "Notes (optional)",
   "es": "Notas (opcional)",
@@ -317,6 +416,17 @@
   "zh": "账号已删除",
   "ja": "ログイン情報を削除しました",
   "ko": "로그인 정보 삭제됨"
+ },
+ "Historique": {
+  "en": "History",
+  "es": "Historial",
+  "de": "Verlauf",
+  "pt": "Histórico",
+  "it": "Cronologia",
+  "ru": "История",
+  "zh": "历史记录",
+  "ja": "履歴",
+  "ko": "기록"
  },
  "Confirmer": {
   "en": "Confirm",
@@ -1033,17 +1143,6 @@
   "ja": "パスワードが正しくありません。",
   "ko": "비밀번호가 틀렸습니다."
  },
- "E-mail": {
-  "en": "Email",
-  "es": "Correo",
-  "de": "E-Mail",
-  "pt": "E-mail",
-  "it": "E-mail",
-  "ru": "Почта",
-  "zh": "邮箱",
-  "ja": "メール",
-  "ko": "이메일"
- },
  "Utilisateur": {
   "en": "Username",
   "es": "Usuario",
@@ -1065,6 +1164,39 @@
   "zh": "搜索网站或账号…",
   "ja": "サイトやログイン情報を検索…",
   "ko": "사이트 또는 로그인 정보 검색…"
+ },
+ "Ajouté aux favoris": {
+  "en": "Added to favourites",
+  "es": "Añadido a favoritos",
+  "de": "Zu Favoriten hinzugefügt",
+  "pt": "Adicionado aos favoritos",
+  "it": "Aggiunto ai preferiti",
+  "ru": "Добавлено в избранное",
+  "zh": "已加入收藏",
+  "ja": "お気に入りに追加しました",
+  "ko": "즐겨찾기에 추가됨"
+ },
+ "Retiré des favoris": {
+  "en": "Removed from favourites",
+  "es": "Quitado de favoritos",
+  "de": "Aus Favoriten entfernt",
+  "pt": "Removido dos favoritos",
+  "it": "Rimosso dai preferiti",
+  "ru": "Удалено из избранного",
+  "zh": "已取消收藏",
+  "ja": "お気に入りから外しました",
+  "ko": "즐겨찾기에서 제거됨"
+ },
+ "Toutes les catégories": {
+  "en": "All categories",
+  "es": "Todas las categorías",
+  "de": "Alle Kategorien",
+  "pt": "Todas as categorias",
+  "it": "Tutte le categorie",
+  "ru": "Все категории",
+  "zh": "所有类别",
+  "ja": "すべてのカテゴリ",
+  "ko": "모든 카테고리"
  },
  "Aucun résultat.": {
   "en": "No results.",
@@ -1484,6 +1616,17 @@
   "ja": "コピー",
   "ko": "복사"
  },
+ "Favori": {
+  "en": "Favourite",
+  "es": "Favorito",
+  "de": "Favorit",
+  "pt": "Favorito",
+  "it": "Preferito",
+  "ru": "Избранное",
+  "zh": "收藏",
+  "ja": "お気に入り",
+  "ko": "즐겨찾기"
+ },
  "Enregistrer": {
   "en": "Save",
   "es": "Guardar",
@@ -1550,17 +1693,6 @@
   "ja": "メールアドレスが正しくないようです。",
   "ko": "이메일 주소가 올바르지 않은 것 같습니다."
  },
- "Supprimer": {
-  "en": "Delete",
-  "es": "Eliminar",
-  "de": "Löschen",
-  "pt": "Excluir",
-  "it": "Elimina",
-  "ru": "Удалить",
-  "zh": "删除",
-  "ja": "削除",
-  "ko": "삭제"
- },
  "Fermer": {
   "en": "Close",
   "es": "Cerrar",
@@ -1571,6 +1703,17 @@
   "zh": "关闭",
   "ja": "閉じる",
   "ko": "닫기"
+ },
+ "Supprimer": {
+  "en": "Delete",
+  "es": "Eliminar",
+  "de": "Löschen",
+  "pt": "Excluir",
+  "it": "Elimina",
+  "ru": "Удалить",
+  "zh": "删除",
+  "ja": "削除",
+  "ko": "삭제"
  },
  "Avant le dernier enregistrement": {
   "en": "Before the last save",
@@ -1759,6 +1902,17 @@
   "ja": "{n} 件",
   "ko": "{n}개"
  },
+ "Favoris": {
+  "en": "Favourites",
+  "es": "Favoritos",
+  "de": "Favoriten",
+  "pt": "Favoritos",
+  "it": "Preferiti",
+  "ru": "Избранное",
+  "zh": "收藏",
+  "ja": "お気に入り",
+  "ko": "즐겨찾기"
+ },
  "Les données sont chiffrées dès l'enregistrement.": {
   "en": "Data is encrypted as soon as it is saved.",
   "es": "Los datos se cifran al guardarlos.",
@@ -1769,6 +1923,28 @@
   "zh": "数据在保存时即被加密。",
   "ja": "データは保存した時点で暗号化されます。",
   "ko": "데이터는 저장하는 즉시 암호화됩니다."
+ },
+ "Anciens mots de passe de « {nom} »": {
+  "en": "Previous passwords for “{nom}”",
+  "es": "Contraseñas anteriores de «{nom}»",
+  "de": "Frühere Passwörter von „{nom}“",
+  "pt": "Senhas anteriores de “{nom}”",
+  "it": "Password precedenti di «{nom}»",
+  "ru": "Прежние пароли «{nom}»",
+  "zh": "“{nom}”的旧密码",
+  "ja": "「{nom}」の以前のパスワード",
+  "ko": "‘{nom}’의 이전 비밀번호"
+ },
+ "Utile si le changement sur le site n'a pas abouti.": {
+  "en": "Useful if the change on the website did not go through.",
+  "es": "Útil si el cambio en el sitio no se completó.",
+  "de": "Nützlich, falls die Änderung auf der Website nicht geklappt hat.",
+  "pt": "Útil se a alteração no site não deu certo.",
+  "it": "Utile se il cambio sul sito non è andato a buon fine.",
+  "ru": "Пригодится, если смена пароля на сайте не прошла.",
+  "zh": "如果网站上的修改没有成功，这会很有用。",
+  "ja": "サイトでの変更がうまくいかなかったときに役立ちます。",
+  "ko": "사이트에서 변경이 제대로 되지 않았을 때 유용합니다."
  },
  "Supprimer « {nom} » ?": {
   "en": "Delete “{nom}”?",
@@ -1978,6 +2154,17 @@
   "zh": "新账号",
   "ja": "新しいログイン情報",
   "ko": "새 로그인 정보"
+ },
+ "Remplacé le {date}": {
+  "en": "Replaced on {date}",
+  "es": "Sustituida el {date}",
+  "de": "Ersetzt am {date}",
+  "pt": "Substituída em {date}",
+  "it": "Sostituita il {date}",
+  "ru": "Заменён {date}",
+  "zh": "{date} 更换",
+  "ja": "{date} に変更",
+  "ko": "{date} 교체"
  },
  "Rien à importer : tout est déjà dans le coffre": {
   "en": "Nothing to import: everything is already in the vault",

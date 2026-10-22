@@ -29,6 +29,7 @@ ARGON2_MEMOIRE_KIO = 256 * 1024
 ARGON2_ITERATIONS = 4
 ARGON2_VOIES = 4
 LONGUEUR_MIN_MAITRE = 12
+HISTORIQUE_MAX = 10  # anciens mots de passe gardés par compte
 # Limites des paramètres Argon2id acceptés à la lecture d'un fichier : un fichier piégé
 # ne doit pas pouvoir réclamer des Gio de mémoire ou des heures de calcul.
 ARGON2_MEMOIRE_MAX_KIO = 1024 * 1024
@@ -275,6 +276,16 @@ def _verifier_entrees(entrees) -> list[dict]:
             e["id"] = secrets.token_hex(8)
         if not isinstance(e.get("change_le"), str):
             e.pop("change_le", None)  # date inconnue (compte créé avant le bilan de santé)
+        if not isinstance(e.get("favori"), bool):
+            e["favori"] = False
+        if not isinstance(e.get("categorie"), str):
+            e["categorie"] = ""
+        historique = e.get("historique")
+        if not isinstance(historique, list):
+            historique = []
+        e["historique"] = [h for h in historique if isinstance(h, dict)
+                           and isinstance(h.get("mot_de_passe"), str)
+                           and isinstance(h.get("remplace_le"), str)]
     return entrees
 
 
@@ -471,6 +482,9 @@ class Coffre:
                 "mot_de_passe": e["mot_de_passe"],
                 "notes": e.get("notes", "").strip(),
                 "change_le": aujourdhui,
+                "categorie": e.get("categorie", "").strip(),
+                "favori": bool(e.get("favori", False)),
+                "historique": [],
             })
             ajoutees += 1
         if ajoutees:
@@ -522,7 +536,7 @@ class Coffre:
         self.entrees.sort(key=lambda e: (e["site"].casefold(), e["utilisateur"].casefold()))
 
     def ajouter(self, site: str, utilisateur: str, mot_de_passe: str, notes: str = "",
-                email: str = "") -> None:
+                email: str = "", categorie: str = "", favori: bool = False) -> None:
         self.entrees.append({
             "id": secrets.token_hex(8),
             "site": site.strip(),
@@ -531,6 +545,9 @@ class Coffre:
             "mot_de_passe": mot_de_passe,
             "notes": notes.strip(),
             "change_le": datetime.date.today().isoformat(),
+            "categorie": categorie.strip(),
+            "favori": favori,
+            "historique": [],
         })
         self.sauvegarder()
 
@@ -538,10 +555,27 @@ class Coffre:
         for e in self.entrees:
             if e["id"] == id_entree:
                 if "mot_de_passe" in champs and champs["mot_de_passe"] != e["mot_de_passe"]:
+                    # L'ancien mot de passe est gardé : utile si le changement sur le site
+                    # n'a pas abouti.
+                    ancien = {"mot_de_passe": e["mot_de_passe"],
+                              "remplace_le": datetime.date.today().isoformat()}
+                    e["historique"] = ([ancien] + e.get("historique", []))[:HISTORIQUE_MAX]
                     e["change_le"] = datetime.date.today().isoformat()
-                e.update({k: v.strip() if k != "mot_de_passe" else v for k, v in champs.items()})
+                e.update({k: v.strip() if isinstance(v, str) and k != "mot_de_passe" else v
+                          for k, v in champs.items()})
                 break
         self.sauvegarder()
+
+    def basculer_favori(self, id_entree: str) -> None:
+        for e in self.entrees:
+            if e["id"] == id_entree:
+                e["favori"] = not e.get("favori", False)
+        self.sauvegarder()
+
+    def categories(self) -> list[str]:
+        """Catégories utilisées, sans doublon, par ordre alphabétique."""
+        return sorted({e["categorie"] for e in self.entrees if e.get("categorie")},
+                      key=str.casefold)
 
     def supprimer(self, id_entree: str) -> None:
         self.entrees = [e for e in self.entrees if e["id"] != id_entree]

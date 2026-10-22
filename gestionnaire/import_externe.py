@@ -12,19 +12,20 @@ from gestionnaire.langue import t
 FORMATS = [
     ("Bitwarden", {"login_uri", "login_password"},
      dict(site=("name",), url=("login_uri",), utilisateur=("login_username",),
-          mot_de_passe=("login_password",), notes=("notes",))),
+          mot_de_passe=("login_password",), notes=("notes",), categorie=("folder",),
+          favori=("favorite",))),
     ("KeePass", {"title", "group", "password"},
      dict(site=("title",), url=("url",), utilisateur=("username",), mot_de_passe=("password",),
-          notes=("notes",))),
+          notes=("notes",), categorie=("group",))),
     ("KeePass", {"account", "login name"},
      dict(site=("account",), url=("web site",), utilisateur=("login name",),
           mot_de_passe=("password",), notes=("comments",))),
     ("1Password", {"title", "otpauth"},
      dict(site=("title",), url=("url",), utilisateur=("username",), mot_de_passe=("password",),
-          notes=("notes",))),
+          notes=("notes",), categorie=("tags",), favori=("favorite",))),
     ("LastPass", {"grouping", "extra"},
      dict(site=("name",), url=("url",), utilisateur=("username",), mot_de_passe=("password",),
-          notes=("extra",))),
+          notes=("extra",), categorie=("grouping",), favori=("fav",))),
     ("Firefox", {"httprealm", "formactionorigin"},
      dict(site=(), url=("url",), utilisateur=("username",), mot_de_passe=("password",), notes=())),
     ("Chrome", {"name", "url", "username", "password"},
@@ -40,6 +41,11 @@ FORMATS = [
           utilisateur=("utilisateur", "identifiant", "nom d'utilisateur"),
           mot_de_passe=("mot de passe",), notes=("notes", "note"))),
 ]
+
+
+# Groupe racine de KeePass : ce n'est pas une vraie catégorie.
+GROUPES_RACINE = {"root", "racine", "passwords", "database"}
+VRAI = {"1", "true", "yes", "oui"}
 
 
 class FormatInconnu(ValueError):
@@ -95,6 +101,10 @@ def lire(chemin: Path) -> tuple[str, list[dict]]:
         notes = valeur(ligne, champs["notes"])
         if url and url not in notes and nom_depuis_url(url) != site:
             notes = (url + "\n" + notes).strip()
+        categorie = valeur(ligne, champs.get("categorie", ())).split("/")[-1].strip()
+        if categorie.casefold() in GROUPES_RACINE:
+            categorie = ""
+        favori = valeur(ligne, champs.get("favori", ())).casefold() in VRAI
         entrees.append(dict(site=site, utilisateur=utilisateur, email=email, mot_de_passe=mdp,
-                            notes=notes))
+                            notes=notes, categorie=categorie, favori=favori))
     return source, entrees
