@@ -271,6 +271,8 @@ def _verifier_entrees(entrees) -> list[dict]:
             raise ValueError("champ email ou notes invalide")
         if not isinstance(e.get("id"), str) or not e["id"]:
             e["id"] = secrets.token_hex(8)
+        if not isinstance(e.get("change_le"), str):
+            e.pop("change_le", None)  # date inconnue (compte créé avant le bilan de santé)
     return entrees
 
 
@@ -493,12 +495,15 @@ class Coffre:
             "email": email.strip(),
             "mot_de_passe": mot_de_passe,
             "notes": notes.strip(),
+            "change_le": datetime.date.today().isoformat(),
         })
         self.sauvegarder()
 
     def modifier(self, id_entree: str, **champs) -> None:
         for e in self.entrees:
             if e["id"] == id_entree:
+                if "mot_de_passe" in champs and champs["mot_de_passe"] != e["mot_de_passe"]:
+                    e["change_le"] = datetime.date.today().isoformat()
                 e.update({k: v.strip() if k != "mot_de_passe" else v for k, v in champs.items()})
                 break
         self.sauvegarder()
