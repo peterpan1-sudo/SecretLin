@@ -112,6 +112,18 @@ the username and Enter again the password.
 3. Firefox ESR: `about:config` → `xpinstall.signatures.required` to `false`, then
    “Install Add-on From File” with the file prepared by SecretLin.
 
+**⚠️ Important: turn off the browser's own password manager.** Otherwise its suggestions
+(old usernames, “Manage Passwords”) show up on top of the SecretLin menu and hide it.
+
+- **Firefox**: type `about:config` in the address bar, accept the warning, then set
+  `signon.rememberSignons` and `browser.formfill.enable` to `false` (double-click).
+- **Chrome, Chromium, Brave, Edge**: Settings → Autofill and passwords → turn off
+  “Offer to save passwords” and “Addresses and more”.
+
+<img src="docs/captures/tuto-firefox-en.gif" alt="Tutorial: turning off Firefox's suggestions" width="660">
+
+The same video tutorial is in the app: ⚙ Settings → Browsers.
+
 On a login page, click the field: that site's accounts appear below it. For safety, an
 account is only offered on a site with the exact same name (not on “amaz.com” for Amazon),
 and the extension only talks to SecretLin, on your computer.

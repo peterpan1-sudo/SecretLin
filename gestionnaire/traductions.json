@@ -1088,6 +1088,50 @@
   "ja": "Firefox ESR（Kali 付属）：about:config を開き、xpinstall.signatures.required を false にします。次に about:addons を開き、歯車 → 「ファイルからアドオンをインストール」で下に用意したファイルを選んでください。",
   "ko": "Firefox ESR(Kali 기본): about:config를 열고 xpinstall.signatures.required를 false로 설정하세요. 그런 다음 about:addons를 열고 톱니바퀴 → ‘파일에서 부가 기능 설치’를 눌러 아래에서 준비한 파일을 선택하세요."
  },
+ "Important : couper les suggestions du navigateur": {
+  "en": "Important: turn off the browser's suggestions",
+  "es": "Importante: desactivar las sugerencias del navegador",
+  "de": "Wichtig: Vorschläge des Browsers abschalten",
+  "pt": "Importante: desativar as sugestões do navegador",
+  "it": "Importante: disattiva i suggerimenti del browser",
+  "ru": "Важно: отключите подсказки браузера",
+  "zh": "重要：关闭浏览器自带的建议",
+  "ja": "重要：ブラウザーの候補表示をオフに",
+  "ko": "중요: 브라우저 자체 제안 끄기"
+ },
+ "Le gestionnaire de mots de passe intégré au navigateur affiche ses propres suggestions par-dessus celles de SecretLin. Désactivez-le :": {
+  "en": "The browser's built-in password manager shows its own suggestions on top of SecretLin's. Turn it off:",
+  "es": "El gestor de contraseñas integrado del navegador muestra sus propias sugerencias encima de las de SecretLin. Desactívalo:",
+  "de": "Der eingebaute Passwort-Manager des Browsers zeigt seine Vorschläge über denen von SecretLin an. Schalte ihn ab:",
+  "pt": "O gerenciador de senhas integrado do navegador mostra as próprias sugestões por cima das do SecretLin. Desative-o:",
+  "it": "Il gestore di password integrato nel browser mostra i suoi suggerimenti sopra quelli di SecretLin. Disattivalo:",
+  "ru": "Встроенный менеджер паролей браузера показывает свои подсказки поверх подсказок SecretLin. Отключите его:",
+  "zh": "浏览器自带的密码管理器会把自己的建议显示在 SecretLin 的上面。请关闭它：",
+  "ja": "ブラウザー内蔵のパスワードマネージャーが、SecretLin の候補の上に自分の候補を表示します。オフにしてください：",
+  "ko": "브라우저에 내장된 비밀번호 관리자가 SecretLin 제안 위에 자체 제안을 표시합니다. 끄세요:"
+ },
+ "Firefox : about:config → signon.rememberSignons et browser.formfill.enable à false (double-clic).": {
+  "en": "Firefox: about:config → signon.rememberSignons and browser.formfill.enable to false (double-click).",
+  "es": "Firefox: about:config → signon.rememberSignons y browser.formfill.enable en false (doble clic).",
+  "de": "Firefox: about:config → signon.rememberSignons und browser.formfill.enable auf false (Doppelklick).",
+  "pt": "Firefox: about:config → signon.rememberSignons e browser.formfill.enable como false (clique duplo).",
+  "it": "Firefox: about:config → signon.rememberSignons e browser.formfill.enable su false (doppio clic).",
+  "ru": "Firefox: about:config → signon.rememberSignons и browser.formfill.enable в false (двойной щелчок).",
+  "zh": "Firefox：about:config → 把 signon.rememberSignons 和 browser.formfill.enable 设为 false（双击）。",
+  "ja": "Firefox：about:config → signon.rememberSignons と browser.formfill.enable を false に（ダブルクリック）。",
+  "ko": "Firefox: about:config → signon.rememberSignons와 browser.formfill.enable을 false로 (더블클릭)."
+ },
+ "Chrome, Chromium, Brave, Edge : Paramètres → Saisie automatique et mots de passe → désactivez « Proposer d'enregistrer les mots de passe » et « Adresses et autres ».": {
+  "en": "Chrome, Chromium, Brave, Edge: Settings → Autofill and passwords → turn off “Offer to save passwords” and “Addresses and more”.",
+  "es": "Chrome, Chromium, Brave, Edge: Configuración → Autocompletar y contraseñas → desactiva «Ofrecer guardar contraseñas» y «Direcciones y más».",
+  "de": "Chrome, Chromium, Brave, Edge: Einstellungen → Autofill und Passwörter → „Speichern von Passwörtern anbieten“ und „Adressen und mehr“ abschalten.",
+  "pt": "Chrome, Chromium, Brave, Edge: Configurações → Preenchimento automático e senhas → desative “Oferecer para salvar senhas” e “Endereços e mais”.",
+  "it": "Chrome, Chromium, Brave, Edge: Impostazioni → Compilazione automatica e password → disattiva «Proponi di salvare le password» e «Indirizzi e altro».",
+  "ru": "Chrome, Chromium, Brave, Edge: Настройки → Автозаполнение и пароли → отключите «Предлагать сохранение паролей» и «Адреса и другие данные».",
+  "zh": "Chrome、Chromium、Brave、Edge：设置 → 自动填充和密码 → 关闭“提示保存密码”和“地址和其他信息”。",
+  "ja": "Chrome、Chromium、Brave、Edge：設定 → 自動入力とパスワード → 「パスワードの保存を確認する」と「住所やその他の情報」をオフ。",
+  "ko": "Chrome, Chromium, Brave, Edge: 설정 → 자동 완성 및 비밀번호 → ‘비밀번호 저장 제안’과 ‘주소 및 기타 정보’ 끄기."
+ },
  "3. Utiliser": {
   "en": "3. Use it",
   "es": "3. Usar",
@@ -1120,6 +1164,28 @@
   "zh": "路径已复制",
   "ja": "パスをコピーしました",
   "ko": "경로 복사됨"
+ },
+ "Tutoriel vidéo": {
+  "en": "Video tutorial",
+  "es": "Tutorial en vídeo",
+  "de": "Video-Anleitung",
+  "pt": "Tutorial em vídeo",
+  "it": "Tutorial video",
+  "ru": "Видеоинструкция",
+  "zh": "视频教程",
+  "ja": "動画チュートリアル",
+  "ko": "동영상 튜토리얼"
+ },
+ "Pause": {
+  "en": "Pause",
+  "es": "Pausa",
+  "de": "Pause",
+  "pt": "Pausar",
+  "it": "Pausa",
+  "ru": "Пауза",
+  "zh": "暂停",
+  "ja": "一時停止",
+  "ko": "일시 정지"
  },
  "Langue": {
   "en": "Language",
@@ -1670,6 +1736,28 @@
   "zh": "{n} 个字符",
   "ja": "{n} 文字",
   "ko": "{n}자"
+ },
+ "Préparation de la vidéo…": {
+  "en": "Preparing the video…",
+  "es": "Preparando el vídeo…",
+  "de": "Video wird vorbereitet…",
+  "pt": "Preparando o vídeo…",
+  "it": "Preparazione del video…",
+  "ru": "Подготовка видео…",
+  "zh": "正在准备视频…",
+  "ja": "動画を準備中…",
+  "ko": "동영상 준비 중…"
+ },
+ "Lecture": {
+  "en": "Play",
+  "es": "Reproducir",
+  "de": "Abspielen",
+  "pt": "Reproduzir",
+  "it": "Riproduci",
+  "ru": "Воспроизвести",
+  "zh": "播放",
+  "ja": "再生",
+  "ko": "재생"
  },
  "Mots de passe piratés": {
   "en": "Breached passwords",
@@ -2254,6 +2342,17 @@
   "ja": "ホームフォルダーにブラウザーが見つかりません。一度ブラウザーを開いてから、もう一度お試しください。",
   "ko": "홈 폴더에서 브라우저를 찾지 못했습니다. 브라우저를 한 번 연 뒤 다시 시도하세요."
  },
+ "Recommencer": {
+  "en": "Restart",
+  "es": "Reiniciar",
+  "de": "Neu starten",
+  "pt": "Recomeçar",
+  "it": "Ricomincia",
+  "ru": "Сначала",
+  "zh": "重新播放",
+  "ja": "最初から",
+  "ko": "처음부터"
+ },
  "Vu {n} fois dans des fuites": {
   "en": "Seen {n} times in breaches",
   "es": "Visto {n} veces en filtraciones",
@@ -2759,6 +2858,17 @@
   "zh": "无",
   "ja": "なし",
   "ko": "없음"
+ },
+ "Voir le tutoriel vidéo (Firefox)": {
+  "en": "Watch the video tutorial (Firefox)",
+  "es": "Ver el tutorial en vídeo (Firefox)",
+  "de": "Video-Anleitung ansehen (Firefox)",
+  "pt": "Ver o tutorial em vídeo (Firefox)",
+  "it": "Guarda il tutorial video (Firefox)",
+  "ru": "Смотреть видеоинструкцию (Firefox)",
+  "zh": "观看视频教程（Firefox）",
+  "ja": "動画チュートリアルを見る（Firefox）",
+  "ko": "동영상 튜토리얼 보기 (Firefox)"
  },
  "Connexion installée pour : {liste}": {
   "en": "Connection installed for: {liste}",
@@ -3342,6 +3452,171 @@
   "zh": "错误次数过多：SecretLin 已锁定。",
   "ja": "エラーが多すぎるため、SecretLin はロックされました。",
   "ko": "오류가 너무 많아 SecretLin이 잠겼습니다."
+ },
+ "Connexion": {
+  "en": "Sign in",
+  "es": "Iniciar sesión",
+  "de": "Anmelden",
+  "pt": "Entrar",
+  "it": "Accedi",
+  "ru": "Вход",
+  "zh": "登录",
+  "ja": "ログイン",
+  "ko": "로그인"
+ },
+ "Se connecter": {
+  "en": "Sign in",
+  "es": "Entrar",
+  "de": "Anmelden",
+  "pt": "Entrar",
+  "it": "Accedi",
+  "ru": "Войти",
+  "zh": "登录",
+  "ja": "ログイン",
+  "ko": "로그인"
+ },
+ "Gérer les mots de passe": {
+  "en": "Manage Passwords",
+  "es": "Administrar contraseñas",
+  "de": "Passwörter verwalten",
+  "pt": "Gerenciar senhas",
+  "it": "Gestisci password",
+  "ru": "Управление паролями",
+  "zh": "管理密码",
+  "ja": "パスワードを管理",
+  "ko": "비밀번호 관리"
+ },
+ "Faites preuve de prudence": {
+  "en": "Proceed with Caution",
+  "es": "Procede con precaución",
+  "de": "Vorsicht",
+  "pt": "Prossiga com cuidado",
+  "it": "Procedi con cautela",
+  "ru": "Будьте осторожны",
+  "zh": "请谨慎操作",
+  "ja": "注意して進んでください",
+  "ko": "주의해서 진행하세요"
+ },
+ "Modifier les préférences avancées peut affecter Firefox.": {
+  "en": "Changing advanced preferences can affect Firefox.",
+  "es": "Cambiar las preferencias avanzadas puede afectar a Firefox.",
+  "de": "Erweiterte Einstellungen zu ändern kann Firefox beeinträchtigen.",
+  "pt": "Alterar preferências avançadas pode afetar o Firefox.",
+  "it": "Modificare le preferenze avanzate può influire su Firefox.",
+  "ru": "Изменение расширенных настроек может повлиять на Firefox.",
+  "zh": "更改高级首选项可能会影响 Firefox。",
+  "ja": "詳細設定を変更すると Firefox に影響することがあります。",
+  "ko": "고급 설정을 바꾸면 Firefox에 영향을 줄 수 있습니다."
+ },
+ "Accepter le risque et poursuivre": {
+  "en": "Accept the Risk and Continue",
+  "es": "Aceptar el riesgo y continuar",
+  "de": "Risiko akzeptieren und fortfahren",
+  "pt": "Aceitar o risco e continuar",
+  "it": "Accetta il rischio e continua",
+  "ru": "Принять риск и продолжить",
+  "zh": "接受风险并继续",
+  "ja": "危険性を承知の上で使用する",
+  "ko": "위험을 감수하고 계속"
+ },
+ "Booléen": {
+  "en": "Boolean",
+  "es": "Booleano",
+  "de": "Boolean",
+  "pt": "Booleano",
+  "it": "Booleano",
+  "ru": "Логическое",
+  "zh": "布尔",
+  "ja": "真偽値",
+  "ko": "불리언"
+ },
+ "Rechercher un nom de préférence": {
+  "en": "Search preference name",
+  "es": "Buscar nombre de preferencia",
+  "de": "Einstellungsnamen suchen",
+  "pt": "Pesquisar nome de preferência",
+  "it": "Cerca nome preferenza",
+  "ru": "Поиск по имени параметра",
+  "zh": "搜索首选项名称",
+  "ja": "設定名を検索",
+  "ko": "설정 이름 검색"
+ },
+ "Le problème : les suggestions de Firefox cachent celles de SecretLin.": {
+  "en": "The problem: Firefox's suggestions hide SecretLin's.",
+  "es": "El problema: las sugerencias de Firefox tapan las de SecretLin.",
+  "de": "Das Problem: Die Vorschläge von Firefox verdecken die von SecretLin.",
+  "pt": "O problema: as sugestões do Firefox escondem as do SecretLin.",
+  "it": "Il problema: i suggerimenti di Firefox coprono quelli di SecretLin.",
+  "ru": "Проблема: подсказки Firefox закрывают подсказки SecretLin.",
+  "zh": "问题：Firefox 的建议挡住了 SecretLin 的建议。",
+  "ja": "問題：Firefox の候補が SecretLin の候補を隠しています。",
+  "ko": "문제: Firefox 제안이 SecretLin 제안을 가립니다."
+ },
+ "Tapez about:config dans la barre d'adresse.": {
+  "en": "Type about:config in the address bar.",
+  "es": "Escribe about:config en la barra de direcciones.",
+  "de": "Gib about:config in die Adressleiste ein.",
+  "pt": "Digite about:config na barra de endereços.",
+  "it": "Digita about:config nella barra degli indirizzi.",
+  "ru": "Введите about:config в адресной строке.",
+  "zh": "在地址栏输入 about:config。",
+  "ja": "アドレスバーに about:config と入力します。",
+  "ko": "주소창에 about:config를 입력하세요."
+ },
+ "Acceptez l'avertissement.": {
+  "en": "Accept the warning.",
+  "es": "Acepta la advertencia.",
+  "de": "Bestätige die Warnung.",
+  "pt": "Aceite o aviso.",
+  "it": "Accetta l'avviso.",
+  "ru": "Примите предупреждение.",
+  "zh": "接受警告。",
+  "ja": "警告を承諾します。",
+  "ko": "경고를 수락하세요."
+ },
+ "Cherchez signon.rememberSignons et double-cliquez dessus : il passe à false.": {
+  "en": "Search for signon.rememberSignons and double-click it: it becomes false.",
+  "es": "Busca signon.rememberSignons y haz doble clic: pasa a false.",
+  "de": "Suche signon.rememberSignons und doppelklicke darauf: Es wird false.",
+  "pt": "Pesquise signon.rememberSignons e clique duas vezes: ele vira false.",
+  "it": "Cerca signon.rememberSignons e fai doppio clic: diventa false.",
+  "ru": "Найдите signon.rememberSignons и дважды щёлкните: значение станет false.",
+  "zh": "搜索 signon.rememberSignons 并双击：它会变成 false。",
+  "ja": "signon.rememberSignons を検索してダブルクリック：false になります。",
+  "ko": "signon.rememberSignons를 검색해 더블클릭하면 false가 됩니다."
+ },
+ "Puis browser.formfill.enable : double-clic, il passe à false.": {
+  "en": "Then browser.formfill.enable: double-click, it becomes false.",
+  "es": "Luego browser.formfill.enable: doble clic, pasa a false.",
+  "de": "Dann browser.formfill.enable: Doppelklick, es wird false.",
+  "pt": "Depois browser.formfill.enable: clique duplo, vira false.",
+  "it": "Poi browser.formfill.enable: doppio clic, diventa false.",
+  "ru": "Затем browser.formfill.enable: двойной щелчок, значение станет false.",
+  "zh": "然后是 browser.formfill.enable：双击，变成 false。",
+  "ja": "次に browser.formfill.enable：ダブルクリックで false になります。",
+  "ko": "그다음 browser.formfill.enable: 더블클릭하면 false가 됩니다."
+ },
+ "Rechargez la page de connexion : seul SecretLin s'affiche.": {
+  "en": "Reload the login page: only SecretLin shows up.",
+  "es": "Recarga la página de inicio de sesión: solo aparece SecretLin.",
+  "de": "Lade die Anmeldeseite neu: Nur SecretLin erscheint.",
+  "pt": "Recarregue a página de login: só o SecretLin aparece.",
+  "it": "Ricarica la pagina di accesso: compare solo SecretLin.",
+  "ru": "Перезагрузите страницу входа: показывается только SecretLin.",
+  "zh": "重新加载登录页面：只显示 SecretLin。",
+  "ja": "ログインページを再読み込み：SecretLin だけが表示されます。",
+  "ko": "로그인 페이지를 새로 고치면 SecretLin만 표시됩니다."
+ },
+ "Un clic sur votre compte, et c'est rempli !": {
+  "en": "One click on your account, and it's filled in!",
+  "es": "Un clic en tu cuenta, ¡y listo!",
+  "de": "Ein Klick auf dein Konto, und alles ist ausgefüllt!",
+  "pt": "Um clique na sua conta, e pronto!",
+  "it": "Un clic sul tuo account ed è compilato!",
+  "ru": "Один щелчок по записи — и всё заполнено!",
+  "zh": "点击你的账号，即可自动填好！",
+  "ja": "アカウントをクリックするだけで入力完了！",
+  "ko": "계정을 한 번 클릭하면 바로 채워집니다!"
  },
  "Graphite": {
   "en": "Graphite",

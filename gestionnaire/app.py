@@ -2330,6 +2330,21 @@ class PageNavigateurs(Page):
                     width=240).pack(anchor="w")
         self.ligne_xpi.pack(fill="x", pady=(6, 0))
 
+        etape4 = self._section(defilement, t("Important : couper les suggestions du navigateur"),
+                               t("Le gestionnaire de mots de passe intégré au navigateur affiche "
+                                 "ses propres suggestions par-dessus celles de SecretLin. "
+                                 "Désactivez-le :"))
+        for ligne in (t("Firefox : about:config → signon.rememberSignons et "
+                        "browser.formfill.enable à false (double-clic)."),
+                      t("Chrome, Chromium, Brave, Edge : Paramètres → Saisie automatique et "
+                        "mots de passe → désactivez « Proposer d'enregistrer les mots de passe » "
+                        "et « Adresses et autres ».")):
+            ctk.CTkLabel(etape4, text="•  " + ligne, font=police(12), text_color=TEXTE,
+                         anchor="w", justify="left", wraplength=620).pack(fill="x", pady=(0, 4))
+        BoutonAnime(etape4, "▶  " + t("Voir le tutoriel vidéo (Firefox)"),
+                    lambda: DialogueTuto(self.app), style="principal",
+                    width=280).pack(anchor="w", pady=(8, 0))
+
         self._section(defilement, t("3. Utiliser"),
                       t("Sur une page de connexion, cliquez dans le champ identifiant ou mot de "
                         "passe : vos comptes SecretLin pour ce site s'affichent dessous. "
@@ -2379,6 +2394,74 @@ class PageNavigateurs(Page):
         for enfant in self.ligne_xpi.winfo_children():
             enfant.destroy()
         self._chemin(self.ligne_xpi, xpi)
+
+
+class DialogueTuto(Dialogue):
+    """Lecteur du tutoriel vidéo (images dessinées par tuto_video)."""
+
+    def __init__(self, app):
+        super().__init__(app, t("Tutoriel vidéo"))
+        self.film, self.indice, self.lecture, self._jeton = [], 0, True, None
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(padx=18, pady=16)
+        self.ecran_video = tkinter.Label(corps, bg="#0b0b0d", width=880, height=540, bd=0,
+                                         text=t("Préparation de la vidéo…"), fg="#8e8e98",
+                                         font=police(14))
+        self.ecran_video.pack()
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(fill="x", pady=(10, 0))
+        self.bouton_lecture = BoutonAnime(boutons, t("Pause"), self._basculer, width=110)
+        self.bouton_lecture.pack(side="left")
+        BoutonAnime(boutons, t("Recommencer"), self._recommencer, width=130).pack(
+            side="left", padx=(8, 0))
+        BoutonAnime(boutons, t("Fermer"), self.destroy, width=100).pack(side="right")
+        threading.Thread(target=self._preparer, daemon=True).start()
+
+    def _preparer(self):
+        from gestionnaire import tuto_video
+        film = tuto_video.images()
+        self.after(0, lambda: self._pret(film))
+
+    def _pret(self, film):
+        self.film = film
+        self.ecran_video.configure(width=0, height=0, text="")
+        self._image_suivante()
+
+    def _image_suivante(self):
+        self._jeton = None
+        if not self.lecture or not self.film:
+            return
+        image, duree = self.film[self.indice]
+        self._photo = ImageTk.PhotoImage(image)
+        self.ecran_video.configure(image=self._photo)
+        if self.indice + 1 < len(self.film):
+            self.indice += 1
+            self._jeton = self.after(duree, self._image_suivante)
+        else:
+            self.lecture = False
+            self.bouton_lecture.changer_texte(t("Lecture"))
+
+    def _basculer(self):
+        if self.lecture:
+            self.lecture = False
+            if self._jeton:
+                self.after_cancel(self._jeton)
+                self._jeton = None
+            self.bouton_lecture.changer_texte(t("Lecture"))
+        else:
+            if self.indice + 1 >= len(self.film):
+                self.indice = 0
+            self.lecture = True
+            self.bouton_lecture.changer_texte(t("Pause"))
+            self._image_suivante()
+
+    def _recommencer(self):
+        if self._jeton:
+            self.after_cancel(self._jeton)
+            self._jeton = None
+        self.indice, self.lecture = 0, True
+        self.bouton_lecture.changer_texte(t("Pause"))
+        self._image_suivante()
 
 
 class PageLangue(Page):

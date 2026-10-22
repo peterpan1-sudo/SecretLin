@@ -112,6 +112,19 @@ puis Entrée copie l'identifiant et encore Entrée le mot de passe.
 3. Firefox ESR : `about:config` → `xpinstall.signatures.required` à `false`, puis
    « Installer un module depuis un fichier » avec le fichier préparé par SecretLin.
 
+**⚠️ Important : désactivez le gestionnaire de mots de passe du navigateur.** Sinon, ses
+propres suggestions (anciens identifiants, « Gérer les mots de passe ») s'affichent
+par-dessus le menu de SecretLin et le cachent.
+
+- **Firefox** : tapez `about:config` dans la barre d'adresse, acceptez l'avertissement, puis
+  passez `signon.rememberSignons` et `browser.formfill.enable` à `false` (double-clic).
+- **Chrome, Chromium, Brave, Edge** : Paramètres → Saisie automatique et mots de passe →
+  désactivez « Proposer d'enregistrer les mots de passe » et « Adresses et autres ».
+
+<img src="docs/captures/tuto-firefox-fr.gif" alt="Tutoriel : désactiver les suggestions de Firefox" width="660">
+
+Le même tutoriel vidéo se trouve dans l'application : ⚙ Réglages → Navigateurs.
+
 Sur une page de connexion, cliquez dans le champ : les comptes de ce site s'affichent dessous.
 Par sécurité, un compte n'est proposé que sur un site au nom identique (pas sur
 « amaz.com » pour Amazon), et l'extension ne parle qu'à SecretLin, sur votre ordinateur.
