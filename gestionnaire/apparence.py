@@ -1,5 +1,5 @@
-"""Réglages de SecretLin : apparence (thème de couleurs, couleur d'accent, police, taille
-du texte, animations) et options du générateur de mots de passe. Les choix sont rangés
+"""Réglages de SecretLin : langue, apparence (thème de couleurs, couleur d'accent, police,
+taille du texte, animations) et options du générateur de mots de passe. Les choix sont rangés
 dans « reglages.json » à côté du coffre : rien de secret dedans, il n'est donc pas
 chiffré."""
 
@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+from gestionnaire import langue
 from gestionnaire.effets import melanger
 
 DANGER = "#e5484d"
@@ -68,10 +69,12 @@ POLICES_SECOURS = ("Inter", "Segoe UI", "Roboto", "Cantarell", "DejaVu Sans")
 LONGUEUR_MIN, LONGUEUR_MAX = 8, 64
 OPTIONS_GENERATEUR = ("majuscules", "chiffres", "symboles", "sans_ambigus")
 
-DEFAUT = {"theme": "Graphite", "accent": "Neutre", "police": "Inter", "taille": "Normale",
-          "animations": True,
+DEFAUT = {"langue": langue.AUTO, "theme": "Graphite", "accent": "Neutre", "police": "Inter",
+          "taille": "Normale", "animations": True,
           "longueur": 20, "majuscules": True, "chiffres": True, "symboles": True,
           "sans_ambigus": False}
+# Réglages remis à zéro par « Revenir à l'apparence d'origine ».
+CLES_APPARENCE = ("theme", "accent", "police", "taille", "animations")
 
 
 def _luminance(couleur: str) -> float:
@@ -142,7 +145,7 @@ def charger(chemin: Path) -> dict:
         return reglages
     if not isinstance(lus, dict):
         return reglages
-    for cle, permis in (("theme", THEMES), ("accent", ACCENTS), ("police", POLICES),
+    for cle, permis in (("langue", (langue.AUTO, *langue.LANGUES)), ("theme", THEMES), ("accent", ACCENTS), ("police", POLICES),
                          ("taille", TAILLES)):
         if lus.get(cle) in permis:
             reglages[cle] = lus[cle]

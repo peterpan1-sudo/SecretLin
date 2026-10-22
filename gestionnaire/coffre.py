@@ -21,6 +21,8 @@ from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
 
+from gestionnaire.langue import t
+
 VERSION = 1
 # Paramètres Argon2id : 256 Mio de mémoire par essai, ce qui rend la force brute très coûteuse.
 ARGON2_MEMOIRE_KIO = 256 * 1024
@@ -132,15 +134,15 @@ def verifier_force(mot_de_passe: str) -> list[str]:
     """Renvoie la liste des problèmes du mot de passe maître (vide si correct)."""
     problemes = []
     if len(mot_de_passe) < LONGUEUR_MIN_MAITRE:
-        problemes.append(f"au moins {LONGUEUR_MIN_MAITRE} caractères")
+        problemes.append(t("au moins {n} caractères", n=LONGUEUR_MIN_MAITRE))
     if not any(c.islower() for c in mot_de_passe):
-        problemes.append("une minuscule")
+        problemes.append(t("une minuscule"))
     if not any(c.isupper() for c in mot_de_passe):
-        problemes.append("une majuscule")
+        problemes.append(t("une majuscule"))
     if not any(c.isdigit() for c in mot_de_passe):
-        problemes.append("un chiffre")
+        problemes.append(t("un chiffre"))
     if not any(not c.isalnum() for c in mot_de_passe):
-        problemes.append("un caractère spécial")
+        problemes.append(t("un caractère spécial"))
     return problemes
 
 
@@ -378,7 +380,7 @@ class Coffre:
 
     def sauvegarder(self) -> None:
         if self._cle is None or self._entete is None:
-            raise RuntimeError("Coffre verrouillé")
+            raise RuntimeError(t("Coffre verrouillé"))
         self._trier()
         contenu = _chiffrer(self._cle, self._entete, self.entrees)
         # Avant d'écraser le coffre, on garde sa version précédente (toujours chiffrée) :
@@ -409,10 +411,11 @@ class Coffre:
         """Écrit toutes les entrées dans « destination », chiffrées avec un mot de passe
         propre à l'export (sel et clé neufs, indépendants du mot de passe maître)."""
         if self._cle is None:
-            raise RuntimeError("Coffre verrouillé")
+            raise RuntimeError(t("Coffre verrouillé"))
         problemes = verifier_force(mot_de_passe_export)
         if problemes:
-            raise ValueError("Mot de passe d'export trop faible : il manque " + ", ".join(problemes))
+            raise ValueError(t("Mot de passe d'export trop faible : il manque {liste}",
+                               liste=", ".join(problemes)))
         entete, sel = _nouvel_entete()
         cle = _deriver_cle(mot_de_passe_export, sel, entete["memoire"], entete["iterations"],
                            entete["voies"])
@@ -423,7 +426,7 @@ class Coffre:
         format coffre). Les entrées déjà présentes à l'identique sont ignorées.
         Renvoie le nombre d'entrées ajoutées."""
         if self._cle is None:
-            raise RuntimeError("Coffre verrouillé")
+            raise RuntimeError(t("Coffre verrouillé"))
         _, _, importees = _dechiffrer(Path(source), mot_de_passe_export)
         connues = {_empreinte(e) for e in self.entrees}
         ids = {e["id"] for e in self.entrees}
@@ -445,7 +448,7 @@ class Coffre:
     def verifier_mot_de_passe(self, mot_de_passe: str) -> bool:
         """Vrai si « mot_de_passe » est le mot de passe maître du coffre ouvert."""
         if self._cle is None:
-            raise RuntimeError("Coffre verrouillé")
+            raise RuntimeError(t("Coffre verrouillé"))
         e = self._entete
         cle = _deriver_cle(mot_de_passe, _deb64(e["sel"]), e["memoire"], e["iterations"], e["voies"])
         return hmac.compare_digest(cle, self._cle)
@@ -454,7 +457,7 @@ class Coffre:
         """Rechiffre le coffre avec « nouveau ». Si « actuel » est donné, il doit être
         le mot de passe maître en place, sinon MotDePasseIncorrect est levée."""
         if self._cle is None:
-            raise RuntimeError("Coffre verrouillé")
+            raise RuntimeError(t("Coffre verrouillé"))
         if actuel is not None and not self.verifier_mot_de_passe(actuel):
             raise MotDePasseIncorrect()
         # Les entrées restent intactes : on régénère la clé puis on sauvegarde

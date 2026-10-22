@@ -17,7 +17,7 @@ endif
 override_dh_auto_install:
 	install -D -m 644 lancer.py $(APP)/lancer.py
 	install -d $(APP)/gestionnaire
-	install -m 644 gestionnaire/*.py gestionnaire/logos.zip $(APP)/gestionnaire/
+	install -m 644 gestionnaire/*.py gestionnaire/logos.zip gestionnaire/traductions.json $(APP)/gestionnaire/
 	install -D -m 755 debian/secretlin.sh debian/secretlin/usr/bin/secretlin
 	install -D -m 644 debian/secretlin.desktop debian/secretlin/usr/share/applications/secretlin.desktop
 	install -D -m 644 debian/secretlin-256.png debian/secretlin/usr/share/icons/hicolor/256x256/apps/secretlin.png
