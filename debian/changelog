@@ -1,3 +1,19 @@
+secretlin (1.4.0) kali-dev; urgency=medium
+
+  * Import depuis d'autres gestionnaires : fichiers CSV de Firefox, Chrome,
+    Bitwarden, KeePass, 1Password et LastPass (catégories, favoris et clés 2FA
+    compris).
+  * Codes de double authentification (TOTP, RFC 6238) affichés sur les comptes.
+  * Favoris en tête de liste, catégories avec filtre, historique des 10
+    derniers mots de passe de chaque compte.
+  * Bilan de santé : mots de passe apparus dans des fuites de données (Have I
+    Been Pwned), en option ; seul le début de l'empreinte est envoyé.
+  * Fichier-clé en option : le coffre ne s'ouvre qu'avec le mot de passe maître
+    et un fichier (deuxième facteur).
+  * Mot de passe maître refusé s'il apparaît dans une fuite connue.
+
+ -- peterpan1 <peterpan1sudo@proton.me>  Thu, 22 Oct 2026 20:33:22 +0200
+
 secretlin (1.3.0) kali-dev; urgency=medium
 
   * Bilan de santé : note globale et liste des mots de passe faibles,
