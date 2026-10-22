@@ -15,7 +15,8 @@ from PIL import Image, ImageDraw, ImageTk
 
 from gestionnaire import apparence, effets, fuites, import_externe, langue, sante, totp
 from gestionnaire.coffre import (
-    AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, MotDePasseIncorrect, attente_apres, evaluer_force,
+    AMBIGUS, SYMBOLES, Coffre, CoffreCorrompu, FichierCleRequis, MotDePasseIncorrect, attente_apres,
+    evaluer_force,
     generer_mot_de_passe, verifier_force,
 )
 from gestionnaire.logo import dessiner as dessiner_logo
@@ -537,6 +538,30 @@ class Application(ctk.CTk):
 
 # --- Écrans de connexion ----------------------------------------------------
 
+def case_fuites(parent):
+    """Case « vérifier que le mot de passe maître n'a pas fuité », cochée par défaut."""
+    case = ctk.CTkCheckBox(parent, text=t("Vérifier qu'il n'a pas fuité (Have I Been Pwned)"),
+                           font=police(12), text_color=TEXTE_DOUX, fg_color=ACCENT,
+                           hover_color=STYLES["principal"]["fond_survol"],
+                           border_color=BORDURE_ECLAT, checkmark_color=ACCENT_TEXTE)
+    case.select()
+    return case
+
+
+def probleme_fuite(mdp) -> str | None:
+    """Message d'erreur si le mot de passe a fuité ou ne peut pas être vérifié, sinon None.
+    Seul le début de son empreinte part sur Internet (voir fuites.py)."""
+    try:
+        n = fuites.verifier([mdp])[mdp]
+    except OSError:
+        return t("Vérification des fuites impossible (pas d'Internet ?). Décochez la case "
+                 "pour continuer sans vérifier.")
+    if n:
+        return t("Ce mot de passe apparaît dans des fuites de données (vu {n} fois) : "
+                 "choisissez-en un autre.", n=f"{n:,}".replace(",", " "))
+    return None
+
+
 class EcranCentre(ctk.CTkFrame):
     """Carte centrée utilisée pour la création et le déverrouillage."""
 
@@ -594,6 +619,8 @@ class EcranCreation(EcranCentre):
         self.confirmation = champ(self.interieur, t("Confirmer le mot de passe"), masque=True,
                                   width=340)
         self.confirmation.pack(pady=(0, 4))
+        self.case_fuites = case_fuites(self.interieur)
+        self.case_fuites.pack(anchor="w", pady=(6, 0))
         self.message.pack(pady=(6, 6))
         self.bouton = BoutonAnime(self.interieur, t("Créer le coffre"), self._creer, style="principal",
                                   width=340, height=44)
@@ -614,12 +641,22 @@ class EcranCreation(EcranCentre):
             return
         self.bouton.activer(False, t("Création…"))
         self.afficher_message("")
+        verifier = bool(self.case_fuites.get())
 
         def travail():
+            probleme = probleme_fuite(mdp) if verifier else None
+            if probleme:
+                self.app.after(0, lambda: self._refuse(probleme))
+                return
             self.app.coffre.creer(mdp)
             self.app.after(0, lambda: self.logo.ouvrir(self.app.afficher_principal))
 
         threading.Thread(target=travail, daemon=True).start()
+
+    def _refuse(self, probleme):
+        self.bouton.activer(True, t("Créer le coffre"))
+        self.afficher_message(probleme)
+        self.secouer()
 
 
 class EcranDeverrouillage(EcranCentre):
@@ -627,6 +664,16 @@ class EcranDeverrouillage(EcranCentre):
         super().__init__(app, t("Coffre verrouillé"), t("Entrez votre mot de passe maître."))
         self.mdp = champ(self.interieur, t("Mot de passe maître"), masque=True, width=340)
         self.mdp.pack(pady=(0, 4))
+        self.avec_fichier = app.coffre.besoin_fichier_cle()
+        if self.avec_fichier:
+            ligne = ctk.CTkFrame(self.interieur, fg_color="transparent")
+            ligne.pack(fill="x", pady=(6, 0))
+            self.nom_fichier = ctk.CTkLabel(ligne, text="", font=police(12), anchor="w",
+                                            width=230, text_color=TEXTE_DOUX)
+            self.nom_fichier.pack(side="left", fill="x", expand=True)
+            BoutonAnime(ligne, t("Fichier-clé…"), self._choisir_fichier, width=106, height=34,
+                        taille_police=12).pack(side="right")
+            self._afficher_fichier()
         self.message.pack(pady=(6, 6))
         self.bouton = BoutonAnime(self.interieur, t("Déverrouiller"), self._ouvrir, style="principal",
                                   width=340, height=44)
@@ -634,6 +681,20 @@ class EcranDeverrouillage(EcranCentre):
         self.mdp.bind("<Return>", lambda _e: self._ouvrir())
         self.mdp.focus_set()
         self._decompte()
+
+    def _afficher_fichier(self):
+        chemin = self.app.reglages["fichier_cle"]
+        if chemin:
+            self.nom_fichier.configure(text="🔑  " + Path(chemin).name, text_color=TEXTE)
+        else:
+            self.nom_fichier.configure(text=t("Aucun fichier-clé choisi"), text_color=TEXTE_DOUX)
+
+    def _choisir_fichier(self):
+        chemin = filedialog.askopenfilename(parent=self, title=t("Choisir le fichier-clé"))
+        if chemin:
+            self.app.enregistrer_reglages(fichier_cle=chemin)
+            self._afficher_fichier()
+            self.afficher_message("")
 
     def _decompte(self):
         """Pendant l'attente, le bouton reste grisé et le temps restant défile chaque seconde."""
@@ -657,14 +718,28 @@ class EcranDeverrouillage(EcranCentre):
         if not mdp:
             self.secouer()
             return
+        contenu_cle = None
+        if self.avec_fichier:
+            chemin = self.app.reglages["fichier_cle"]
+            if not chemin:
+                self.afficher_message(t("Ce coffre s'ouvre avec un fichier-clé : choisissez-le."))
+                self.secouer()
+                return
+            try:
+                contenu_cle = self.app.coffre.lire_fichier_cle(Path(chemin))
+            except (OSError, ValueError):
+                self.afficher_message(t("Fichier-clé introuvable ou illisible. Branchez la clé "
+                                        "USB ou choisissez le fichier."))
+                self.secouer()
+                return
         self.bouton.activer(False, t("Vérification…"))
         self.afficher_message("")
 
         def travail():
             try:
-                self.app.coffre.ouvrir(mdp)
+                self.app.coffre.ouvrir(mdp, contenu_cle)
                 resultat = None
-            except MotDePasseIncorrect:
+            except (MotDePasseIncorrect, FichierCleRequis):
                 resultat = "incorrect"
             except CoffreCorrompu:
                 resultat = "corrompu"
@@ -695,7 +770,8 @@ class EcranDeverrouillage(EcranCentre):
             self._decompte()
         else:
             self.app.noter_echecs(0)
-            self.afficher_message(t("Mot de passe incorrect."))
+            self.afficher_message(t("Mot de passe ou fichier-clé incorrect.") if self.avec_fichier
+                                  else t("Mot de passe incorrect."))
 
 
 # --- Écran principal --------------------------------------------------------
@@ -1863,8 +1939,13 @@ class PageSecurite(Page):
     def __init__(self, ecran: EcranPrincipal):
         super().__init__(ecran, t("Sécurité"), t("Tout ce qui protège l'accès à votre coffre."),
                          retour=t("Réglages"))
-        self.section = SectionMotDePasse(self, ecran)
+        defilement = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                            scrollbar_button_color=BORDURE,
+                                            scrollbar_button_hover_color=BORDURE_ECLAT)
+        defilement.pack(fill="both", expand=True)
+        self.section = SectionMotDePasse(defilement, ecran)
         self.section.pack(fill="x", pady=4)
+        SectionFichierCle(defilement, ecran).pack(fill="x", pady=4)
 
     def affichee(self):
         self.after(80, self.section.actuel.focus_set)
@@ -2298,6 +2379,8 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.confirmation = champ(corps, t("Confirmer le nouveau mot de passe"), masque=True,
                                   width=340)
         self.confirmation.pack()
+        self.case_fuites = case_fuites(corps)
+        self.case_fuites.pack(anchor="w", pady=(8, 0))
         self.confirmation.bind("<Return>", lambda _e: self._valider())
         self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
                                     wraplength=340)
@@ -2324,11 +2407,13 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.bouton.activer(False, t("Patientez…"))
         self.message.configure(text="")
         app = self.ecran.app
+        verifier = bool(self.case_fuites.get())
 
         def fond():
             try:
-                app.coffre.changer_mot_de_passe(nouveau, actuel=actuel)
-                erreur = None
+                erreur = probleme_fuite(nouveau) if verifier else None
+                if erreur is None:
+                    app.coffre.changer_mot_de_passe(nouveau, actuel=actuel)
             except MotDePasseIncorrect:
                 erreur = t("Mot de passe actuel incorrect.")
             except (OSError, RuntimeError) as e:
@@ -2355,6 +2440,127 @@ class SectionMotDePasse(ctk.CTkFrame):
         self.confirmation.delete(0, "end")
         self.jauge.maj("")
         self.ecran.notifier(t("Mot de passe maître changé"))
+
+class SectionFichierCle(ctk.CTkFrame):
+    """Fichier-clé : un deuxième facteur pour ouvrir le coffre, en plus du mot de passe."""
+
+    def __init__(self, parent, ecran: EcranPrincipal):
+        super().__init__(parent, fg_color=CARTE, corner_radius=12, border_width=1,
+                         border_color=BORDURE)
+        self.ecran = ecran
+        app = ecran.app
+        self.actif = app.coffre.besoin_fichier_cle()
+        corps = ctk.CTkFrame(self, fg_color="transparent")
+        corps.pack(anchor="w", padx=20, pady=18)
+        ctk.CTkLabel(corps, text=t("Fichier-clé (deuxième facteur)"), font=police(15, gras=True),
+                     text_color=TEXTE, anchor="w").pack(fill="x")
+        if self.actif:
+            nom = Path(app.reglages["fichier_cle"]).name or "?"
+            texte = t("Activé : le coffre s'ouvre avec le mot de passe maître et le fichier "
+                      "« {nom} ».", nom=nom)
+        else:
+            texte = t("En plus du mot de passe maître, le coffre ne s'ouvrira qu'avec ce fichier, "
+                      "par exemple rangé sur une clé USB.")
+        ctk.CTkLabel(corps, text=texte, font=police(12), text_color=TEXTE_DOUX, anchor="w",
+                     justify="left", wraplength=420).pack(fill="x", pady=(4, 4))
+        ctk.CTkLabel(corps, text=t("⚠  Si vous perdez ce fichier, le coffre ne pourra plus jamais "
+                                   "être ouvert : gardez-en une copie en lieu sûr."),
+                     font=police(12), text_color="#f0883e", anchor="w", justify="left",
+                     wraplength=420).pack(fill="x", pady=(0, 12))
+        self.actuel = champ(corps, t("Mot de passe maître actuel"), masque=True, width=340)
+        self.actuel.pack(anchor="w")
+        self.message = ctk.CTkLabel(corps, text="", font=police(12), text_color=DANGER,
+                                    wraplength=420)
+        self.message.pack(pady=(6, 0))
+        boutons = ctk.CTkFrame(corps, fg_color="transparent")
+        boutons.pack(anchor="w", pady=(4, 0))
+        self.boutons = []
+        if self.actif:
+            self.boutons.append(BoutonAnime(boutons, t("Retirer le fichier-clé"), self._retirer,
+                                            style="danger", width=180))
+        else:
+            self.boutons.append(BoutonAnime(boutons, t("Créer un fichier-clé…"), self._creer,
+                                            style="principal", width=180))
+            self.boutons.append(BoutonAnime(boutons, t("Utiliser un fichier existant…"),
+                                            self._existant, width=200))
+        for b in self.boutons:
+            b.pack(side="left", padx=(0, 8))
+
+    def _mot_de_passe(self):
+        actuel = self.actuel.get()
+        if not actuel:
+            self.message.configure(text=t("Entrez votre mot de passe actuel."))
+        return actuel
+
+    def _creer(self):
+        if not (actuel := self._mot_de_passe()):
+            return
+        chemin = filedialog.asksaveasfilename(parent=self, title=t("Enregistrer le fichier-clé"),
+                                              initialfile="secretlin.cle")
+        if chemin:
+            self._lancer(actuel, chemin, nouveau=True)
+
+    def _existant(self):
+        if not (actuel := self._mot_de_passe()):
+            return
+        chemin = filedialog.askopenfilename(parent=self, title=t("Choisir le fichier-clé"))
+        if chemin:
+            self._lancer(actuel, chemin, nouveau=False)
+
+    def _retirer(self):
+        if actuel := self._mot_de_passe():
+            self._lancer(actuel, "", nouveau=False)
+
+    def _lancer(self, actuel, chemin, nouveau):
+        """Vérifie le mot de passe puis active (chemin donné) ou retire le fichier-clé, en
+        arrière-plan : Argon2id prend du temps."""
+        app = self.ecran.app
+        for b in self.boutons:
+            b.activer(False)
+        self.message.configure(text=t("Patientez…"), text_color=TEXTE_DOUX)
+
+        def fond():
+            try:
+                if not app.coffre.verifier_mot_de_passe(actuel):
+                    raise MotDePasseIncorrect()
+                if not chemin:
+                    app.coffre.retirer_fichier_cle(actuel)
+                else:
+                    contenu = (app.coffre.creer_fichier_cle(Path(chemin)) if nouveau
+                               else app.coffre.lire_fichier_cle(Path(chemin)))
+                    app.coffre.activer_fichier_cle(contenu, actuel)
+                erreur = None
+            except MotDePasseIncorrect:
+                erreur = t("Mot de passe actuel incorrect.")
+            except (OSError, RuntimeError, ValueError) as e:
+                erreur = t("Opération impossible : {erreur}", erreur=e)
+            app.after(0, lambda: self._resultat(erreur, chemin))
+
+        threading.Thread(target=fond, daemon=True).start()
+
+    def _resultat(self, erreur, chemin):
+        app = self.ecran.app
+        if app.ecran is not self.ecran:
+            app.coffre.verrouiller()
+            return
+        if not self.winfo_exists():
+            return
+        if erreur:
+            for b in self.boutons:
+                b.activer(True)
+            self.actuel.delete(0, "end")
+            self.message.configure(text=erreur, text_color=DANGER)
+            return
+        app.enregistrer_reglages(fichier_cle=chemin)
+        # La page préparée d'avance montrerait l'ancien état.
+        ancienne = self.ecran._pages_pretes.pop(PageSecurite, None)
+        if ancienne is not None:
+            ancienne.destroy()
+        self.ecran.notifier(t("Fichier-clé activé") if chemin else t("Fichier-clé retiré"))
+        # La page est redessinée pour montrer le nouvel état.
+        self.ecran.page_precedente()
+        self.ecran.ouvrir_page(PageSecurite)
+
 
 def main():
     Application().mainloop()

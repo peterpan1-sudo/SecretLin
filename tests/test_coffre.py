@@ -486,3 +486,66 @@ def test_anciens_comptes_sans_les_nouveaux_champs():
                                          "favori": "oui", "historique": [{"x": 1}, 3]}])
     assert (entrees[0]["favori"], entrees[0]["categorie"], entrees[0]["historique"]) == \
         (False, "", [])
+
+
+def test_fichier_cle(tmp_path):
+    mdp = "Maitre-Tres-Solide-42!"
+    c = Coffre(tmp_path / "coffre.vault")
+    c.creer(mdp)
+    c.ajouter("Steam", "joueur", "secret")
+    c.sauvegarder()  # une copie .bak existe
+    cle = Coffre.creer_fichier_cle(tmp_path / "secretlin.cle")
+    assert len(cle) == 64 and Coffre.lire_fichier_cle(tmp_path / "secretlin.cle") == cle
+    with pytest.raises(MotDePasseIncorrect):
+        c.activer_fichier_cle(cle, "mauvais")
+    c.activer_fichier_cle(cle, mdp)
+    assert c.besoin_fichier_cle()
+    c.verrouiller()
+    assert c.besoin_fichier_cle()
+    with pytest.raises(module.FichierCleRequis):
+        c.ouvrir(mdp)
+    with pytest.raises(MotDePasseIncorrect):
+        c.ouvrir(mdp, b"un autre fichier")
+    with pytest.raises(MotDePasseIncorrect):
+        c.ouvrir("mauvais", cle)
+    c.ouvrir(mdp, cle)
+    assert c.entrees[0]["site"] == "Steam"
+    assert c.verifier_mot_de_passe(mdp)
+    # Les copies suivent : la .bak demande aussi le fichier-clé.
+    with pytest.raises(module.FichierCleRequis):
+        module._dechiffrer(c.chemin_sauvegarde, mdp)
+    c.restaurer_sauvegarde(mdp)
+    # Changer le mot de passe garde le fichier-clé.
+    c.changer_mot_de_passe("Nouveau-Maitre-Solide-7!", actuel=mdp)
+    c.verrouiller()
+    c.ouvrir("Nouveau-Maitre-Solide-7!", cle)
+    c.retirer_fichier_cle("Nouveau-Maitre-Solide-7!")
+    c.verrouiller()
+    assert not c.besoin_fichier_cle()
+    c.ouvrir("Nouveau-Maitre-Solide-7!")
+    module._dechiffrer(c.chemin_sauvegarde, "Nouveau-Maitre-Solide-7!")
+
+
+def test_indication_de_fichier_cle_protegee(tmp_path):
+    """Retirer « fichier_cle » de l'en-tête ne permet pas d'ouvrir sans le fichier."""
+    mdp = "Maitre-Tres-Solide-42!"
+    c = Coffre(tmp_path / "coffre.vault")
+    c.creer(mdp)
+    c.activer_fichier_cle(b"contenu du fichier", mdp)
+    contenu = json.loads(c.chemin.read_text(encoding="utf-8"))
+    del contenu["entete"]["fichier_cle"]
+    c.chemin.write_text(json.dumps(contenu), encoding="utf-8")
+    c.verrouiller()
+    with pytest.raises(MotDePasseIncorrect):
+        c.ouvrir(mdp)
+
+
+def test_fichier_cle_vide_ou_trop_gros(tmp_path):
+    (tmp_path / "vide").write_bytes(b"")
+    with pytest.raises(ValueError):
+        Coffre.lire_fichier_cle(tmp_path / "vide")
+    gros = tmp_path / "gros"
+    with open(gros, "wb") as f:
+        f.truncate(module.FICHIER_CLE_MAX_OCTETS + 1)
+    with pytest.raises(ValueError):
+        Coffre.lire_fichier_cle(gros)

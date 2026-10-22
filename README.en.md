@@ -104,7 +104,12 @@ Your vault and settings are kept.
 
 - The vault is encrypted with **AES-256-GCM**. The key is derived from the master password
   with **Argon2id**, which is designed to make guessing attacks very slow.
-- The master password is **never stored** anywhere.
+- The master password is **never stored** anywhere. It must be at least 12 characters long
+  (lowercase, uppercase, digit, special character), and SecretLin checks that it does not
+  appear in a known data breach (the box can be unticked).
+- Optional **key file** (⚙ Settings → Security): the vault then only opens with the master
+  password **and** a file, for example on a USB stick. It is a second factor: a stolen
+  password is no longer enough.
 - Any change to the vault file (by another program, for example) is **detected**.
 - After 3 wrong attempts you must wait 1 min, then 3, 5, 10, 15, 30 min and 1 h.
   The wait continues even if SecretLin is closed and reopened.
@@ -143,6 +148,10 @@ turn it on, uses the Internet, and it never sends your passwords.
 **How do I switch from Bitwarden (or Firefox, Chrome…) to SecretLin?**
 Export your passwords to CSV from the other manager, then in SecretLin:
 Backup → From another manager.
+
+**How can I protect my vault even more?**
+Turn on the key file: ⚙ Settings → Security → Create a key file, and keep it on a USB
+stick. Keep a copy of it: without this file, the vault can no longer be opened.
 
 **How do I change my master password?**
 ⚙ Settings → Security. The vault and its automatic copies are re-encrypted.

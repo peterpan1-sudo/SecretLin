@@ -104,7 +104,12 @@ Votre coffre et vos réglages sont conservés.
 
 - Le coffre est chiffré en **AES-256-GCM**. La clé est dérivée du mot de passe maître avec
   **Argon2id**, conçu pour rendre très lentes les attaques par essais successifs.
-- Le mot de passe maître **n'est jamais enregistré**, nulle part.
+- Le mot de passe maître **n'est jamais enregistré**, nulle part. Il doit faire au moins
+  12 caractères (minuscule, majuscule, chiffre, caractère spécial), et SecretLin vérifie
+  qu'il n'apparaît pas dans une fuite de données connue (case décochable).
+- **Fichier-clé** en option (⚙ Réglages → Sécurité) : le coffre ne s'ouvre alors qu'avec
+  le mot de passe maître **et** un fichier, par exemple sur une clé USB. C'est un deuxième
+  facteur : un mot de passe volé ne suffit plus.
 - Toute modification du fichier du coffre (par un autre programme, par exemple) est **détectée**.
 - Après 3 mauvais essais, il faut attendre 1 min, puis 3, 5, 10, 15, 30 min et 1 h.
   L'attente continue même si l'on ferme et relance SecretLin.
@@ -144,6 +149,10 @@ fuites, si vous l'activez, utilise Internet, sans jamais envoyer vos mots de pas
 **Comment passer de Bitwarden (ou Firefox, Chrome…) à SecretLin ?**
 Exportez vos mots de passe en CSV depuis l'autre gestionnaire, puis dans SecretLin :
 Sauvegarde → Depuis un autre gestionnaire.
+
+**Comment protéger encore plus mon coffre ?**
+Activez le fichier-clé : ⚙ Réglages → Sécurité → Créer un fichier-clé, et rangez-le sur
+une clé USB. Gardez-en une copie : sans ce fichier, le coffre ne peut plus être ouvert.
 
 **Comment changer mon mot de passe maître ?**
 ⚙ Réglages → Sécurité. Le coffre et ses copies automatiques sont rechiffrés.
