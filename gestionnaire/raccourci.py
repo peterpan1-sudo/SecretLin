@@ -17,11 +17,13 @@ CHEMIN_GNOME = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings
 
 
 def commande() -> str:
-    """Commande lancée par le raccourci : le programme installé, sinon le code source."""
-    if shutil.which("secretlin"):
+    """Commande lancée par le raccourci : celle de la version de SecretLin qui l'installe
+    (le programme installé, ou le code source lancé depuis son dossier). Une autre version,
+    plus ancienne, ne connaîtrait peut-être pas le remplissage rapide."""
+    racine = Path(__file__).resolve().parent.parent
+    if racine == Path("/usr/share/secretlin") and shutil.which("secretlin"):
         return "secretlin --remplissage"
-    lanceur = Path(__file__).resolve().parent.parent / "lancer.py"
-    return f'"{sys.executable}" "{lanceur}" --remplissage'
+    return f'"{sys.executable}" "{racine / "lancer.py"}" --remplissage'
 
 
 def bureau() -> str:
@@ -31,6 +33,12 @@ def bureau() -> str:
     if "XFCE" in nom:
         return "xfce"
     return ""
+
+
+def _gvariant(texte: str) -> str:
+    """Texte écrit comme gsettings l'attend (sinon des guillemets dans la commande, utiles
+    pour un dossier avec des espaces, sont refusés)."""
+    return "'" + texte.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 
 def _executer(arguments) -> str:
@@ -51,7 +59,7 @@ def installer(executer=_executer) -> bool:
             schema = f"{SCHEMA_GNOME}.custom-keybinding:{CHEMIN_GNOME}"
             for cle, valeur in (("name", NOM), ("command", commande()),
                                 ("binding", TOUCHES_GNOME)):
-                executer(["gsettings", "set", schema, cle, valeur])
+                executer(["gsettings", "set", schema, cle, _gvariant(valeur)])
             return True
         if bureau() == "xfce":
             executer(["xfconf-query", "-c", "xfce4-keyboard-shortcuts", "-p",

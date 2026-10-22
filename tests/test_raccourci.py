@@ -13,7 +13,8 @@ def test_gnome(monkeypatch):
     assert raccourci.installer(executer)
     liste = appels[1][-1]
     assert "custom0" in liste and raccourci.CHEMIN_GNOME in liste
-    assert any(a[-2:] == ["binding", raccourci.TOUCHES_GNOME] for a in appels)
+    assert any(a[-2:] == ["binding", "'<Control><Alt>p'"] for a in appels)
+    assert raccourci._gvariant("a 'b' \\c") == "'a \\'b\\' \\\\c'"
     assert any(a[-2] == "command" and "--remplissage" in a[-1] for a in appels)
 
 
