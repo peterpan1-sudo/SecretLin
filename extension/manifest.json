@@ -11,15 +11,26 @@
     "48": "icones/secretlin-48.png",
     "128": "icones/secretlin-128.png"
   },
-  "permissions": ["nativeMessaging", "storage", "activeTab"],
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "activeTab"
+  ],
   "background": {
     "service_worker": "background.js",
-    "scripts": ["background.js"]
+    "scripts": [
+      "background.js"
+    ]
   },
   "content_scripts": [
     {
-      "matches": ["https://*/*", "http://*/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -34,7 +45,12 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "secretlin@peterpan1-sudo.github.io",
-      "strict_min_version": "128.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   }
 }
