@@ -1,0 +1,44 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "Remplit vos identifiants depuis SecretLin, le gestionnaire de mots de passe chiffré."
+  },
+  "verrouille": {
+    "message": "SecretLin est verrouillé : ouvrez-le avec votre mot de passe maître."
+  },
+  "ouvrir": {
+    "message": "Ouvrir SecretLin"
+  },
+  "codePin": {
+    "message": "Code PIN pour « $1 »"
+  },
+  "codeFaux": {
+    "message": "Code faux : encore $1 essai(s)."
+  },
+  "tropErreurs": {
+    "message": "Trop d'erreurs : SecretLin s'est verrouillé."
+  },
+  "pasLance": {
+    "message": "SecretLin n'est pas ouvert, ou la connexion avec le navigateur n'est pas installée (SecretLin → Réglages → Navigateurs)."
+  },
+  "aucun": {
+    "message": "Aucun compte SecretLin pour ce site."
+  },
+  "pourCeSite": {
+    "message": "Comptes de ce site"
+  },
+  "pageSansConnexion": {
+    "message": "Cette page n'est pas un site web."
+  },
+  "rechercher": {
+    "message": "Rechercher un compte"
+  },
+  "autreSite": {
+    "message": "« $1 » n'est pas associé à ce site. Le remplir quand même ? Vérifiez l'adresse : un faux site peut imiter le vrai."
+  },
+  "aucunAide": {
+    "message": "Cherchez-le avec le bouton SecretLin de la barre du navigateur, ou ajoutez-le dans SecretLin."
+  }
+}

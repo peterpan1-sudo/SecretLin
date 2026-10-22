@@ -24,6 +24,7 @@ password. Nothing is sent over the Internet.
 - [Features](#-features)
 - [Installation](#-installation)
 - [Getting started](#-getting-started)
+- [Browser extension and quick fill](#-browser-extension-and-quick-fill)
 - [Screenshots](#-screenshots)
 - [Security](#-security)
 - [Backups](#-backups)
@@ -42,6 +43,8 @@ password. Nothing is sent over the Internet.
 | 🔑 **2FA codes** | Six-digit two-factor authentication codes, like Google Authenticator. |
 | ⭐ **Favourites and categories** | Favourite accounts at the top of the list, categories (Games, Banking…) and a filter. |
 | 🕘 **History** | The last 10 passwords of each account can still be viewed. |
+| 🌐 **Browser extension** | Firefox, Chrome, Chromium, Brave, Edge, Vivaldi, Opera: your accounts offered under login fields. |
+| ⚡ **Quick fill** | `Ctrl+Alt+P` anywhere (even in an app like Discord): search, PIN, copy. |
 | 📦 **Import** | From Firefox, Chrome, Bitwarden, KeePass, 1Password or LastPass (CSV file). |
 | 🔎 **Search and A–Z index** | Find an account in a few keystrokes. Logos for well-known sites (Discord, Netflix, Steam…). |
 | ⏱️ **Auto-lock** | After 5 min without moving the mouse over the window, or 2 min with the mouse outside it. |
@@ -89,6 +92,41 @@ Your vault and settings are kept.
 5. The **⚙** gear opens the settings: security, generator, appearance and language.
 
 **Keyboard shortcuts:** `Ctrl+N` add · `Ctrl+F` search · `Ctrl+L` lock.
+
+## 🌐 Browser extension and quick fill
+
+**PIN.** In ⚙ Settings → Security, choose a 4-digit code. As long as SecretLin was unlocked
+with the master password (less than 8 hours ago) and has not been quit, this code is enough
+to copy or fill a login. Three wrong codes and the master password is required again. With
+a code, the window's close button keeps SecretLin in the background; “Quit SecretLin”
+really closes it.
+
+**Quick fill.** ⚙ Settings → Security → “Install the shortcut” (GNOME and Xfce). Then
+`Ctrl+Alt+P` opens a small window: type the site name, Enter, the PIN, then Enter copies
+the username and Enter again the password.
+
+**Extension.** ⚙ Settings → Browsers guides you through the setup:
+1. “Install the connection” (already done for Firefox, Chromium, Chrome and Edge by the package);
+2. Chrome, Chromium, Brave, Edge, Vivaldi, Opera: extensions page → developer mode →
+   “Load unpacked” → folder `/usr/share/secretlin/extension`;
+3. Firefox ESR: `about:config` → `xpinstall.signatures.required` to `false`, then
+   “Install Add-on From File” with the file prepared by SecretLin.
+
+**⚠️ Important: turn off the browser's own password manager.** Otherwise its suggestions
+(old usernames, “Manage Passwords”) show up on top of the SecretLin menu and hide it.
+
+- **Firefox**: type `about:config` in the address bar, accept the warning, then set
+  `signon.rememberSignons` and `browser.formfill.enable` to `false` (double-click).
+- **Chrome, Chromium, Brave, Edge**: Settings → Autofill and passwords → turn off
+  “Offer to save passwords” and “Addresses and more”.
+
+<img src="docs/captures/tuto-firefox-en.gif" alt="Tutorial: turning off Firefox's suggestions" width="660">
+
+The same video tutorial is in the app: ⚙ Settings → Browsers.
+
+On a login page, click the field: that site's accounts appear below it. For safety, an
+account is only offered on a site with the exact same name (not on “amaz.com” for Amazon),
+and the extension only talks to SecretLin, on your computer.
 
 ## 📸 Screenshots
 

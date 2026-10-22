@@ -1,0 +1,44 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "Füllt deine Zugänge aus SecretLin aus, dem verschlüsselten Passwort-Manager."
+  },
+  "verrouille": {
+    "message": "SecretLin ist gesperrt: Öffne es mit deinem Master-Passwort."
+  },
+  "ouvrir": {
+    "message": "SecretLin öffnen"
+  },
+  "codePin": {
+    "message": "PIN für „$1“"
+  },
+  "codeFaux": {
+    "message": "Falscher Code: noch $1 Versuch(e)."
+  },
+  "tropErreurs": {
+    "message": "Zu viele Fehler: SecretLin hat sich gesperrt."
+  },
+  "pasLance": {
+    "message": "SecretLin ist nicht geöffnet oder die Browser-Verbindung ist nicht installiert (SecretLin → Einstellungen → Browser)."
+  },
+  "aucun": {
+    "message": "Kein SecretLin-Konto für diese Website."
+  },
+  "pourCeSite": {
+    "message": "Konten dieser Website"
+  },
+  "pageSansConnexion": {
+    "message": "Diese Seite ist keine Website."
+  },
+  "rechercher": {
+    "message": "Konto suchen"
+  },
+  "autreSite": {
+    "message": "„$1“ gehört nicht zu dieser Website. Trotzdem ausfüllen? Prüfe die Adresse: Eine gefälschte Seite kann die echte nachahmen."
+  },
+  "aucunAide": {
+    "message": "Suche es über die SecretLin-Schaltfläche in der Browserleiste oder füge es in SecretLin hinzu."
+  }
+}

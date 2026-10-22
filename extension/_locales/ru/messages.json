@@ -1,0 +1,44 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "Заполняет логины из SecretLin — зашифрованного менеджера паролей."
+  },
+  "verrouille": {
+    "message": "SecretLin заблокирован: откройте его мастер-паролем."
+  },
+  "ouvrir": {
+    "message": "Открыть SecretLin"
+  },
+  "codePin": {
+    "message": "PIN-код для «$1»"
+  },
+  "codeFaux": {
+    "message": "Неверный код: осталось попыток: $1."
+  },
+  "tropErreurs": {
+    "message": "Слишком много ошибок: SecretLin заблокировался."
+  },
+  "pasLance": {
+    "message": "SecretLin не открыт или связь с браузером не установлена (SecretLin → Настройки → Браузеры)."
+  },
+  "aucun": {
+    "message": "Для этого сайта нет записей SecretLin."
+  },
+  "pourCeSite": {
+    "message": "Записи этого сайта"
+  },
+  "pageSansConnexion": {
+    "message": "Эта страница не является сайтом."
+  },
+  "rechercher": {
+    "message": "Найти запись"
+  },
+  "autreSite": {
+    "message": "«$1» не связан с этим сайтом. Всё равно заполнить? Проверьте адрес: поддельный сайт может подражать настоящему."
+  },
+  "aucunAide": {
+    "message": "Найдите её кнопкой SecretLin на панели браузера или добавьте в SecretLin."
+  }
+}

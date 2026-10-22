@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_nom__",
+  "description": "__MSG_description__",
+  "version": "1.5.0",
+  "default_locale": "fr",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAypVW4lz9kkgeBx5rkymcgzCIcUBQO5PmjZGZCm0j/lrmuNSnEPlhFUjk+qESOMTm0aRdoAgAdy1zY8rMZqoywE2+xKrsoGLab796e05y4rrYaByIGfL7IU0CzCaxJxmnxvNhX/p/S/4qxgmX1eU/UtoNCKKwbarhUl8S+zZdlIlTgKFqt4Vc3ZVbmzYwOyFJcNufwil77kJ46iBzrz1tZvI4lz3ywgqsxH39TyMIQPKLW+Viwk5/jYy58J7OqIdz8RQ9lgnrYLvz0vC/W08MXrMP8PopLqCC+yFEIHvtLTUcdMwIZhxHtv4CzXMqIS0xUf6kAYY11EO4lPHQzHXLUQIDAQAB",
+  "icons": {
+    "16": "icones/secretlin-16.png",
+    "32": "icones/secretlin-32.png",
+    "48": "icones/secretlin-48.png",
+    "128": "icones/secretlin-128.png"
+  },
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "SecretLin",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icones/secretlin-16.png",
+      "32": "icones/secretlin-32.png"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "secretlin@peterpan1-sudo.github.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  }
+}

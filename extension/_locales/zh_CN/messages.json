@@ -1,0 +1,44 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "从加密密码管理器 SecretLin 自动填写你的账号。"
+  },
+  "verrouille": {
+    "message": "SecretLin 已锁定：请用主密码打开。"
+  },
+  "ouvrir": {
+    "message": "打开 SecretLin"
+  },
+  "codePin": {
+    "message": "“$1”的 PIN 码"
+  },
+  "codeFaux": {
+    "message": "代码错误：还剩 $1 次机会。"
+  },
+  "tropErreurs": {
+    "message": "错误次数过多：SecretLin 已锁定。"
+  },
+  "pasLance": {
+    "message": "SecretLin 未打开，或尚未安装与浏览器的连接（SecretLin → 设置 → 浏览器）。"
+  },
+  "aucun": {
+    "message": "此网站没有 SecretLin 账号。"
+  },
+  "pourCeSite": {
+    "message": "此网站的账号"
+  },
+  "pageSansConnexion": {
+    "message": "此页面不是网站。"
+  },
+  "rechercher": {
+    "message": "搜索账号"
+  },
+  "autreSite": {
+    "message": "“$1”与此网站无关。仍要填写吗？请检查网址：假网站可能冒充真网站。"
+  },
+  "aucunAide": {
+    "message": "可通过浏览器工具栏中的 SecretLin 按钮搜索，或在 SecretLin 中添加。"
+  }
+}

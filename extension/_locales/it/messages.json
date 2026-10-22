@@ -1,0 +1,44 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "Compila i tuoi account da SecretLin, il gestore di password cifrato."
+  },
+  "verrouille": {
+    "message": "SecretLin è bloccato: aprilo con la password principale."
+  },
+  "ouvrir": {
+    "message": "Apri SecretLin"
+  },
+  "codePin": {
+    "message": "PIN per «$1»"
+  },
+  "codeFaux": {
+    "message": "Codice errato: restano $1 tentativo/i."
+  },
+  "tropErreurs": {
+    "message": "Troppi errori: SecretLin si è bloccato."
+  },
+  "pasLance": {
+    "message": "SecretLin non è aperto o la connessione con il browser non è installata (SecretLin → Impostazioni → Browser)."
+  },
+  "aucun": {
+    "message": "Nessun account SecretLin per questo sito."
+  },
+  "pourCeSite": {
+    "message": "Account di questo sito"
+  },
+  "pageSansConnexion": {
+    "message": "Questa pagina non è un sito web."
+  },
+  "rechercher": {
+    "message": "Cerca un account"
+  },
+  "autreSite": {
+    "message": "«$1» non è associato a questo sito. Compilarlo comunque? Controlla l'indirizzo: un sito falso può imitare quello vero."
+  },
+  "aucunAide": {
+    "message": "Cercalo con il pulsante SecretLin nella barra del browser o aggiungilo in SecretLin."
+  }
+}

@@ -1000,6 +1000,193 @@
   "ja": "ボタンのズームと光彩、検索の煙、画面の切り替え。",
   "ko": "버튼 확대와 빛, 검색 연기 효과, 전환 효과."
  },
+ "Navigateurs": {
+  "en": "Browsers",
+  "es": "Navegadores",
+  "de": "Browser",
+  "pt": "Navegadores",
+  "it": "Browser",
+  "ru": "Браузеры",
+  "zh": "浏览器",
+  "ja": "ブラウザー",
+  "ko": "브라우저"
+ },
+ "Remplir vos identifiants directement sur les sites web.": {
+  "en": "Fill in your logins directly on websites.",
+  "es": "Rellena tus cuentas directamente en los sitios web.",
+  "de": "Zugänge direkt auf Websites ausfüllen.",
+  "pt": "Preencha seus logins diretamente nos sites.",
+  "it": "Compila i tuoi account direttamente sui siti web.",
+  "ru": "Заполняйте логины прямо на сайтах.",
+  "zh": "直接在网站上填写你的账号。",
+  "ja": "ウェブサイトでログイン情報を直接入力します。",
+  "ko": "웹사이트에서 로그인 정보를 바로 채웁니다."
+ },
+ "1. Connecter SecretLin aux navigateurs": {
+  "en": "1. Connect SecretLin to your browsers",
+  "es": "1. Conectar SecretLin con los navegadores",
+  "de": "1. SecretLin mit den Browsern verbinden",
+  "pt": "1. Conectar o SecretLin aos navegadores",
+  "it": "1. Collega SecretLin ai browser",
+  "ru": "1. Подключить SecretLin к браузерам",
+  "zh": "1. 将 SecretLin 连接到浏览器",
+  "ja": "1. SecretLin をブラウザーに接続",
+  "ko": "1. SecretLin을 브라우저에 연결"
+ },
+ "Navigateurs trouvés : {liste}": {
+  "en": "Browsers found: {liste}",
+  "es": "Navegadores encontrados: {liste}",
+  "de": "Gefundene Browser: {liste}",
+  "pt": "Navegadores encontrados: {liste}",
+  "it": "Browser trovati: {liste}",
+  "ru": "Найдены браузеры: {liste}",
+  "zh": "找到的浏览器：{liste}",
+  "ja": "見つかったブラウザー：{liste}",
+  "ko": "찾은 브라우저: {liste}"
+ },
+ "2. Ajouter l'extension : Chrome, Chromium, Brave, Edge, Vivaldi, Opera": {
+  "en": "2. Add the extension: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "es": "2. Añadir la extensión: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "de": "2. Erweiterung hinzufügen: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "pt": "2. Adicionar a extensão: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "it": "2. Aggiungi l'estensione: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "ru": "2. Добавить расширение: Chrome, Chromium, Brave, Edge, Vivaldi, Opera",
+  "zh": "2. 添加扩展：Chrome、Chromium、Brave、Edge、Vivaldi、Opera",
+  "ja": "2. 拡張機能を追加：Chrome、Chromium、Brave、Edge、Vivaldi、Opera",
+  "ko": "2. 확장 프로그램 추가: Chrome, Chromium, Brave, Edge, Vivaldi, Opera"
+ },
+ "Ouvrez la page des extensions (chrome://extensions, brave://extensions, edge://extensions…), activez le « mode développeur », cliquez sur « Charger l'extension non empaquetée » et choisissez ce dossier :": {
+  "en": "Open the extensions page (chrome://extensions, brave://extensions, edge://extensions…), turn on “Developer mode”, click “Load unpacked” and choose this folder:",
+  "es": "Abre la página de extensiones (chrome://extensions, brave://extensions, edge://extensions…), activa el «modo de desarrollador», haz clic en «Cargar descomprimida» y elige esta carpeta:",
+  "de": "Öffne die Erweiterungsseite (chrome://extensions, brave://extensions, edge://extensions…), aktiviere den „Entwicklermodus“, klicke auf „Entpackte Erweiterung laden“ und wähle diesen Ordner:",
+  "pt": "Abra a página de extensões (chrome://extensions, brave://extensions, edge://extensions…), ative o “modo do desenvolvedor”, clique em “Carregar sem compactação” e escolha esta pasta:",
+  "it": "Apri la pagina delle estensioni (chrome://extensions, brave://extensions, edge://extensions…), attiva la «modalità sviluppatore», fai clic su «Carica estensione non pacchettizzata» e scegli questa cartella:",
+  "ru": "Откройте страницу расширений (chrome://extensions, brave://extensions, edge://extensions…), включите «Режим разработчика», нажмите «Загрузить распакованное расширение» и выберите эту папку:",
+  "zh": "打开扩展程序页面（chrome://extensions、brave://extensions、edge://extensions…），开启“开发者模式”，点击“加载已解压的扩展程序”，然后选择此文件夹：",
+  "ja": "拡張機能のページ（chrome://extensions、brave://extensions、edge://extensions…）を開き、「デベロッパー モード」をオンにして「パッケージ化されていない拡張機能を読み込む」をクリックし、このフォルダーを選んでください：",
+  "ko": "확장 프로그램 페이지(chrome://extensions, brave://extensions, edge://extensions…)를 열고 ‘개발자 모드’를 켠 뒤 ‘압축해제된 확장 프로그램을 로드합니다’를 눌러 이 폴더를 선택하세요:"
+ },
+ "2. Ajouter l'extension : Firefox": {
+  "en": "2. Add the extension: Firefox",
+  "es": "2. Añadir la extensión: Firefox",
+  "de": "2. Erweiterung hinzufügen: Firefox",
+  "pt": "2. Adicionar a extensão: Firefox",
+  "it": "2. Aggiungi l'estensione: Firefox",
+  "ru": "2. Добавить расширение: Firefox",
+  "zh": "2. 添加扩展：Firefox",
+  "ja": "2. 拡張機能を追加：Firefox",
+  "ko": "2. 확장 프로그램 추가: Firefox"
+ },
+ "Firefox ESR (celui de Kali) : ouvrez about:config et mettez xpinstall.signatures.required à false. Puis ouvrez about:addons, roue dentée → « Installer un module depuis un fichier », et choisissez le fichier préparé ci-dessous.": {
+  "en": "Firefox ESR (the one in Kali): open about:config and set xpinstall.signatures.required to false. Then open about:addons, gear icon → “Install Add-on From File”, and choose the file prepared below.",
+  "es": "Firefox ESR (el de Kali): abre about:config y pon xpinstall.signatures.required en false. Luego abre about:addons, rueda dentada → «Instalar complemento desde archivo» y elige el archivo preparado abajo.",
+  "de": "Firefox ESR (das von Kali): Öffne about:config und setze xpinstall.signatures.required auf false. Öffne dann about:addons, Zahnrad → „Add-on aus Datei installieren“ und wähle die unten vorbereitete Datei.",
+  "pt": "Firefox ESR (o do Kali): abra about:config e defina xpinstall.signatures.required como false. Depois abra about:addons, engrenagem → “Instalar extensão a partir de arquivo” e escolha o arquivo preparado abaixo.",
+  "it": "Firefox ESR (quello di Kali): apri about:config e imposta xpinstall.signatures.required su false. Poi apri about:addons, rotella → «Installa componente aggiuntivo da file» e scegli il file preparato qui sotto.",
+  "ru": "Firefox ESR (из Kali): откройте about:config и установите xpinstall.signatures.required в false. Затем откройте about:addons, шестерёнка → «Установить дополнение из файла» и выберите файл, подготовленный ниже.",
+  "zh": "Firefox ESR（Kali 自带）：打开 about:config，把 xpinstall.signatures.required 设为 false。然后打开 about:addons，齿轮 → “从文件安装附加组件”，选择下面准备好的文件。",
+  "ja": "Firefox ESR（Kali 付属）：about:config を開き、xpinstall.signatures.required を false にします。次に about:addons を開き、歯車 → 「ファイルからアドオンをインストール」で下に用意したファイルを選んでください。",
+  "ko": "Firefox ESR(Kali 기본): about:config를 열고 xpinstall.signatures.required를 false로 설정하세요. 그런 다음 about:addons를 열고 톱니바퀴 → ‘파일에서 부가 기능 설치’를 눌러 아래에서 준비한 파일을 선택하세요."
+ },
+ "Important : couper les suggestions du navigateur": {
+  "en": "Important: turn off the browser's suggestions",
+  "es": "Importante: desactivar las sugerencias del navegador",
+  "de": "Wichtig: Vorschläge des Browsers abschalten",
+  "pt": "Importante: desativar as sugestões do navegador",
+  "it": "Importante: disattiva i suggerimenti del browser",
+  "ru": "Важно: отключите подсказки браузера",
+  "zh": "重要：关闭浏览器自带的建议",
+  "ja": "重要：ブラウザーの候補表示をオフに",
+  "ko": "중요: 브라우저 자체 제안 끄기"
+ },
+ "Le gestionnaire de mots de passe intégré au navigateur affiche ses propres suggestions par-dessus celles de SecretLin. Désactivez-le :": {
+  "en": "The browser's built-in password manager shows its own suggestions on top of SecretLin's. Turn it off:",
+  "es": "El gestor de contraseñas integrado del navegador muestra sus propias sugerencias encima de las de SecretLin. Desactívalo:",
+  "de": "Der eingebaute Passwort-Manager des Browsers zeigt seine Vorschläge über denen von SecretLin an. Schalte ihn ab:",
+  "pt": "O gerenciador de senhas integrado do navegador mostra as próprias sugestões por cima das do SecretLin. Desative-o:",
+  "it": "Il gestore di password integrato nel browser mostra i suoi suggerimenti sopra quelli di SecretLin. Disattivalo:",
+  "ru": "Встроенный менеджер паролей браузера показывает свои подсказки поверх подсказок SecretLin. Отключите его:",
+  "zh": "浏览器自带的密码管理器会把自己的建议显示在 SecretLin 的上面。请关闭它：",
+  "ja": "ブラウザー内蔵のパスワードマネージャーが、SecretLin の候補の上に自分の候補を表示します。オフにしてください：",
+  "ko": "브라우저에 내장된 비밀번호 관리자가 SecretLin 제안 위에 자체 제안을 표시합니다. 끄세요:"
+ },
+ "Firefox : about:config → signon.rememberSignons et browser.formfill.enable à false (double-clic).": {
+  "en": "Firefox: about:config → signon.rememberSignons and browser.formfill.enable to false (double-click).",
+  "es": "Firefox: about:config → signon.rememberSignons y browser.formfill.enable en false (doble clic).",
+  "de": "Firefox: about:config → signon.rememberSignons und browser.formfill.enable auf false (Doppelklick).",
+  "pt": "Firefox: about:config → signon.rememberSignons e browser.formfill.enable como false (clique duplo).",
+  "it": "Firefox: about:config → signon.rememberSignons e browser.formfill.enable su false (doppio clic).",
+  "ru": "Firefox: about:config → signon.rememberSignons и browser.formfill.enable в false (двойной щелчок).",
+  "zh": "Firefox：about:config → 把 signon.rememberSignons 和 browser.formfill.enable 设为 false（双击）。",
+  "ja": "Firefox：about:config → signon.rememberSignons と browser.formfill.enable を false に（ダブルクリック）。",
+  "ko": "Firefox: about:config → signon.rememberSignons와 browser.formfill.enable을 false로 (더블클릭)."
+ },
+ "Chrome, Chromium, Brave, Edge : Paramètres → Saisie automatique et mots de passe → désactivez « Proposer d'enregistrer les mots de passe » et « Adresses et autres ».": {
+  "en": "Chrome, Chromium, Brave, Edge: Settings → Autofill and passwords → turn off “Offer to save passwords” and “Addresses and more”.",
+  "es": "Chrome, Chromium, Brave, Edge: Configuración → Autocompletar y contraseñas → desactiva «Ofrecer guardar contraseñas» y «Direcciones y más».",
+  "de": "Chrome, Chromium, Brave, Edge: Einstellungen → Autofill und Passwörter → „Speichern von Passwörtern anbieten“ und „Adressen und mehr“ abschalten.",
+  "pt": "Chrome, Chromium, Brave, Edge: Configurações → Preenchimento automático e senhas → desative “Oferecer para salvar senhas” e “Endereços e mais”.",
+  "it": "Chrome, Chromium, Brave, Edge: Impostazioni → Compilazione automatica e password → disattiva «Proponi di salvare le password» e «Indirizzi e altro».",
+  "ru": "Chrome, Chromium, Brave, Edge: Настройки → Автозаполнение и пароли → отключите «Предлагать сохранение паролей» и «Адреса и другие данные».",
+  "zh": "Chrome、Chromium、Brave、Edge：设置 → 自动填充和密码 → 关闭“提示保存密码”和“地址和其他信息”。",
+  "ja": "Chrome、Chromium、Brave、Edge：設定 → 自動入力とパスワード → 「パスワードの保存を確認する」と「住所やその他の情報」をオフ。",
+  "ko": "Chrome, Chromium, Brave, Edge: 설정 → 자동 완성 및 비밀번호 → ‘비밀번호 저장 제안’과 ‘주소 및 기타 정보’ 끄기."
+ },
+ "3. Utiliser": {
+  "en": "3. Use it",
+  "es": "3. Usar",
+  "de": "3. Verwenden",
+  "pt": "3. Usar",
+  "it": "3. Usare",
+  "ru": "3. Использование",
+  "zh": "3. 使用",
+  "ja": "3. 使い方",
+  "ko": "3. 사용하기"
+ },
+ "Sur une page de connexion, cliquez dans le champ identifiant ou mot de passe : vos comptes SecretLin pour ce site s'affichent dessous. SecretLin doit être ouvert ; s'il est verrouillé, le code PIN (Réglages → Sécurité) suffit.": {
+  "en": "On a login page, click the username or password field: your SecretLin accounts for that site appear below it. SecretLin must be open; if it is locked, the PIN (Settings → Security) is enough.",
+  "es": "En una página de inicio de sesión, haz clic en el campo de usuario o contraseña: tus cuentas de SecretLin para ese sitio aparecen debajo. SecretLin debe estar abierto; si está bloqueado, basta con el PIN (Ajustes → Seguridad).",
+  "de": "Klicke auf einer Anmeldeseite in das Feld für Benutzername oder Passwort: Deine SecretLin-Konten für diese Website erscheinen darunter. SecretLin muss geöffnet sein; ist es gesperrt, genügt der PIN (Einstellungen → Sicherheit).",
+  "pt": "Em uma página de login, clique no campo de usuário ou senha: suas contas do SecretLin para esse site aparecem abaixo. O SecretLin deve estar aberto; se estiver bloqueado, o PIN (Configurações → Segurança) basta.",
+  "it": "In una pagina di accesso, fai clic nel campo utente o password: i tuoi account SecretLin per quel sito compaiono sotto. SecretLin deve essere aperto; se è bloccato, basta il PIN (Impostazioni → Sicurezza).",
+  "ru": "На странице входа нажмите на поле логина или пароля: ваши записи SecretLin для этого сайта появятся под ним. SecretLin должен быть открыт; если он заблокирован, достаточно PIN-кода (Настройки → Безопасность).",
+  "zh": "在登录页面点击用户名或密码输入框，该网站的 SecretLin 账号会显示在下方。SecretLin 必须处于打开状态；如果已锁定，输入 PIN 码（设置 → 安全）即可。",
+  "ja": "ログインページでユーザー名またはパスワードの欄をクリックすると、そのサイトの SecretLin アカウントが下に表示されます。SecretLin を開いておく必要があります。ロック中は PIN（設定 → セキュリティ）で使えます。",
+  "ko": "로그인 페이지에서 아이디나 비밀번호 칸을 클릭하면 그 사이트의 SecretLin 계정이 아래에 표시됩니다. SecretLin이 열려 있어야 하며, 잠겨 있으면 PIN(설정 → 보안)으로 충분합니다."
+ },
+ "Chemin copié": {
+  "en": "Path copied",
+  "es": "Ruta copiada",
+  "de": "Pfad kopiert",
+  "pt": "Caminho copiado",
+  "it": "Percorso copiato",
+  "ru": "Путь скопирован",
+  "zh": "路径已复制",
+  "ja": "パスをコピーしました",
+  "ko": "경로 복사됨"
+ },
+ "Tutoriel vidéo": {
+  "en": "Video tutorial",
+  "es": "Tutorial en vídeo",
+  "de": "Video-Anleitung",
+  "pt": "Tutorial em vídeo",
+  "it": "Tutorial video",
+  "ru": "Видеоинструкция",
+  "zh": "视频教程",
+  "ja": "動画チュートリアル",
+  "ko": "동영상 튜토리얼"
+ },
+ "Pause": {
+  "en": "Pause",
+  "es": "Pausa",
+  "de": "Pause",
+  "pt": "Pausar",
+  "it": "Pausa",
+  "ru": "Пауза",
+  "zh": "暂停",
+  "ja": "一時停止",
+  "ko": "일시 정지"
+ },
  "Langue": {
   "en": "Language",
   "es": "Idioma",
@@ -1165,6 +1352,39 @@
   "ja": "マスターパスワードを変更しました",
   "ko": "마스터 비밀번호 변경됨"
  },
+ "Nouveau code (4 chiffres)": {
+  "en": "New code (4 digits)",
+  "es": "Nuevo código (4 cifras)",
+  "de": "Neuer Code (4 Ziffern)",
+  "pt": "Novo código (4 dígitos)",
+  "it": "Nuovo codice (4 cifre)",
+  "ru": "Новый код (4 цифры)",
+  "zh": "新代码（4 位数字）",
+  "ja": "新しいコード（4 桁）",
+  "ko": "새 코드 (4자리)"
+ },
+ "Confirmer le code": {
+  "en": "Confirm the code",
+  "es": "Confirmar el código",
+  "de": "Code bestätigen",
+  "pt": "Confirmar o código",
+  "it": "Conferma il codice",
+  "ru": "Подтвердите код",
+  "zh": "确认代码",
+  "ja": "コードを確認",
+  "ko": "코드 확인"
+ },
+ "Mot de passe maître actuel": {
+  "en": "Current master password",
+  "es": "Contraseña maestra actual",
+  "de": "Aktuelles Master-Passwort",
+  "pt": "Senha mestra atual",
+  "it": "Password principale attuale",
+  "ru": "Текущий мастер-пароль",
+  "zh": "当前主密码",
+  "ja": "現在のマスターパスワード",
+  "ko": "현재 마스터 비밀번호"
+ },
  "Activé : le coffre s'ouvre avec le mot de passe maître et le fichier « {nom} ».": {
   "en": "On: the vault opens with the master password and the file “{nom}”.",
   "es": "Activado: la caja fuerte se abre con la contraseña maestra y el archivo «{nom}».",
@@ -1187,16 +1407,16 @@
   "ja": "マスターパスワードに加えて、このファイル（USB メモリーに保存するなど）がないと金庫は開きません。",
   "ko": "마스터 비밀번호에 더해 이 파일(예: USB 메모리에 보관)이 있어야만 금고가 열립니다."
  },
- "Mot de passe maître actuel": {
-  "en": "Current master password",
-  "es": "Contraseña maestra actual",
-  "de": "Aktuelles Master-Passwort",
-  "pt": "Senha mestra atual",
-  "it": "Password principale attuale",
-  "ru": "Текущий мастер-пароль",
-  "zh": "当前主密码",
-  "ja": "現在のマスターパスワード",
-  "ko": "현재 마스터 비밀번호"
+ "Copié par le remplissage rapide": {
+  "en": "Copied by quick fill",
+  "es": "Copiado por el relleno rápido",
+  "de": "Per Schnellausfüllen kopiert",
+  "pt": "Copiado pelo preenchimento rápido",
+  "it": "Copiato dal riempimento rapido",
+  "ru": "Скопировано быстрым заполнением",
+  "zh": "已通过快速填充复制",
+  "ja": "クイック入力でコピーしました",
+  "ko": "빠른 채우기로 복사됨"
  },
  "Il manque : {liste}.": {
   "en": "Missing: {liste}.",
@@ -1517,6 +1737,28 @@
   "ja": "{n} 文字",
   "ko": "{n}자"
  },
+ "Préparation de la vidéo…": {
+  "en": "Preparing the video…",
+  "es": "Preparando el vídeo…",
+  "de": "Video wird vorbereitet…",
+  "pt": "Preparando o vídeo…",
+  "it": "Preparazione del video…",
+  "ru": "Подготовка видео…",
+  "zh": "正在准备视频…",
+  "ja": "動画を準備中…",
+  "ko": "동영상 준비 중…"
+ },
+ "Lecture": {
+  "en": "Play",
+  "es": "Reproducir",
+  "de": "Abspielen",
+  "pt": "Reproduzir",
+  "it": "Riproduci",
+  "ru": "Воспроизвести",
+  "zh": "播放",
+  "ja": "再生",
+  "ko": "재생"
+ },
  "Mots de passe piratés": {
   "en": "Breached passwords",
   "es": "Contraseñas filtradas",
@@ -1725,6 +1967,28 @@
   "zh": "旧",
   "ja": "古い",
   "ko": "오래됨"
+ },
+ "Code PIN enregistré": {
+  "en": "PIN saved",
+  "es": "PIN guardado",
+  "de": "PIN gespeichert",
+  "pt": "PIN salvo",
+  "it": "PIN salvato",
+  "ru": "PIN-код сохранён",
+  "zh": "PIN 码已保存",
+  "ja": "PIN を保存しました",
+  "ko": "PIN 저장됨"
+ },
+ "Code PIN retiré": {
+  "en": "PIN removed",
+  "es": "PIN quitado",
+  "de": "PIN entfernt",
+  "pt": "PIN removido",
+  "it": "PIN rimosso",
+  "ru": "PIN-код удалён",
+  "zh": "PIN 码已移除",
+  "ja": "PIN を削除しました",
+  "ko": "PIN 제거됨"
  },
  "Enregistrer le fichier-clé": {
   "en": "Save the key file",
@@ -1979,6 +2243,28 @@
   "ja": "パスワードを入力してください。",
   "ko": "비밀번호를 입력하세요."
  },
+ "Quitter SecretLin": {
+  "en": "Quit SecretLin",
+  "es": "Salir de SecretLin",
+  "de": "SecretLin beenden",
+  "pt": "Sair do SecretLin",
+  "it": "Esci da SecretLin",
+  "ru": "Выйти из SecretLin",
+  "zh": "退出 SecretLin",
+  "ja": "SecretLin を終了",
+  "ko": "SecretLin 종료"
+ },
+ "Ferme complètement l'application, même en arrière-plan.": {
+  "en": "Closes the app completely, even in the background.",
+  "es": "Cierra la aplicación por completo, incluso en segundo plano.",
+  "de": "Beendet die App vollständig, auch im Hintergrund.",
+  "pt": "Fecha o aplicativo por completo, mesmo em segundo plano.",
+  "it": "Chiude completamente l'app, anche in background.",
+  "ru": "Полностью закрывает приложение, даже в фоне.",
+  "zh": "彻底关闭应用，包括后台运行。",
+  "ja": "バックグラウンドも含めてアプリを完全に終了します。",
+  "ko": "백그라운드에서도 앱을 완전히 종료합니다."
+ },
  "Régénérer": {
   "en": "Regenerate",
   "es": "Regenerar",
@@ -2011,6 +2297,61 @@
   "zh": "未安装",
   "ja": "未インストール",
   "ko": "설치 안 됨"
+ },
+ "Installer la connexion": {
+  "en": "Install the connection",
+  "es": "Instalar la conexión",
+  "de": "Verbindung einrichten",
+  "pt": "Instalar a conexão",
+  "it": "Installa la connessione",
+  "ru": "Установить связь",
+  "zh": "安装连接",
+  "ja": "接続を設定",
+  "ko": "연결 설치"
+ },
+ "Préparer le fichier pour Firefox": {
+  "en": "Prepare the file for Firefox",
+  "es": "Preparar el archivo para Firefox",
+  "de": "Datei für Firefox vorbereiten",
+  "pt": "Preparar o arquivo para o Firefox",
+  "it": "Prepara il file per Firefox",
+  "ru": "Подготовить файл для Firefox",
+  "zh": "为 Firefox 准备文件",
+  "ja": "Firefox 用のファイルを準備",
+  "ko": "Firefox용 파일 준비"
+ },
+ "Ouvrir le dossier": {
+  "en": "Open folder",
+  "es": "Abrir carpeta",
+  "de": "Ordner öffnen",
+  "pt": "Abrir pasta",
+  "it": "Apri cartella",
+  "ru": "Открыть папку",
+  "zh": "打开文件夹",
+  "ja": "フォルダーを開く",
+  "ko": "폴더 열기"
+ },
+ "Aucun navigateur trouvé dans votre dossier personnel. Ouvrez votre navigateur une fois, puis réessayez.": {
+  "en": "No browser found in your home folder. Open your browser once, then try again.",
+  "es": "No se encontró ningún navegador en tu carpeta personal. Abre tu navegador una vez y vuelve a intentarlo.",
+  "de": "Kein Browser in deinem persönlichen Ordner gefunden. Öffne deinen Browser einmal und versuche es erneut.",
+  "pt": "Nenhum navegador encontrado na sua pasta pessoal. Abra o navegador uma vez e tente de novo.",
+  "it": "Nessun browser trovato nella tua cartella personale. Apri il browser una volta, poi riprova.",
+  "ru": "В домашней папке не найден ни один браузер. Откройте браузер один раз и попробуйте снова.",
+  "zh": "在你的主文件夹中未找到浏览器。请先打开一次浏览器，然后重试。",
+  "ja": "ホームフォルダーにブラウザーが見つかりません。一度ブラウザーを開いてから、もう一度お試しください。",
+  "ko": "홈 폴더에서 브라우저를 찾지 못했습니다. 브라우저를 한 번 연 뒤 다시 시도하세요."
+ },
+ "Recommencer": {
+  "en": "Restart",
+  "es": "Reiniciar",
+  "de": "Neu starten",
+  "pt": "Recomeçar",
+  "it": "Ricomincia",
+  "ru": "Сначала",
+  "zh": "重新播放",
+  "ja": "最初から",
+  "ko": "처음부터"
  },
  "Vu {n} fois dans des fuites": {
   "en": "Seen {n} times in breaches",
@@ -2132,6 +2473,83 @@
   "zh": "无法更改：{erreur}",
   "ja": "変更できません：{erreur}",
   "ko": "변경할 수 없습니다: {erreur}"
+ },
+ "Changer le code": {
+  "en": "Change the code",
+  "es": "Cambiar el código",
+  "de": "Code ändern",
+  "pt": "Alterar o código",
+  "it": "Cambia il codice",
+  "ru": "Сменить код",
+  "zh": "更改代码",
+  "ja": "コードを変更",
+  "ko": "코드 변경"
+ },
+ "Définir le code": {
+  "en": "Set the code",
+  "es": "Definir el código",
+  "de": "Code festlegen",
+  "pt": "Definir o código",
+  "it": "Imposta il codice",
+  "ru": "Задать код",
+  "zh": "设置代码",
+  "ja": "コードを設定",
+  "ko": "코드 설정"
+ },
+ "Retirer le code": {
+  "en": "Remove the code",
+  "es": "Quitar el código",
+  "de": "Code entfernen",
+  "pt": "Remover o código",
+  "it": "Rimuovi il codice",
+  "ru": "Удалить код",
+  "zh": "移除代码",
+  "ja": "コードを削除",
+  "ko": "코드 제거"
+ },
+ "Installer le raccourci": {
+  "en": "Install the shortcut",
+  "es": "Instalar el atajo",
+  "de": "Tastenkürzel einrichten",
+  "pt": "Instalar o atalho",
+  "it": "Installa la scorciatoia",
+  "ru": "Установить сочетание клавиш",
+  "zh": "安装快捷键",
+  "ja": "ショートカットを設定",
+  "ko": "단축키 설치"
+ },
+ "Bureau non reconnu : créez le raccourci vous-même dans les réglages du clavier.": {
+  "en": "Desktop not recognised: create the shortcut yourself in the keyboard settings.",
+  "es": "Escritorio no reconocido: crea el atajo tú mismo en los ajustes del teclado.",
+  "de": "Desktop nicht erkannt: Lege das Tastenkürzel selbst in den Tastatureinstellungen an.",
+  "pt": "Ambiente não reconhecido: crie o atalho nas configurações do teclado.",
+  "it": "Desktop non riconosciuto: crea la scorciatoia nelle impostazioni della tastiera.",
+  "ru": "Рабочий стол не распознан: создайте сочетание клавиш в настройках клавиатуры.",
+  "zh": "无法识别桌面环境：请在键盘设置中自行创建快捷键。",
+  "ja": "デスクトップを認識できません。キーボード設定でショートカットを作成してください。",
+  "ko": "데스크톱을 인식하지 못했습니다. 키보드 설정에서 직접 단축키를 만드세요."
+ },
+ "Le code doit faire exactement 4 chiffres.": {
+  "en": "The code must be exactly 4 digits.",
+  "es": "El código debe tener exactamente 4 cifras.",
+  "de": "Der Code muss genau 4 Ziffern haben.",
+  "pt": "O código deve ter exatamente 4 dígitos.",
+  "it": "Il codice deve avere esattamente 4 cifre.",
+  "ru": "Код должен состоять ровно из 4 цифр.",
+  "zh": "代码必须正好是 4 位数字。",
+  "ja": "コードはちょうど 4 桁の数字にしてください。",
+  "ko": "코드는 정확히 4자리 숫자여야 합니다."
+ },
+ "Les deux codes ne correspondent pas.": {
+  "en": "The two codes do not match.",
+  "es": "Los dos códigos no coinciden.",
+  "de": "Die beiden Codes stimmen nicht überein.",
+  "pt": "Os dois códigos não coincidem.",
+  "it": "I due codici non coincidono.",
+  "ru": "Коды не совпадают.",
+  "zh": "两次输入的代码不一致。",
+  "ja": "2 つのコードが一致しません。",
+  "ko": "두 코드가 일치하지 않습니다."
  },
  "Retirer le fichier-clé": {
   "en": "Remove the key file",
@@ -2430,6 +2848,39 @@
   "ja": "このファイルは読み取れないか、SecretLin のエクスポートではありません。",
   "ko": "이 파일을 읽을 수 없거나 SecretLin 내보내기 파일이 아닙니다."
  },
+ "aucun": {
+  "en": "none",
+  "es": "ninguno",
+  "de": "keiner",
+  "pt": "nenhum",
+  "it": "nessuno",
+  "ru": "нет",
+  "zh": "无",
+  "ja": "なし",
+  "ko": "없음"
+ },
+ "Voir le tutoriel vidéo (Firefox)": {
+  "en": "Watch the video tutorial (Firefox)",
+  "es": "Ver el tutorial en vídeo (Firefox)",
+  "de": "Video-Anleitung ansehen (Firefox)",
+  "pt": "Ver o tutorial em vídeo (Firefox)",
+  "it": "Guarda il tutorial video (Firefox)",
+  "ru": "Смотреть видеоинструкцию (Firefox)",
+  "zh": "观看视频教程（Firefox）",
+  "ja": "動画チュートリアルを見る（Firefox）",
+  "ko": "동영상 튜토리얼 보기 (Firefox)"
+ },
+ "Connexion installée pour : {liste}": {
+  "en": "Connection installed for: {liste}",
+  "es": "Conexión instalada para: {liste}",
+  "de": "Verbindung eingerichtet für: {liste}",
+  "pt": "Conexão instalada para: {liste}",
+  "it": "Connessione installata per: {liste}",
+  "ru": "Связь установлена для: {liste}",
+  "zh": "已为以下浏览器安装连接：{liste}",
+  "ja": "接続を設定しました：{liste}",
+  "ko": "연결 설치됨: {liste}"
+ },
  "Vérification impossible : pas de connexion Internet ?": {
   "en": "Could not check: no Internet connection?",
   "es": "No se pudo comprobar: ¿sin conexión a Internet?",
@@ -2474,6 +2925,72 @@
   "ja": "金庫と自動コピーは再暗号化され、古いパスワードでは何も開けなくなります。エクスポートしたファイルは独自のエクスポート用パスワードのままです。",
   "ko": "금고와 자동 사본이 다시 암호화되어 이전 비밀번호로는 더 이상 열 수 없습니다. 내보낸 파일은 자체 내보내기 비밀번호를 그대로 유지합니다."
  },
+ "Accès rapide (code PIN)": {
+  "en": "Quick access (PIN)",
+  "es": "Acceso rápido (PIN)",
+  "de": "Schnellzugriff (PIN)",
+  "pt": "Acesso rápido (PIN)",
+  "it": "Accesso rapido (PIN)",
+  "ru": "Быстрый доступ (PIN-код)",
+  "zh": "快速访问（PIN 码）",
+  "ja": "クイックアクセス（PIN）",
+  "ko": "빠른 접근 (PIN)"
+ },
+ "Un code à 4 chiffres pour copier un identifiant avec le remplissage rapide ou l'extension de navigateur, sans redonner le mot de passe maître.": {
+  "en": "A 4-digit code to copy a login with quick fill or the browser extension, without typing the master password again.",
+  "es": "Un código de 4 cifras para copiar una cuenta con el relleno rápido o la extensión del navegador, sin volver a escribir la contraseña maestra.",
+  "de": "Ein 4-stelliger Code, um einen Zugang per Schnellausfüllen oder Browser-Erweiterung zu kopieren, ohne das Master-Passwort erneut einzugeben.",
+  "pt": "Um código de 4 dígitos para copiar um login com o preenchimento rápido ou a extensão do navegador, sem digitar de novo a senha mestra.",
+  "it": "Un codice di 4 cifre per copiare un account con il riempimento rapido o l'estensione del browser, senza ridigitare la password principale.",
+  "ru": "4-значный код, чтобы копировать записи быстрым заполнением или расширением браузера, не вводя снова мастер-пароль.",
+  "zh": "用 4 位代码通过快速填充或浏览器扩展复制账号，无需再次输入主密码。",
+  "ja": "4 桁のコードで、マスターパスワードを入力し直さずにクイック入力やブラウザー拡張からログイン情報をコピーできます。",
+  "ko": "4자리 코드로 마스터 비밀번호를 다시 입력하지 않고 빠른 채우기나 브라우저 확장에서 로그인 정보를 복사합니다."
+ },
+ "Il ne marche que si SecretLin a été déverrouillé avec le mot de passe maître depuis moins de 8 heures et n'a pas été quitté. Après 3 codes faux, le mot de passe maître est redemandé. Avec un code, la croix de la fenêtre laisse SecretLin ouvert en arrière-plan.": {
+  "en": "It only works if SecretLin was unlocked with the master password less than 8 hours ago and has not been quit. After 3 wrong codes, the master password is required again. With a code, the window's close button keeps SecretLin running in the background.",
+  "es": "Solo funciona si SecretLin se desbloqueó con la contraseña maestra hace menos de 8 horas y no se ha cerrado. Tras 3 códigos erróneos, se vuelve a pedir la contraseña maestra. Con un código, la cruz de la ventana deja SecretLin abierto en segundo plano.",
+  "de": "Funktioniert nur, wenn SecretLin vor weniger als 8 Stunden mit dem Master-Passwort entsperrt und nicht beendet wurde. Nach 3 falschen Codes wird das Master-Passwort wieder verlangt. Mit Code lässt das Schließen-Kreuz SecretLin im Hintergrund laufen.",
+  "pt": "Só funciona se o SecretLin foi desbloqueado com a senha mestra há menos de 8 horas e não foi encerrado. Após 3 códigos errados, a senha mestra é pedida de novo. Com um código, o X da janela mantém o SecretLin aberto em segundo plano.",
+  "it": "Funziona solo se SecretLin è stato sbloccato con la password principale da meno di 8 ore e non è stato chiuso. Dopo 3 codici errati, la password principale viene richiesta di nuovo. Con un codice, la X della finestra lascia SecretLin aperto in background.",
+  "ru": "Работает, только если SecretLin разблокирован мастер-паролем менее 8 часов назад и не был закрыт. После 3 неверных кодов снова потребуется мастер-пароль. С кодом крестик окна оставляет SecretLin работать в фоне.",
+  "zh": "仅当 SecretLin 在 8 小时内用主密码解锁且未退出时有效。输错 3 次后需要重新输入主密码。设置代码后，点窗口的关闭按钮会让 SecretLin 在后台继续运行。",
+  "ja": "SecretLin を 8 時間以内にマスターパスワードでロック解除し、終了していない場合のみ使えます。3 回間違えるとマスターパスワードが再び必要になります。コードを設定すると、ウィンドウの × ボタンで SecretLin はバックグラウンドで動き続けます。",
+  "ko": "SecretLin을 8시간 이내에 마스터 비밀번호로 잠금 해제했고 종료하지 않았을 때만 작동합니다. 코드를 3번 틀리면 마스터 비밀번호를 다시 입력해야 합니다. 코드를 설정하면 창의 X 버튼을 눌러도 SecretLin이 백그라운드에서 계속 실행됩니다."
+ },
+ "Raccourci clavier du remplissage rapide : Ctrl+Alt+P": {
+  "en": "Quick fill keyboard shortcut: Ctrl+Alt+P",
+  "es": "Atajo de teclado del relleno rápido: Ctrl+Alt+P",
+  "de": "Tastenkürzel für Schnellausfüllen: Strg+Alt+P",
+  "pt": "Atalho do preenchimento rápido: Ctrl+Alt+P",
+  "it": "Scorciatoia del riempimento rapido: Ctrl+Alt+P",
+  "ru": "Сочетание клавиш быстрого заполнения: Ctrl+Alt+P",
+  "zh": "快速填充快捷键：Ctrl+Alt+P",
+  "ja": "クイック入力のショートカット：Ctrl+Alt+P",
+  "ko": "빠른 채우기 단축키: Ctrl+Alt+P"
+ },
+ "Sur un autre bureau, créez un raccourci qui lance : {cmd}": {
+  "en": "On another desktop, create a shortcut that runs: {cmd}",
+  "es": "En otro escritorio, crea un atajo que ejecute: {cmd}",
+  "de": "Auf einem anderen Desktop ein Tastenkürzel anlegen, das ausführt: {cmd}",
+  "pt": "Em outro ambiente, crie um atalho que execute: {cmd}",
+  "it": "Su un altro desktop, crea una scorciatoia che esegua: {cmd}",
+  "ru": "В другой среде создайте сочетание клавиш, запускающее: {cmd}",
+  "zh": "在其他桌面环境中，创建一个运行以下命令的快捷键：{cmd}",
+  "ja": "他のデスクトップでは、次を実行するショートカットを作成してください：{cmd}",
+  "ko": "다른 데스크톱에서는 다음을 실행하는 단축키를 만드세요: {cmd}"
+ },
+ "Raccourci installé : Ctrl+Alt+P.": {
+  "en": "Shortcut installed: Ctrl+Alt+P.",
+  "es": "Atajo instalado: Ctrl+Alt+P.",
+  "de": "Tastenkürzel eingerichtet: Strg+Alt+P.",
+  "pt": "Atalho instalado: Ctrl+Alt+P.",
+  "it": "Scorciatoia installata: Ctrl+Alt+P.",
+  "ru": "Сочетание установлено: Ctrl+Alt+P.",
+  "zh": "快捷键已安装：Ctrl+Alt+P。",
+  "ja": "ショートカットを設定しました：Ctrl+Alt+P。",
+  "ko": "단축키 설치됨: Ctrl+Alt+P."
+ },
  "Fichier-clé (deuxième facteur)": {
   "en": "Key file (second factor)",
   "es": "Archivo de clave (segundo factor)",
@@ -2506,6 +3023,17 @@
   "zh": "数据仅保存在这台电脑上",
   "ja": "データはこのコンピューターにのみ保存されます",
   "ko": "데이터는 이 컴퓨터에만 저장됩니다"
+ },
+ "Le remplissage rapide reste disponible avec le code PIN.": {
+  "en": "Quick fill is still available with the PIN.",
+  "es": "El relleno rápido sigue disponible con el PIN.",
+  "de": "Schnellausfüllen bleibt mit dem PIN verfügbar.",
+  "pt": "O preenchimento rápido continua disponível com o PIN.",
+  "it": "Il riempimento rapido resta disponibile con il PIN.",
+  "ru": "Быстрое заполнение по-прежнему доступно с PIN-кодом.",
+  "zh": "仍可使用 PIN 码进行快速填充。",
+  "ja": "クイック入力は PIN で引き続き使えます。",
+  "ko": "빠른 채우기는 PIN으로 계속 사용할 수 있습니다."
  },
  "Chiffré de bout en bout": {
   "en": "End-to-end encrypted",
@@ -2605,6 +3133,17 @@
   "zh": "避免外形相似的字符",
   "ja": "似ている文字を避ける",
   "ko": "비슷하게 생긴 문자 피하기"
+ },
+ "Code PIN défini.": {
+  "en": "PIN set.",
+  "es": "PIN definido.",
+  "de": "PIN festgelegt.",
+  "pt": "PIN definido.",
+  "it": "PIN impostato.",
+  "ru": "PIN-код задан.",
+  "zh": "已设置 PIN 码。",
+  "ja": "PIN を設定済みです。",
+  "ko": "PIN이 설정되었습니다."
  },
  "au moins {n} caractères": {
   "en": "at least {n} characters",
@@ -2715,6 +3254,369 @@
   "zh": "未命名",
   "ja": "名前なし",
   "ko": "이름 없음"
+ },
+ "Code faux : encore {n} essai.": {
+  "en": "Wrong code: {n} try left.",
+  "es": "Código incorrecto: queda {n} intento.",
+  "de": "Falscher Code: noch {n} Versuch.",
+  "pt": "Código errado: resta {n} tentativa.",
+  "it": "Codice errato: resta {n} tentativo.",
+  "ru": "Неверный код: осталось попыток: {n}.",
+  "zh": "代码错误：还剩 {n} 次机会。",
+  "ja": "コードが違います。残り {n} 回。",
+  "ko": "코드가 틀렸습니다. {n}번 남음."
+ },
+ "Code faux : encore {n} essais.": {
+  "en": "Wrong code: {n} tries left.",
+  "es": "Código incorrecto: quedan {n} intentos.",
+  "de": "Falscher Code: noch {n} Versuche.",
+  "pt": "Código errado: restam {n} tentativas.",
+  "it": "Codice errato: restano {n} tentativi.",
+  "ru": "Неверный код: осталось попыток: {n}.",
+  "zh": "代码错误：还剩 {n} 次机会。",
+  "ja": "コードが違います。残り {n} 回。",
+  "ko": "코드가 틀렸습니다. {n}번 남음."
+ },
+ "SecretLin — remplissage rapide": {
+  "en": "SecretLin — quick fill",
+  "es": "SecretLin — relleno rápido",
+  "de": "SecretLin — Schnellausfüllen",
+  "pt": "SecretLin — preenchimento rápido",
+  "it": "SecretLin — riempimento rapido",
+  "ru": "SecretLin — быстрое заполнение",
+  "zh": "SecretLin — 快速填充",
+  "ja": "SecretLin — クイック入力",
+  "ko": "SecretLin — 빠른 채우기"
+ },
+ "Remplissage rapide": {
+  "en": "Quick fill",
+  "es": "Relleno rápido",
+  "de": "Schnellausfüllen",
+  "pt": "Preenchimento rápido",
+  "it": "Riempimento rapido",
+  "ru": "Быстрое заполнение",
+  "zh": "快速填充",
+  "ja": "クイック入力",
+  "ko": "빠른 채우기"
+ },
+ "Tapez le nom du site, puis Entrée.": {
+  "en": "Type the website name, then Enter.",
+  "es": "Escribe el nombre del sitio y pulsa Intro.",
+  "de": "Gib den Namen der Website ein, dann Enter.",
+  "pt": "Digite o nome do site e pressione Enter.",
+  "it": "Digita il nome del sito, poi Invio.",
+  "ru": "Введите название сайта и нажмите Enter.",
+  "zh": "输入网站名称，然后按回车。",
+  "ja": "サイト名を入力して Enter を押します。",
+  "ko": "사이트 이름을 입력하고 Enter를 누르세요."
+ },
+ "Code PIN": {
+  "en": "PIN",
+  "es": "PIN",
+  "de": "PIN",
+  "pt": "PIN",
+  "it": "PIN",
+  "ru": "PIN-код",
+  "zh": "PIN 码",
+  "ja": "PIN",
+  "ko": "PIN"
+ },
+ "Entrez votre code à 4 chiffres pour « {site} ».": {
+  "en": "Enter your 4-digit code for “{site}”.",
+  "es": "Introduce tu código de 4 cifras para «{site}».",
+  "de": "Gib deinen 4-stelligen Code für „{site}“ ein.",
+  "pt": "Digite seu código de 4 dígitos para “{site}”.",
+  "it": "Inserisci il tuo codice di 4 cifre per «{site}».",
+  "ru": "Введите 4-значный код для «{site}».",
+  "zh": "输入“{site}”的 4 位代码。",
+  "ja": "「{site}」用の 4 桁のコードを入力してください。",
+  "ko": "‘{site}’의 4자리 코드를 입력하세요."
+ },
+ "Entrée copie l'identifiant, puis le mot de passe.": {
+  "en": "Enter copies the login, then the password.",
+  "es": "Intro copia el usuario y luego la contraseña.",
+  "de": "Enter kopiert erst den Benutzernamen, dann das Passwort.",
+  "pt": "Enter copia o login e depois a senha.",
+  "it": "Invio copia l'utente, poi la password.",
+  "ru": "Enter копирует логин, затем пароль.",
+  "zh": "按回车先复制账号，再复制密码。",
+  "ja": "Enter でユーザー名、続けてパスワードをコピーします。",
+  "ko": "Enter를 누르면 아이디, 그다음 비밀번호가 복사됩니다."
+ },
+ "SecretLin n'est pas ouvert": {
+  "en": "SecretLin is not open",
+  "es": "SecretLin no está abierto",
+  "de": "SecretLin ist nicht geöffnet",
+  "pt": "O SecretLin não está aberto",
+  "it": "SecretLin non è aperto",
+  "ru": "SecretLin не открыт",
+  "zh": "SecretLin 未打开",
+  "ja": "SecretLin が開いていません",
+  "ko": "SecretLin이 열려 있지 않습니다"
+ },
+ "Ouvrez SecretLin et déverrouillez-le avec votre mot de passe maître, puis relancez le remplissage rapide.": {
+  "en": "Open SecretLin and unlock it with your master password, then start quick fill again.",
+  "es": "Abre SecretLin y desbloquéalo con tu contraseña maestra; luego vuelve a abrir el relleno rápido.",
+  "de": "Öffne SecretLin, entsperre es mit deinem Master-Passwort und starte das Schnellausfüllen erneut.",
+  "pt": "Abra o SecretLin e desbloqueie com sua senha mestra; depois abra o preenchimento rápido de novo.",
+  "it": "Apri SecretLin e sbloccalo con la password principale, poi riavvia il riempimento rapido.",
+  "ru": "Откройте SecretLin, разблокируйте мастер-паролем и снова запустите быстрое заполнение.",
+  "zh": "打开 SecretLin 并用主密码解锁，然后重新启动快速填充。",
+  "ja": "SecretLin を開いてマスターパスワードでロック解除し、もう一度クイック入力を起動してください。",
+  "ko": "SecretLin을 열고 마스터 비밀번호로 잠금 해제한 뒤 빠른 채우기를 다시 실행하세요."
+ },
+ "SecretLin est verrouillé": {
+  "en": "SecretLin is locked",
+  "es": "SecretLin está bloqueado",
+  "de": "SecretLin ist gesperrt",
+  "pt": "O SecretLin está bloqueado",
+  "it": "SecretLin è bloccato",
+  "ru": "SecretLin заблокирован",
+  "zh": "SecretLin 已锁定",
+  "ja": "SecretLin はロックされています",
+  "ko": "SecretLin이 잠겨 있습니다"
+ },
+ "Déverrouillez-le avec votre mot de passe maître : le code PIN ne sert que tant que SecretLin reste ouvert.": {
+  "en": "Unlock it with your master password: the PIN only works while SecretLin stays open.",
+  "es": "Desbloquéalo con tu contraseña maestra: el PIN solo sirve mientras SecretLin sigue abierto.",
+  "de": "Entsperre es mit deinem Master-Passwort: Der PIN funktioniert nur, solange SecretLin geöffnet bleibt.",
+  "pt": "Desbloqueie com sua senha mestra: o PIN só funciona enquanto o SecretLin está aberto.",
+  "it": "Sbloccalo con la password principale: il PIN funziona solo finché SecretLin resta aperto.",
+  "ru": "Разблокируйте мастер-паролем: PIN-код работает, только пока SecretLin открыт.",
+  "zh": "请用主密码解锁：PIN 码只在 SecretLin 保持打开时有效。",
+  "ja": "マスターパスワードでロック解除してください。PIN は SecretLin が開いている間だけ使えます。",
+  "ko": "마스터 비밀번호로 잠금 해제하세요. PIN은 SecretLin이 열려 있는 동안에만 작동합니다."
+ },
+ "Copier le mot de passe": {
+  "en": "Copy password",
+  "es": "Copiar contraseña",
+  "de": "Passwort kopieren",
+  "pt": "Copiar senha",
+  "it": "Copia password",
+  "ru": "Копировать пароль",
+  "zh": "复制密码",
+  "ja": "パスワードをコピー",
+  "ko": "비밀번호 복사"
+ },
+ "Ouvrir SecretLin": {
+  "en": "Open SecretLin",
+  "es": "Abrir SecretLin",
+  "de": "SecretLin öffnen",
+  "pt": "Abrir o SecretLin",
+  "it": "Apri SecretLin",
+  "ru": "Открыть SecretLin",
+  "zh": "打开 SecretLin",
+  "ja": "SecretLin を開く",
+  "ko": "SecretLin 열기"
+ },
+ "Copier le nom d'utilisateur": {
+  "en": "Copy username",
+  "es": "Copiar usuario",
+  "de": "Benutzernamen kopieren",
+  "pt": "Copiar usuário",
+  "it": "Copia nome utente",
+  "ru": "Копировать логин",
+  "zh": "复制用户名",
+  "ja": "ユーザー名をコピー",
+  "ko": "사용자 이름 복사"
+ },
+ "Copier l'e-mail": {
+  "en": "Copy email",
+  "es": "Copiar correo",
+  "de": "E-Mail kopieren",
+  "pt": "Copiar e-mail",
+  "it": "Copia e-mail",
+  "ru": "Копировать почту",
+  "zh": "复制邮箱",
+  "ja": "メールをコピー",
+  "ko": "이메일 복사"
+ },
+ "Copier le code 2FA": {
+  "en": "Copy 2FA code",
+  "es": "Copiar código 2FA",
+  "de": "2FA-Code kopieren",
+  "pt": "Copiar código 2FA",
+  "it": "Copia codice 2FA",
+  "ru": "Копировать код 2FA",
+  "zh": "复制 2FA 验证码",
+  "ja": "2FA コードをコピー",
+  "ko": "2FA 코드 복사"
+ },
+ "Trop d'erreurs : SecretLin s'est verrouillé.": {
+  "en": "Too many errors: SecretLin has locked itself.",
+  "es": "Demasiados errores: SecretLin se ha bloqueado.",
+  "de": "Zu viele Fehler: SecretLin hat sich gesperrt.",
+  "pt": "Erros demais: o SecretLin foi bloqueado.",
+  "it": "Troppi errori: SecretLin si è bloccato.",
+  "ru": "Слишком много ошибок: SecretLin заблокировался.",
+  "zh": "错误次数过多：SecretLin 已锁定。",
+  "ja": "エラーが多すぎるため、SecretLin はロックされました。",
+  "ko": "오류가 너무 많아 SecretLin이 잠겼습니다."
+ },
+ "Connexion": {
+  "en": "Sign in",
+  "es": "Iniciar sesión",
+  "de": "Anmelden",
+  "pt": "Entrar",
+  "it": "Accedi",
+  "ru": "Вход",
+  "zh": "登录",
+  "ja": "ログイン",
+  "ko": "로그인"
+ },
+ "Se connecter": {
+  "en": "Sign in",
+  "es": "Entrar",
+  "de": "Anmelden",
+  "pt": "Entrar",
+  "it": "Accedi",
+  "ru": "Войти",
+  "zh": "登录",
+  "ja": "ログイン",
+  "ko": "로그인"
+ },
+ "Gérer les mots de passe": {
+  "en": "Manage Passwords",
+  "es": "Administrar contraseñas",
+  "de": "Passwörter verwalten",
+  "pt": "Gerenciar senhas",
+  "it": "Gestisci password",
+  "ru": "Управление паролями",
+  "zh": "管理密码",
+  "ja": "パスワードを管理",
+  "ko": "비밀번호 관리"
+ },
+ "Faites preuve de prudence": {
+  "en": "Proceed with Caution",
+  "es": "Procede con precaución",
+  "de": "Vorsicht",
+  "pt": "Prossiga com cuidado",
+  "it": "Procedi con cautela",
+  "ru": "Будьте осторожны",
+  "zh": "请谨慎操作",
+  "ja": "注意して進んでください",
+  "ko": "주의해서 진행하세요"
+ },
+ "Modifier les préférences avancées peut affecter Firefox.": {
+  "en": "Changing advanced preferences can affect Firefox.",
+  "es": "Cambiar las preferencias avanzadas puede afectar a Firefox.",
+  "de": "Erweiterte Einstellungen zu ändern kann Firefox beeinträchtigen.",
+  "pt": "Alterar preferências avançadas pode afetar o Firefox.",
+  "it": "Modificare le preferenze avanzate può influire su Firefox.",
+  "ru": "Изменение расширенных настроек может повлиять на Firefox.",
+  "zh": "更改高级首选项可能会影响 Firefox。",
+  "ja": "詳細設定を変更すると Firefox に影響することがあります。",
+  "ko": "고급 설정을 바꾸면 Firefox에 영향을 줄 수 있습니다."
+ },
+ "Accepter le risque et poursuivre": {
+  "en": "Accept the Risk and Continue",
+  "es": "Aceptar el riesgo y continuar",
+  "de": "Risiko akzeptieren und fortfahren",
+  "pt": "Aceitar o risco e continuar",
+  "it": "Accetta il rischio e continua",
+  "ru": "Принять риск и продолжить",
+  "zh": "接受风险并继续",
+  "ja": "危険性を承知の上で使用する",
+  "ko": "위험을 감수하고 계속"
+ },
+ "Booléen": {
+  "en": "Boolean",
+  "es": "Booleano",
+  "de": "Boolean",
+  "pt": "Booleano",
+  "it": "Booleano",
+  "ru": "Логическое",
+  "zh": "布尔",
+  "ja": "真偽値",
+  "ko": "불리언"
+ },
+ "Rechercher un nom de préférence": {
+  "en": "Search preference name",
+  "es": "Buscar nombre de preferencia",
+  "de": "Einstellungsnamen suchen",
+  "pt": "Pesquisar nome de preferência",
+  "it": "Cerca nome preferenza",
+  "ru": "Поиск по имени параметра",
+  "zh": "搜索首选项名称",
+  "ja": "設定名を検索",
+  "ko": "설정 이름 검색"
+ },
+ "Le problème : les suggestions de Firefox cachent celles de SecretLin.": {
+  "en": "The problem: Firefox's suggestions hide SecretLin's.",
+  "es": "El problema: las sugerencias de Firefox tapan las de SecretLin.",
+  "de": "Das Problem: Die Vorschläge von Firefox verdecken die von SecretLin.",
+  "pt": "O problema: as sugestões do Firefox escondem as do SecretLin.",
+  "it": "Il problema: i suggerimenti di Firefox coprono quelli di SecretLin.",
+  "ru": "Проблема: подсказки Firefox закрывают подсказки SecretLin.",
+  "zh": "问题：Firefox 的建议挡住了 SecretLin 的建议。",
+  "ja": "問題：Firefox の候補が SecretLin の候補を隠しています。",
+  "ko": "문제: Firefox 제안이 SecretLin 제안을 가립니다."
+ },
+ "Tapez about:config dans la barre d'adresse.": {
+  "en": "Type about:config in the address bar.",
+  "es": "Escribe about:config en la barra de direcciones.",
+  "de": "Gib about:config in die Adressleiste ein.",
+  "pt": "Digite about:config na barra de endereços.",
+  "it": "Digita about:config nella barra degli indirizzi.",
+  "ru": "Введите about:config в адресной строке.",
+  "zh": "在地址栏输入 about:config。",
+  "ja": "アドレスバーに about:config と入力します。",
+  "ko": "주소창에 about:config를 입력하세요."
+ },
+ "Acceptez l'avertissement.": {
+  "en": "Accept the warning.",
+  "es": "Acepta la advertencia.",
+  "de": "Bestätige die Warnung.",
+  "pt": "Aceite o aviso.",
+  "it": "Accetta l'avviso.",
+  "ru": "Примите предупреждение.",
+  "zh": "接受警告。",
+  "ja": "警告を承諾します。",
+  "ko": "경고를 수락하세요."
+ },
+ "Cherchez signon.rememberSignons et double-cliquez dessus : il passe à false.": {
+  "en": "Search for signon.rememberSignons and double-click it: it becomes false.",
+  "es": "Busca signon.rememberSignons y haz doble clic: pasa a false.",
+  "de": "Suche signon.rememberSignons und doppelklicke darauf: Es wird false.",
+  "pt": "Pesquise signon.rememberSignons e clique duas vezes: ele vira false.",
+  "it": "Cerca signon.rememberSignons e fai doppio clic: diventa false.",
+  "ru": "Найдите signon.rememberSignons и дважды щёлкните: значение станет false.",
+  "zh": "搜索 signon.rememberSignons 并双击：它会变成 false。",
+  "ja": "signon.rememberSignons を検索してダブルクリック：false になります。",
+  "ko": "signon.rememberSignons를 검색해 더블클릭하면 false가 됩니다."
+ },
+ "Puis browser.formfill.enable : double-clic, il passe à false.": {
+  "en": "Then browser.formfill.enable: double-click, it becomes false.",
+  "es": "Luego browser.formfill.enable: doble clic, pasa a false.",
+  "de": "Dann browser.formfill.enable: Doppelklick, es wird false.",
+  "pt": "Depois browser.formfill.enable: clique duplo, vira false.",
+  "it": "Poi browser.formfill.enable: doppio clic, diventa false.",
+  "ru": "Затем browser.formfill.enable: двойной щелчок, значение станет false.",
+  "zh": "然后是 browser.formfill.enable：双击，变成 false。",
+  "ja": "次に browser.formfill.enable：ダブルクリックで false になります。",
+  "ko": "그다음 browser.formfill.enable: 더블클릭하면 false가 됩니다."
+ },
+ "Rechargez la page de connexion : seul SecretLin s'affiche.": {
+  "en": "Reload the login page: only SecretLin shows up.",
+  "es": "Recarga la página de inicio de sesión: solo aparece SecretLin.",
+  "de": "Lade die Anmeldeseite neu: Nur SecretLin erscheint.",
+  "pt": "Recarregue a página de login: só o SecretLin aparece.",
+  "it": "Ricarica la pagina di accesso: compare solo SecretLin.",
+  "ru": "Перезагрузите страницу входа: показывается только SecretLin.",
+  "zh": "重新加载登录页面：只显示 SecretLin。",
+  "ja": "ログインページを再読み込み：SecretLin だけが表示されます。",
+  "ko": "로그인 페이지를 새로 고치면 SecretLin만 표시됩니다."
+ },
+ "Un clic sur votre compte, et c'est rempli !": {
+  "en": "One click on your account, and it's filled in!",
+  "es": "Un clic en tu cuenta, ¡y listo!",
+  "de": "Ein Klick auf dein Konto, und alles ist ausgefüllt!",
+  "pt": "Um clique na sua conta, e pronto!",
+  "it": "Un clic sul tuo account ed è compilato!",
+  "ru": "Один щелчок по записи — и всё заполнено!",
+  "zh": "点击你的账号，即可自动填好！",
+  "ja": "アカウントをクリックするだけで入力完了！",
+  "ko": "계정을 한 번 클릭하면 바로 채워집니다!"
  },
  "Graphite": {
   "en": "Graphite",

@@ -1,0 +1,44 @@
+{
+  "nom": {
+    "message": "SecretLin"
+  },
+  "description": {
+    "message": "Fills in your logins from SecretLin, the encrypted password manager."
+  },
+  "verrouille": {
+    "message": "SecretLin is locked: open it with your master password."
+  },
+  "ouvrir": {
+    "message": "Open SecretLin"
+  },
+  "codePin": {
+    "message": "PIN for “$1”"
+  },
+  "codeFaux": {
+    "message": "Wrong code: $1 try/tries left."
+  },
+  "tropErreurs": {
+    "message": "Too many errors: SecretLin has locked itself."
+  },
+  "pasLance": {
+    "message": "SecretLin is not open, or the browser connection is not installed (SecretLin → Settings → Browsers)."
+  },
+  "aucun": {
+    "message": "No SecretLin account for this site."
+  },
+  "pourCeSite": {
+    "message": "Accounts for this site"
+  },
+  "pageSansConnexion": {
+    "message": "This page is not a website."
+  },
+  "rechercher": {
+    "message": "Search for an account"
+  },
+  "autreSite": {
+    "message": "“$1” is not linked to this site. Fill it in anyway? Check the address: a fake site can imitate the real one."
+  },
+  "aucunAide": {
+    "message": "Search for it with the SecretLin button in the browser toolbar, or add it in SecretLin."
+  }
+}
