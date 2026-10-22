@@ -6,7 +6,8 @@ cd "$(dirname "$0")"
 .venv/bin/pip install -q -r requirements.txt pyinstaller
 .venv/bin/pyinstaller --noconfirm --onefile --windowed --name SecretLin \
     --collect-data customtkinter --hidden-import PIL._tkinter_finder \
-    --add-data "gestionnaire/logos.zip:gestionnaire" lancer.py
+    --add-data "gestionnaire/logos.zip:gestionnaire" \
+    --add-data "gestionnaire/traductions.json:gestionnaire" lancer.py
 
 mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications" "$HOME/.local/share/icons"
 cp dist/SecretLin "$HOME/.local/bin/SecretLin"
